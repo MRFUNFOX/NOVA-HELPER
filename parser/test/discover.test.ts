@@ -37,7 +37,7 @@ const pages = new Map<string, string>([
 
 describe('автопоиск серверов и законов', () => {
   it('находит законы на серверах с разными названиями разделов и пропускает архив', async () => {
-    const d = await discover(new FixtureFetcher(pages));
+    const d = await discover(new FixtureFetcher(pages), undefined, { collectLaws: true });
     expect(d.warnings).toEqual([]);
     expect(d.servers.map((s) => [s.id, s.lawBaseUrl])).toEqual([
       ['mirage', `${B}/forums/929/`],
@@ -53,10 +53,17 @@ describe('автопоиск серверов и законов', () => {
     expect(d.docs.filter((x) => x.scope === 'project').map((x) => x.threadId)).toEqual([403002, 406242]);
   });
 
+  it('по умолчанию собираются только правила проекта', async () => {
+    const d = await discover(new FixtureFetcher(pages));
+    expect(d.servers).toEqual([]);
+    expect(d.docs.every((x) => x.scope === 'project')).toBe(true);
+    expect(d.docs.map((x) => x.threadId)).toEqual([403002, 406242]);
+  });
+
   it('если у сервера нет пути до законов — предупреждение, а не падение всего сбора', async () => {
     const broken = new Map(pages);
     broken.set(`${B}/forums/905/`, page([['Суд', `${B}/forums/1115/`]]));
-    const d = await discover(new FixtureFetcher(broken));
+    const d = await discover(new FixtureFetcher(broken), undefined, { collectLaws: true });
     expect(d.warnings).toEqual(['Сервер Mirage: в «Правительство» нет подраздела «Законодательная база» или «Законодательство»']);
     expect(d.docs.some((x) => x.serverId === 'horizon')).toBe(true);
   });

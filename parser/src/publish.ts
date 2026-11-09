@@ -77,6 +77,8 @@ export interface PublishInput {
    * уменьшение намеренное — например, перестали собирать какой-то раздел).
    */
   acceptShrink?: boolean;
+  /** Сбор законов серверов выключен намеренно: серверы и их документы убираются сразу, без «трёх прогонов». */
+  lawsDisabled?: boolean;
 }
 
 export interface PublishResult {
@@ -167,7 +169,7 @@ export function publish(input: PublishInput): PublishResult {
     if (!prev) addedServers.push(s.name);
     servers.push({ ...s, missingRuns: 0, archived: false });
   }
-  for (const prev of prevManifest?.servers ?? []) {
+  for (const prev of input.lawsDisabled ? [] : prevManifest?.servers ?? []) {
     if (seenIds.has(prev.id)) continue;
     const missingRuns = (prev.missingRuns ?? 0) + 1;
     const archived = missingRuns >= MISSING_RUNS_TO_ARCHIVE;
@@ -217,6 +219,7 @@ export function publish(input: PublishInput): PublishResult {
       continue;
     }
     if (serverId && archivedIds.has(serverId)) continue; // сервер закрыт — документы уходят
+    if (serverId && input.lawsDisabled) continue; // законы выключены — уходят без записи в журнал
     // Тема удалена с форума
     const change = diffDocuments(prev.doc, undefined);
     if (change) changes.push(change);

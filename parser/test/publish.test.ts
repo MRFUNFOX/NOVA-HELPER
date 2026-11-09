@@ -107,6 +107,14 @@ describe('публикация базы', () => {
     expect(read<Changelog>(dir, r3.manifest.changelog!).servers.archived).toEqual(['horizon']);
   });
 
+  it('если законы выключены, серверы и их документы уходят сразу, правила остаются', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nova-'));
+    run(dir, [doc('p', many(5)), doc('m', many(5), 'mirage')], [S('mirage')]);
+    const r = run(dir, [doc('p', many(5))], [], { lawsDisabled: true, discoveredCount: 1, acceptShrink: true }, '2026-11-10T00:00:00Z');
+    expect(r.manifest.servers).toEqual([]);
+    expect(r.manifest.documents.map((d) => d.id)).toEqual(['p']);
+  });
+
   it('новый сервер попадает в базу и в перечень изменений', () => {
     const dir = mkdtempSync(join(tmpdir(), 'nova-'));
     run(dir, [doc('m', many(5), 'mirage')], [S('mirage')]);

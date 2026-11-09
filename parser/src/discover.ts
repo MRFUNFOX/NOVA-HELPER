@@ -5,6 +5,12 @@ import type { DocMeta } from './document.js';
 import type { ServerInfo } from './types.js';
 
 export const CONFIG = {
+  /**
+   * Собирать ли законодательство серверов. Сейчас выключено: в программе только правила проекта.
+   * Весь код для законов (автопоиск серверов, форматы кодексов Mirage/New Era/Horizon) рабочий и
+   * покрыт тестами — чтобы вернуть законы, достаточно поставить true.
+   */
+  collectLaws: false,
   base: 'https://forum.nova-rp.com',
   /** Страница со списком серверов: блок категории 21 «Раздел игровых серверов» */
   serversPage: 'https://forum.nova-rp.com/categories/21/',
@@ -44,7 +50,12 @@ export function titleMatches(actual: string, wanted: string): boolean {
   return a === w || a.includes(w) || (w.includes(a) && a.length >= 5);
 }
 
-export async function discover(fetcher: Fetcher, log: (s: string) => void = () => {}): Promise<Discovery> {
+export async function discover(
+  fetcher: Fetcher,
+  log: (s: string) => void = () => {},
+  opts: { collectLaws?: boolean } = {},
+): Promise<Discovery> {
+  const collectLaws = opts.collectLaws ?? CONFIG.collectLaws;
   const out: Discovery = { servers: [], docs: [], warnings: [], pagesFetched: 0 };
   const get = async (url: string) => { out.pagesFetched++; return fetcher.get(url); };
 
@@ -74,6 +85,7 @@ export async function discover(fetcher: Fetcher, log: (s: string) => void = () =
   }
 
   // ── Серверы ──
+  if (!collectLaws) return out;
   log('Серверы…');
   const serverNodes = parseNodeList(await get(CONFIG.serversPage), CONFIG.serversScope)
     .filter((n) => CONFIG.serverTitle.test(n.title));
