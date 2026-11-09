@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { htmlToLines } from './text.js';
-import { parseStructure } from './structure.js';
+import { nodeHash, parseStructure } from './structure.js';
 import { applyAmendments, type ApplyReport } from './amendments.js';
 import type { Post, ThreadPage } from './forum.js';
 import type { Amendment, RuleDocument, RuleNode, Scope } from './types.js';
@@ -38,6 +38,20 @@ export function buildDocument(pages: ThreadPage[], meta: DocMeta, now: Date): Bu
   const amendments = applyAmendments(children, main, extra, now, looseAmendments);
   for (const n of amendments.unmerged) warnings.push(`${title}: п. ${n} — основной текст правили после поправки, но пункт остался в старой редакции`);
   for (const n of amendments.conflicts) warnings.push(`${title}: п. ${n} — текст не совпадает ни с одной редакцией из поправок`);
+
+  // Картинка, повторённая в документе 3+ раз (например, полоска-разделитель с imgur без размеров) — оформление
+  const imageCount = new Map<string, number>();
+  (function count(ns: RuleNode[]) {
+    for (const n of ns) { for (const i of n.images) imageCount.set(i.src, (imageCount.get(i.src) ?? 0) + 1); count(n.children); }
+  })(children);
+  (function strip(ns: RuleNode[]) {
+    for (const n of ns) {
+      const before = n.images.length;
+      n.images = n.images.filter((i) => (imageCount.get(i.src) ?? 0) < 3);
+      if (n.images.length !== before) n.hash = nodeHash(n);
+      strip(n.children);
+    }
+  })(children);
 
   const stats = { nodes: 0, punishments: 0, images: 0 };
   const dupNumbers = new Set<string>();

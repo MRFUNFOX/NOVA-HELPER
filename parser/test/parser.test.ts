@@ -46,6 +46,36 @@ describe('Уголовный кодекс (Horizon)', () => {
   });
 });
 
+describe('Уголовный кодекс (Mirage) — другой формат', () => {
+  const body = fx('mirage_uk_410588.html').split('<div class="bbWrapper">')[1]!;
+  const res = buildDocument([{ title: 'Уголовный Кодекс Штата San-Andreas', locked: true, lastPage: 1,
+    posts: [{ id: '1', url: '', author: 'A', isStaff: true, bodyHtml: `<div class="bbWrapper">${body}` }] }],
+    { scope: 'server', serverId: 'mirage', category: 'НПА', threadId: 410588, sourceUrl: '', listTitle: '' }, NOW);
+  const all = flat(res.doc.children);
+  const p = (num: string) => all.find((n) => n.number === num)!;
+
+  it('«(R)», «Приоритет розыска», «Наказывается…» и «Комментарий:» со списком', () => {
+    expect(p('8.2')).toMatchObject({ jurisdiction: 'Региональная', wanted: [3, 3] });
+    expect(p('8.2').punishments[0]!.kinds).toEqual(['prison', 'fine']);
+    expect(p('8.2').annotations[0]!.type).toBe('explanation');
+    expect(p('8.2').annotations[0]!.text).toContain('- Территория Форта Занкудо.');
+    expect(p('8.2').text).not.toContain('Территория');
+  });
+
+  it('жирные подпункты «1. …» не превращаются в разделы и не забирают наказание', () => {
+    expect(p('8.7').text).toContain('1. Участие в преступном объединении');
+    expect(p('8.7').punishments).toHaveLength(1);
+    expect(res.doc.stats.punishments).toBe(92);
+  });
+
+  it('оглавление и картинки-разделители не создают пустых узлов', () => {
+    expect(all.filter((n) => n.kind === 'chapter').map((n) => n.number)).toEqual(
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']);
+    expect(all.some((n) => n.kind === 'heading' && !n.children.length && !n.text)).toBe(false);
+    expect(res.doc.stats.images).toBe(0);
+  });
+});
+
 describe('Общие правила проекта', () => {
   const page = parseThreadPage(fx('raw_thread_406242.html'));
   const roots = parseStructure(htmlToLines(page.posts[0]!.bodyHtml), { docId: 'r', title: page.title });

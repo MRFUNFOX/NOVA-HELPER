@@ -19,8 +19,15 @@ const RE_ARTICLE = /^статья\s+(\d+(?:\.\d+)*)\s*\.?\s*(.*)$/i;
 const RE_PART = /^ч\.\s*(\d+(?:\.\d+)?)\s*\.?\s*(.*)$/i;
 const RE_POINT = /^(\d+(?:\.\d+)+)\s*\.?\s*(\S.*)?$/;
 const RE_SECTION_NUM = /^(\d{1,2})\.\s+(\S.*)$/;
-const RE_ANNOTATION = /^(примечани[ея]|исключени[ея]|пояснени[ея]|уточнени[ея])\s*(?:№?\s*\d+)?\s*(?::\s*(.*)|$)/i;
-const RE_PUNISHMENT_LINE = /^наказани[ея]\s*:\s*(.+)$/i;
+const RE_ANNOTATION = /^(примечани[ея]|исключени[ея]|пояснени[ея]|уточнени[ея]|комментари[йи])\s*(?:№?\s*\d+)?\s*(?::\s*(.*)|$)/i;
+/** «Наказание: …», «Санкция: …» (Horizon, New Era) и «Наказывается лишением свободы…» (Mirage) */
+const RE_PUNISHMENT_LINE = /^(?:наказани[ея]|санкци[яи]|меры?\s+наказани[яе])\s*[:—–-]\s*(.+)$/i;
+const RE_PUNISHABLE_LINE = /^(?:наказыва[её]тся|карается)\s+\S/i;
+/** «Приоритет розыска: 3.» / «Уровень розыска: 1-2» (Mirage) */
+const RE_WANTED_LINE = /^(?:приоритет|уровень)\s+розыска\s*[:—–-]?\s*(\d)(?:\s*[-–]\s*(\d))?\.?\s*$/i;
+/** «(F)», «(R)», «(F/R)» сразу после номера статьи (Mirage) */
+const RE_JURISDICTION_SHORT = /^\(([FR](?:\s*\/\s*[FR])?)\)\s*/;
+const JURISDICTION_SHORT: Record<string, string> = { F: 'Федеральная', R: 'Региональная' };
 const RE_STARS = /^(★+)(?:\s*\/\s*(★+))?\s*/;
 const RE_JURISDICTION = /^\[([^\]]{3,60})\]\s*/;
 
@@ -29,6 +36,7 @@ const ANNOTATION_TYPES: Record<string, AnnotationType> = {
   исключени: 'exception',
   пояснени: 'explanation',
   уточнени: 'clarification',
+  комментари: 'explanation',
 };
 
 /** Ранг определяет вложенность: узел становится ребёнком ближайшего узла с меньшим рангом. */
@@ -105,6 +113,12 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
         text = text.slice(jur[0].length);
         continue;
       }
+      const short = RE_JURISDICTION_SHORT.exec(text);
+      if (short) {
+        d.node.jurisdiction = short[1]!.split('/').map((x) => JURISDICTION_SHORT[x.trim().toUpperCase()] ?? x.trim()).join('/');
+        text = text.slice(short[0].length);
+        continue;
+      }
       break;
     }
     const { text: clean, punishments } = splitPipePunishments(text);
@@ -123,7 +137,8 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
     for (const img of line.images) d.node.images.push(img);
     if (!line.text) return;
 
-    if (d.openAnnotation && (line.bullet || /^[а-яё]\)\s/i.test(line.text))) {
+    // Открытая аннотация («Комментарий:» без текста) забирает следующие строки до нового пункта
+    if (d.openAnnotation) {
       d.openAnnotation.lines.push(line.text);
       return;
     }
@@ -141,6 +156,8 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
   }
 
   const titleNorm = norm(opts.title ?? '');
+  const textLines = lines.filter((l) => l.text);
+  const emphRatio = textLines.length ? textLines.filter((l) => l.emphasized).length / textLines.length : 0;
 
   for (const line of lines) {
     const t = line.text;
@@ -171,6 +188,18 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
       top()!.node.punishments.push(classifyPunishment(m[1]!));
       continue;
     }
+    if (RE_PUNISHABLE_LINE.test(t) && top()) {
+      closeAnnotation(top());
+      top()!.node.punishments.push(classifyPunishment(t));
+      continue;
+    }
+    if ((m = RE_WANTED_LINE.exec(t)) && top()) {
+      closeAnnotation(top());
+      const a = Number(m[1]);
+      const b = m[2] ? Number(m[2]) : a;
+      top()!.node.wanted = [Math.min(a, b), Math.max(a, b)];
+      continue;
+    }
     if ((m = RE_BOOK.exec(t))) { push('section', m[1], m[2] ?? '', 0.5, 'Часть'); continue; }
     if ((m = RE_SECTION_WORD.exec(t))) { push('section', m[1], m[2] ?? '', 1, 'Раздел'); continue; }
     if ((m = RE_SUBSECTION.exec(t))) { push('section', m[1], m[2] ?? '', 1.5, 'Подраздел'); continue; }
@@ -178,14 +207,18 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
     if ((m = RE_ARTICLE.exec(t))) { push('article', m[1], m[2] ?? '', 3); continue; }
     if ((m = RE_PART.exec(t))) { push('part', m[1], m[2] ?? '', 20); continue; }
     if ((m = RE_POINT.exec(t)) && !line.tableRow) { push('point', m[1], m[2] ?? '', pointRank(m[1]!)); continue; }
-    // «1. Общее положение» — раздел, только если строка выделена: в законах «1. …» бывает
-    // обычным нумерованным абзацем внутри статьи, и превращать его в раздел нельзя
-    if ((m = RE_SECTION_NUM.exec(t)) && !line.tableRow && line.emphasized) {
+    // «1. Общее положение» — раздел, только если это выделенный короткий заголовок: в законах
+    // «1. Участие в преступном объединении, …» бывает нумерованным подпунктом статьи
+    if ((m = RE_SECTION_NUM.exec(t)) && !line.tableRow && line.emphasized && t.length < 80 && !/[.;,:]$/.test(t)) {
       push('section', m[1], m[2]!, 1);
       continue;
     }
-    // Подзаголовок без номера: выделенная короткая строка, не вводная к списку («Запрещены:»)
-    if (line.emphasized && !line.bullet && t.length < 140 && !/:$/.test(t)) {
+    // Подзаголовок без номера: выделенная короткая строка, не вводная к списку («Запрещены:»).
+    // Если жирным набран почти весь документ (так оформлены кодексы Mirage), жирность
+    // ничего не значит — тогда заголовком считаем только строку ЗАГЛАВНЫМИ буквами.
+    const isPartHeading = line.emphasized && t.length < 40 && /часть\.?$/i.test(t);
+    const emphasisMeaningful = emphRatio < 0.5 || t === t.toUpperCase() || isPartHeading;
+    if (line.emphasized && emphasisMeaningful && !line.bullet && t.length < 140 && !/[:;,]$/.test(t)) {
       closeAnnotation(top());
       if (/часть$/i.test(t)) {
         stack.length = 0;
@@ -211,8 +244,35 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
         draftOf.set(preamble.node, preamble);
       }
     }
+    dropTocDuplicates(roots);
     walk(roots, undefined);
     return roots;
+  }
+
+  /**
+   * Оглавление в начале кодекса («Глава 1 … Глава 13») даёт пустые главы. Если у пустой главы
+   * или раздела ниже есть «настоящий» двойник с тем же номером — пустую убираем.
+   */
+  function dropTocDuplicates(nodes: RuleNode[]) {
+    const key = (n: RuleNode) => `${n.kind}|${n.label ?? ''}|${n.number}`;
+    const all: RuleNode[] = [];
+    (function collect(ns: RuleNode[]) { for (const n of ns) { all.push(n); collect(n.children); } })(nodes);
+    // Повторяющиеся картинки — разделители, содержимым узла не считаются
+    const imgCount = new Map<string, number>();
+    for (const n of all) for (const i of n.images) imgCount.set(i.src, (imgCount.get(i.src) ?? 0) + 1);
+    const realImages = (n: RuleNode) => n.images.some((i) => (imgCount.get(i.src) ?? 0) < 3);
+    const isEmpty = (n: RuleNode) => !n.children.length && !(draftOf.get(n)?.body.length) && !n.annotations.length && !n.punishments.length;
+    const full = new Set(all.filter((n) => (n.kind === 'chapter' || n.kind === 'section') && n.number && (!isEmpty(n) || realImages(n))).map(key));
+    (function prune(ns: RuleNode[]) {
+      for (let i = ns.length - 1; i >= 0; i--) {
+        const n = ns[i]!;
+        prune(n.children); // сначала дети: заголовок оглавления пустеет, когда из него ушли главы
+        const tocChapter = (n.kind === 'chapter' || n.kind === 'section') && n.number && isEmpty(n) && full.has(key(n));
+        // Подзаголовок без текста (строка оглавления, повтор названия, логотип) ничего не даёт игроку
+        const emptyHeading = n.kind === 'heading' && isEmpty(n);
+        if (tocChapter || emptyHeading) ns.splice(i, 1);
+      }
+    })(nodes);
   }
 
   /**

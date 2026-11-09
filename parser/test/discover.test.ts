@@ -44,10 +44,10 @@ describe('автопоиск серверов и законов', () => {
       ['horizon', `${B}/forums/1478/`],
     ]);
     const mirage = d.docs.filter((x) => x.serverId === 'mirage').map((x) => [x.threadId, x.category]);
+    // Указы и постановления (кадровые назначения, заседания) намеренно не берём
     expect(mirage).toEqual([
       [500001, 'Нормативно-правовые акты'],
       [500002, 'Нормативно-правовые акты'],
-      [500003, 'Указы Губернатора'],
     ]);
     expect(d.docs.filter((x) => x.serverId === 'horizon').map((x) => x.threadId)).toEqual([411152]);
     expect(d.docs.filter((x) => x.scope === 'project').map((x) => x.threadId)).toEqual([403002, 406242]);

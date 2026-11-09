@@ -2,7 +2,7 @@ import type { Punishment, PunishmentKind } from './types.js';
 
 /** Похоже ли на наказание — используется, чтобы отличить « | BAN …» от « | » в обычном тексте. */
 export const PUNISH_RE =
-  /(?<!\p{L})(ban|warn|jail|mute|rmute|kick|demorgan|бан|варн|мут|кик|чс)(?!\p{L})|блокир|деморган|изъяти|обнулен|лишени[ея]\s+свободы|штраф|увольнен|выговор|предупрежден|ч[её]рн\p{L}*\s+спис|навсегда|перманент/iu;
+  /(?<!\p{L})(ban|warn|jail|mute|rmute|kick|demorgan|бан|варн|мут|кик|чс)(?!\p{L})|блокир|деморган|изъяти|конфиск|обнулен|лишени\p{L}*\s+свобод|штраф|увольнен|выговор|предупрежден|ч[её]рн\p{L}*\s+спис|навсегда|перманент/iu;
 
 const KIND_RULES: [PunishmentKind, RegExp][] = [
   ['blacklist', /(?<!\p{L})чс(?!\p{L})|ч[её]рн\p{L}*\s+спис/iu],
@@ -11,9 +11,9 @@ const KIND_RULES: [PunishmentKind, RegExp][] = [
   ['jail', /(?<!\p{L})(jail|demorgan)(?!\p{L})|деморган/iu],
   ['mute', /(?<!\p{L})(r?mute|мут)/iu],
   ['kick', /(?<!\p{L})(kick|кик)/iu],
-  ['confiscation', /изъяти/i],
+  ['confiscation', /изъяти|конфиск/i],
   ['reset', /обнулен/i],
-  ['prison', /лишени[ея]\s+свободы/i],
+  ['prison', /лишени\p{L}*\s+свобод/iu],
   ['fine', /штраф/i],
   ['dismissal', /увольнен/i],
   ['reprimand', /выговор|предупрежден/i],

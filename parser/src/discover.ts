@@ -18,6 +18,11 @@ export const CONFIG = {
   lawPath: [['Государственные организации'], ['Правительство'], ['Законодательная база', 'Законодательство']],
   /** Глубина вложенных подразделов внутри законодательного раздела */
   lawSubforumDepth: 2,
+  /**
+   * Подразделы законодательства, которые не берём: указы и постановления — в основном кадровые
+   * назначения и созывы заседаний (на Mirage их ~400), игроку они не нужны и засоряют поиск и ИИ.
+   */
+  lawSkipForums: [/архив/i, /указ/i, /постановлен/i],
   rulesForum: 'https://forum.nova-rp.com/forums/893/',
   /** Подразделы, которые не являются действующими документами */
   skipForums: [/архив/i],
@@ -104,7 +109,7 @@ export async function discover(fetcher: Fetcher, log: (s: string) => void = () =
         count += threads.length;
         if (depth >= CONFIG.lawSubforumDepth) return;
         for (const sub of parseNodeList(forumHtml)) {
-          if (CONFIG.skipForums.some((re) => re.test(sub.title))) continue;
+          if (CONFIG.lawSkipForums.some((re) => re.test(sub.title))) continue;
           await collect(sub, await get(sub.url), sub.title, depth + 1);
         }
       };
