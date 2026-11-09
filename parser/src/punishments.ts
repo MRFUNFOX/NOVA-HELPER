@@ -58,3 +58,20 @@ export function splitPipePunishments(line: string): { text: string; punishments:
   }
   return { text: textParts.join(' | ').trim(), punishments };
 }
+
+/**
+ * Наказание внутри предложения (административные и дорожные кодексы Mirage/New Era):
+ * «…влечет за собой наложение административного штрафа в размере 4.000$.»
+ * Текст пункта не меняем — предложение должно читаться целиком; наказание дублируется в карточку.
+ */
+const RE_ENTAILS = /(?:влеч[её]т|влекут|влечёт)(?:\s+за\s+собой)?\s+(.+)$/iu;
+const RE_SANCTION_WORD = /штраф|арест|лишени\p{L}*\s+(?:свобод|лиценз|прав)|выговор|увольнен|изъяти|конфиск|предупрежден|взыскани|(?<!\p{L})(ban|warn|jail|mute|бан|варн|мут)(?!\p{L})/iu;
+
+export function inlinePunishment(line: string): Punishment | undefined {
+  const m = RE_ENTAILS.exec(line);
+  if (!m) return undefined;
+  const clause = m[1]!.trim().replace(/\s+/g, ' ');
+  if (!RE_SANCTION_WORD.test(clause)) return undefined; // «влечет уголовную ответственность по статье…»
+  const p = classifyPunishment(clause.charAt(0).toUpperCase() + clause.slice(1));
+  return p;
+}

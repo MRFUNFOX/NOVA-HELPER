@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { Line } from './text.js';
 import type { Annotation, AnnotationType, NodeKind, Punishment, RuleNode } from './types.js';
-import { classifyPunishment, splitPipePunishments } from './punishments.js';
+import { classifyPunishment, inlinePunishment, splitPipePunishments } from './punishments.js';
 
 /*
  * Грамматика документов NOVA RP. Встречаются два стиля:
@@ -16,6 +16,8 @@ const RE_BOOK = /^часть\s+([IVXLC]+|\d+)\s*[.:]?\s*(.*)$/i;
 const RE_SUBSECTION = /^подраздел\s+([IVXLC]+|\d+)\s*[.:]?\s*(.*)$/i;
 const RE_CHAPTER = /^глава\s+([IVXLC]+|\d+)\s*[.:]?\s*(.*)$/i;
 const RE_ARTICLE = /^статья\s+(\d+(?:\.\d+)*)\s*\.?\s*(.*)$/i;
+/** «2 Статья. Правонарушения в сфере …» — группа пунктов 2.1, 2.2… (АК и ДК Mirage/New Era) */
+const RE_ARTICLE_GROUP = /^(\d+)\s+статья\s*[.:]?\s*(.*)$/i;
 const RE_PART = /^ч\.\s*(\d+(?:\.\d+)?)\s*\.?\s*(.*)$/i;
 const RE_POINT = /^(\d+(?:\.\d+)+)\s*\.?\s*(\S.*)?$/;
 const RE_SECTION_NUM = /^(\d{1,2})\.\s+(\S.*)$/;
@@ -124,6 +126,10 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
     const { text: clean, punishments } = splitPipePunishments(text);
     d.node.text = clean.replace(/,\s*$/, '');
     d.node.punishments.push(...punishments);
+    if (legal && !punishments.length) {
+      const inline = inlinePunishment(d.node.text);
+      if (inline) d.node.punishments.push(inline);
+    }
   }
 
   function addBody(line: Line) {
@@ -151,6 +157,8 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
         if (text) d.body.push(line.bullet ? `- ${text}` : text);
         return;
       }
+      const inline = inlinePunishment(line.text);
+      if (inline) d.node.punishments.push(inline);
     }
     d.body.push(line.bullet ? `- ${line.text}` : line.text);
   }
@@ -205,6 +213,7 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
     if ((m = RE_SUBSECTION.exec(t))) { push('section', m[1], m[2] ?? '', 1.5, 'Подраздел'); continue; }
     if ((m = RE_CHAPTER.exec(t))) { push('chapter', m[1], m[2] ?? '', 2); continue; }
     if ((m = RE_ARTICLE.exec(t))) { push('article', m[1], m[2] ?? '', 3); continue; }
+    if ((m = RE_ARTICLE_GROUP.exec(t))) { push('chapter', m[1], m[2] ?? '', 2, 'Статья'); continue; }
     if ((m = RE_PART.exec(t))) { push('part', m[1], m[2] ?? '', 20); continue; }
     if ((m = RE_POINT.exec(t)) && !line.tableRow) { push('point', m[1], m[2] ?? '', pointRank(m[1]!)); continue; }
     // «1. Общее положение» — раздел, только если это выделенный короткий заголовок: в законах
