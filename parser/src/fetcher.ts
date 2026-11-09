@@ -89,20 +89,42 @@ export class BrowserFetcher implements Fetcher {
   }
 
   async get(url: string): Promise<string> {
+    let lastErr: unknown;
+    // Сбой одной загрузки (переход в момент проверки, таймаут) не должен ронять весь сбор
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        return await this.once(url);
+      } catch (e) {
+        lastErr = e;
+        this.opts.log?.(`  ↻ браузер, попытка ${attempt}/3: ${(e as Error).message.split('\n')[0]}`);
+        await new Promise((r) => setTimeout(r, 2000 * attempt));
+      }
+    }
+    this.failures++;
+    throw lastErr;
+  }
+
+  private async once(url: string): Promise<string> {
     const context = await this.ctx();
     const page = await context.newPage();
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
       const deadline = Date.now() + (this.opts.challengeTimeoutMs ?? 25000);
       while (Date.now() < deadline) {
-        const html = await page.content();
+        let html: string;
+        try {
+          html = await page.content();
+        } catch {
+          // Проверка форума как раз перенаправляет страницу — дождаться, пока она загрузится
+          await page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {});
+          continue;
+        }
         if (!isChallengePage(html) && /class="p-body|<rss|<\?xml/.test(html)) return html;
         await page.waitForTimeout(1000);
       }
-      this.failures++;
       throw new ChallengeError(`Браузер не прошёл проверку форума: ${url}`);
     } finally {
-      await page.close();
+      await page.close().catch(() => {});
     }
   }
 
