@@ -204,7 +204,8 @@ export function publish(input: PublishInput): PublishResult {
     parserVersion: PARSER_VERSION,
     servers,
     documents: finalDocs,
-    changelog: prevManifest?.changelog,
+    // Ссылка на журнал — только если файл на месте (журнал могли очистить)
+    changelog: prevManifest?.changelog && existsSync(join(outDir, prevManifest.changelog)) ? prevManifest.changelog : undefined,
   };
 
   let changelog: Changelog | undefined;
