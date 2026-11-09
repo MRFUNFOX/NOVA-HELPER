@@ -1,0 +1,10 @@
+{
+ "versions": [
+  {
+   "dbVersion": "2026.11.09-1912",
+   "path": "changelog/2026.11.09-1912.json",
+   "generatedAt": "2026-11-09T19:12:24.730Z",
+   "summary": "новых документов: 134; новые серверы: New Era, Mirage, Horizon"
+  }
+ ]
+}
