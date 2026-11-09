@@ -84,7 +84,7 @@ jobs:
       - name: Сброс кэша CDN для манифеста
         if: steps.scrape.outputs.changed == 'true'
         run: |
-          for f in manifest.json manifest.sig status.json changelog/index.json; do
+          for f in manifest.signed.json manifest.json manifest.sig status.json changelog/index.json; do
             curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@data/$f" >/dev/null || true
           done
 

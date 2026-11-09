@@ -231,8 +231,12 @@ export function publish(input: PublishInput): PublishResult {
   const manifestJson = JSON.stringify(manifest, null, 1);
   writeFileSync(join(outDir, 'manifest.json'), manifestJson);
   if (input.signingKeyPem) {
-    const sig = sign(null, Buffer.from(manifestJson), createPrivateKey(input.signingKeyPem));
-    writeFileSync(join(outDir, 'manifest.sig'), sig.toString('base64'));
+    const sig = sign(null, Buffer.from(manifestJson), createPrivateKey(input.signingKeyPem)).toString('base64');
+    writeFileSync(join(outDir, 'manifest.sig'), sig);
+    // Манифест и подпись в одном файле: CDN кэширует файлы по отдельности (до 5 минут),
+    // и пара manifest.json + manifest.sig может прийти из разных версий — подпись «не сойдётся».
+    // Программа читает этот файл; пара оставлена для совместимости и ручной проверки.
+    writeFileSync(join(outDir, 'manifest.signed.json'), JSON.stringify({ manifest: manifestJson, signature: sig }));
   } else {
     warnings.push('Ключ подписи не задан (NOVA_SIGNING_KEY) — manifest.sig не создан');
   }

@@ -137,6 +137,29 @@ fn sha256_hex(b: &[u8]) -> String {
     h.finalize().iter().map(|x| format!("{x:02x}")).collect()
 }
 
+#[derive(Deserialize)]
+struct SignedManifest {
+    manifest: String,
+    signature: String,
+}
+
+/// Манифест и подпись одним файлом (manifest.signed.json): CDN кэширует файлы по отдельности,
+/// и пара manifest.json + manifest.sig может прийти из разных версий. Старый формат — запасной путь.
+async fn fetch_manifest(prefer: usize) -> Result<(Vec<u8>, String, usize), String> {
+    if let Ok((raw, mirror)) = fetch("manifest.signed.json", prefer).await {
+        if let Ok(signed) = serde_json::from_slice::<SignedManifest>(&raw) {
+            let bytes = signed.manifest.into_bytes();
+            verify_manifest(&bytes, &signed.signature)?;
+            return Ok((bytes, signed.signature, mirror));
+        }
+    }
+    let (bytes, mirror) = fetch("manifest.json", prefer).await?;
+    let (sig, _) = fetch("manifest.sig", mirror).await?;
+    let sig = String::from_utf8_lossy(&sig).trim().to_string();
+    verify_manifest(&bytes, &sig)?;
+    Ok((bytes, sig, mirror))
+}
+
 fn read_local_manifest(dir: &Path) -> Option<Manifest> {
     let bytes = fs::read(dir.join("current/manifest.json")).ok()?;
     serde_json::from_slice(&bytes).ok()
@@ -152,10 +175,7 @@ fn ver(v: &str) -> Vec<u32> {
 pub async fn db_check(app: AppHandle, state: State<'_, SyncState>) -> Result<CheckResult, String> {
     let dir = db_dir(&app)?;
     let local = read_local_manifest(&dir);
-    let (bytes, mirror) = fetch("manifest.json", 0).await?;
-    let (sig, _) = fetch("manifest.sig", mirror).await?;
-    let sig = String::from_utf8_lossy(&sig).to_string();
-    verify_manifest(&bytes, &sig)?;
+    let (bytes, sig, mirror) = fetch_manifest(0).await?;
     let remote: Manifest = serde_json::from_slice(&bytes).map_err(|e| format!("Манифест не читается: {e}"))?;
 
     let local_docs: std::collections::HashMap<&str, &str> = local
@@ -327,9 +347,7 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn real_database_verifies() {
-        let (bytes, mirror) = fetch("manifest.json", 0).await.expect("manifest");
-        let (sig, _) = fetch("manifest.sig", mirror).await.expect("sig");
-        verify_manifest(&bytes, &String::from_utf8_lossy(&sig)).expect("подпись базы должна сходиться");
+        let (bytes, sig, mirror) = fetch_manifest(0).await.expect("подписанный манифест базы");
         let m: Manifest = serde_json::from_slice(&bytes).expect("manifest json");
         assert!(m.documents.len() >= 10, "в базе мало документов: {}", m.documents.len());
         for d in m.documents.iter().take(3) {
@@ -339,7 +357,7 @@ mod tests {
         // Подделка: изменённый манифест с прежней подписью не принимается
         let mut forged = bytes.clone();
         forged[10] ^= 1;
-        assert!(verify_manifest(&forged, &String::from_utf8_lossy(&sig)).is_err());
+        assert!(verify_manifest(&forged, &sig).is_err());
     }
 
     #[test]

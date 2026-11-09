@@ -161,6 +161,10 @@ describe('публикация базы', () => {
     const pub = createPublicKey(publicKey.export({ type: 'spki', format: 'pem' }));
     expect(verify(null, manifest, pub, sig)).toBe(true);
     expect(verify(null, Buffer.from(manifest.toString().replace('"a"', '"b"')), pub, sig)).toBe(false);
+    // Единый файл: та же пара манифест + подпись, неразделимо
+    const signed = JSON.parse(readFileSync(join(dir, 'manifest.signed.json'), 'utf8'));
+    expect(signed.manifest).toBe(manifest.toString());
+    expect(verify(null, Buffer.from(signed.manifest), pub, Buffer.from(signed.signature, 'base64'))).toBe(true);
   });
 });
 
