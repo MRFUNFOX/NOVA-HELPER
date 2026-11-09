@@ -129,6 +129,8 @@ export function diffDocuments(prev: RuleDocument | undefined, next: RuleDocument
 export function suspiciousShrink(prev: RuleDocument | undefined, next: RuleDocument): string | undefined {
   if (next.stats.nodes === 0) return 'документ разобран пустым';
   if (!prev || prev.stats.nodes < 10) return undefined;
+  // Пунктов меньше, но наказаний больше — это улучшение разбора (лишние «заголовки» ушли), а не сбой
+  if (next.stats.punishments > prev.stats.punishments) return undefined;
   if (next.stats.nodes < prev.stats.nodes * 0.5) return `пунктов стало ${next.stats.nodes} вместо ${prev.stats.nodes}`;
   if (prev.stats.punishments >= 10 && next.stats.punishments < prev.stats.punishments * 0.5) {
     return `наказаний стало ${next.stats.punishments} вместо ${prev.stats.punishments}`;
@@ -183,7 +185,7 @@ export function publish(input: PublishInput): PublishResult {
 
   for (const doc of input.docs) {
     const prev = prevDocs.get(doc.id);
-    const problem = suspiciousShrink(prev?.doc, doc);
+    const problem = input.acceptShrink && doc.stats.nodes > 0 ? undefined : suspiciousShrink(prev?.doc, doc);
     if (problem && prev) {
       warnings.push(`${doc.title}: ${problem} — оставлена прошлая версия`);
       finalDocs.push({ ...prev.meta, stale: true });

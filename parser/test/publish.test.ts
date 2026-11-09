@@ -62,6 +62,16 @@ describe('публикация базы', () => {
     expect(res.warnings.join()).toContain('пунктов стало 3 вместо 40');
   });
 
+  it('пунктов меньше, но наказаний больше — это улучшение разбора, публикуется', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nova-'));
+    run(dir, [doc('a', many(40))], []);
+    const better = doc('a', many(15));
+    better.stats.punishments = 12;
+    const res = run(dir, [better], [], {}, '2026-11-10T00:00:00Z');
+    expect(res.changed).toBe(true);
+    expect(res.manifest.documents[0]!.stale).toBeUndefined();
+  });
+
   it('если обход нашёл намного меньше документов (заглушка, сбой) — публикация отменяется', () => {
     const dir = mkdtempSync(join(tmpdir(), 'nova-'));
     const docs = Array.from({ length: 12 }, (_, i) => doc(`d${i}`, many(5)));
