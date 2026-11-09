@@ -3,6 +3,7 @@
  "dbVersion": "2026.11.09-1943",
  "generatedAt": "2026-11-09T19:43:49.352Z",
  "minAppVersion": "0.1.0",
+ "parserVersion": 1,
  "servers": [],
  "documents": [
   {
@@ -11,7 +12,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406248/",
-   "sha256": "e9fc0ebf730b8f98d90617ffe4f372c56bf1edf038ec6d4f65b4846f0ce11d73",
+   "sha256": "79be39b17cb24c9fdf42a26a7ea88f9932828e4ee8d37cb9160521aec6cf1f74",
    "size": 19959,
    "path": "docs/project_406248.58a72e7f44a5.json",
    "stats": {
@@ -26,7 +27,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406095/",
-   "sha256": "2e3782daa064b384d2d2c2779e3e0e8a54f464b3db72e469e0e199e42e244225",
+   "sha256": "fbbea02f00da2ef7f6ed209bc9c9a4944a4a6ef928fa6668ac49642842680483",
    "size": 9732,
    "path": "docs/project_406095.fd5dbb743226.json",
    "stats": {
@@ -41,7 +42,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406083/",
-   "sha256": "fc6f1da971c3fcec103f6f42403414f0fa19b69d70bf9a4f23c67bb4eb1dc054",
+   "sha256": "5759ac82a836b41cc082390380b2e1bf9b8a0af67564f946b1d2256b9cf5ba06",
    "size": 9835,
    "path": "docs/project_406083.5d6b591efce0.json",
    "stats": {
@@ -56,7 +57,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406741/",
-   "sha256": "12f314a27389ccd38285ec34556c824292339b0dd14833c4f8b8182941807520",
+   "sha256": "50d00d756bf2ba111e2f65fb768b55c6dfe25704b7d2b9e7970a89c5fe38bff2",
    "size": 11204,
    "path": "docs/project_406741.64dd1ff26cf0.json",
    "stats": {
@@ -71,7 +72,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406086/",
-   "sha256": "dbec32c0414dd536cd3311a731f1c139c4bfe191f2429244a5b6cabebc54738a",
+   "sha256": "2e292b0f671799260346023f8825d916461454261fd2de95c091ef2e804d3f96",
    "size": 26547,
    "path": "docs/project_406086.e51dd953a2d1.json",
    "stats": {
@@ -86,7 +87,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406763/",
-   "sha256": "ef124f554e1993c2174586ed6d52b114e6cb2218d61f0a0ef1d76e358c27cf3e",
+   "sha256": "eba5f75126819e33f710f302849f57d3844c415abca0cec5fb10c3e750de8526",
    "size": 13874,
    "path": "docs/project_406763.a6c75debce32.json",
    "stats": {
@@ -101,7 +102,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406236/",
-   "sha256": "f8eb5b751c5947fc7dbfc882e604edf7874c58c68c42e697e948bd9780a4ef3b",
+   "sha256": "5e99afb1cc9e43418918a97add31d221fade0f514e5cd367a9b998d369c37872",
    "size": 9071,
    "path": "docs/project_406236.e8d22e96ceb8.json",
    "stats": {
@@ -116,7 +117,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406764/",
-   "sha256": "268a9989eb654f4c44beb6b050f947a93a9508af37c4383a272dce99194a837c",
+   "sha256": "5cd8b4bb6796d450a74546a2ac1d53090398f573d2c02ca12595ef1994d7b183",
    "size": 15131,
    "path": "docs/project_406764.e659457d57fe.json",
    "stats": {
@@ -131,7 +132,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406080/",
-   "sha256": "d83b76a095b22d9b6e3358c07ce6234d2fb7c10abfd4a3e26ddc713488d21c60",
+   "sha256": "993b2d0984954362f21215cca41b13c035bbdfd32a5f0d89b780b012235a81b5",
    "size": 6983,
    "path": "docs/project_406080.543fa8d431d1.json",
    "stats": {
@@ -146,7 +147,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/404158/",
-   "sha256": "55dc8bbb6f7bfb5df4a5bda6b40b7199cd60c3d594cad8e49e3531207a39eb3b",
+   "sha256": "47c65b559cf4dee241d5a5010a681d44a45330e9f0dba0dbdec4d5e5a562ef12",
    "size": 5315,
    "path": "docs/project_404158.4ea2fd692d5a.json",
    "stats": {
@@ -161,7 +162,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/404517/",
-   "sha256": "695597739a5b006189234d3187b90ffdb105f788ef42beca53f01a663b515820",
+   "sha256": "97b14b579bc2b8f8e7e73a53b6231a9793b6df7eb449eac39d9dd99062e4731a",
    "size": 9362,
    "path": "docs/project_404517.f72f5aedcee6.json",
    "stats": {
@@ -176,7 +177,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/408658/",
-   "sha256": "71817209ba7891a5dfde71bcddfe39f503aaaa0d83ed25f920fe4befb1e8841d",
+   "sha256": "1b6de7a1c3cfa85cabe0932d8233c4635b8402afcbdc6add4e94cb94bda3c4c4",
    "size": 5119,
    "path": "docs/project_408658.3682fbc1a860.json",
    "stats": {
@@ -191,7 +192,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406081/",
-   "sha256": "a6d73b436d72ed390cd7ba9644867f90c7982bb4baf3e4e87f49cf83299e2bba",
+   "sha256": "f3bf019953541eaea92bd870359cb5d2f41bec7a4e8a40265682e780ceef99dc",
    "size": 14344,
    "path": "docs/project_406081.eb76e9c535dd.json",
    "stats": {
@@ -206,7 +207,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406084/",
-   "sha256": "cdabb2ab9b750628c533955688586827d9b669508bbbe5dd7b6c2b7e1b567b24",
+   "sha256": "847a7568a40846a9f632b02d02c8348b15dba51901669b159abeffcdaafb1922",
    "size": 8094,
    "path": "docs/project_406084.4fd59f8754e6.json",
    "stats": {
@@ -221,7 +222,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/409353/",
-   "sha256": "420b7c0e81ac3943c85cecaabd1ab7b00e1e0724b43fdfd6415a03ad2bd87383",
+   "sha256": "e2b9ad807e0fbfef873701e9e1f0e6f389ef302854e30ce08966a6c36bd2e929",
    "size": 30464,
    "path": "docs/project_409353.25225621445b.json",
    "stats": {
@@ -236,7 +237,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/408659/",
-   "sha256": "35e59be89176b507cc7843716321c2220877336069f7511f3dca9d20782091f5",
+   "sha256": "49913358eeb06a1c4c048613f8d845c1f5ba6d5b0f10499c5817b4e4c8583488",
    "size": 10974,
    "path": "docs/project_408659.60fd3fc983a5.json",
    "stats": {
@@ -251,7 +252,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402988/",
-   "sha256": "3afcbdb88ad45666a2eb3c41a9f98474836fbf1868a05b79e8558ecf39e0b931",
+   "sha256": "19cdd0eac7900c48315351b318a5980336d9dd889d112b9554e2e4c92e2e2071",
    "size": 26337,
    "path": "docs/project_402988.28f5762006b8.json",
    "stats": {
@@ -266,7 +267,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402989/",
-   "sha256": "6ecc470f11eb6d4a71fcf8a0842d1cf9b4c9afe1dd78c73a38685c835b86cae9",
+   "sha256": "a93ec6889d02389d5e6c40b4c594e729fc84c39be926cab605ee64d66acf027a",
    "size": 25933,
    "path": "docs/project_402989.b08ca8d92a5d.json",
    "stats": {
@@ -281,7 +282,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/409199/",
-   "sha256": "003276102447b40469d20488515a42987e47c824ea1e5c5d0d8204d50553af8c",
+   "sha256": "d419a192ab90d94c01912dba4362e8d34bc0da913f8df50c94be2e5ce67dca93",
    "size": 8892,
    "path": "docs/project_409199.b22071bfa83c.json",
    "stats": {
@@ -296,7 +297,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/407655/",
-   "sha256": "fe52bb31da7991cd70b3a2c8c6d19e70593dbb7cc7c8a84fc3326130f9ef59f2",
+   "sha256": "162676472c3171ac45fb1259dff97672cc47cc0ee76e23ed003081972557fe70",
    "size": 14962,
    "path": "docs/project_407655.88180adaddd1.json",
    "stats": {
@@ -311,7 +312,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402986/",
-   "sha256": "155e6654871269b49a3c86b1c481368389de248a99ede91ccd663402dea0a8fa",
+   "sha256": "3eea331838207ec609e6153b0c02d44ae460e7d8415d3c14b36c8dbbffe42708",
    "size": 9916,
    "path": "docs/project_402986.789d13d9bd39.json",
    "stats": {
@@ -326,7 +327,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/406242/",
-   "sha256": "863284d1819d7627fba0b4a3b125c5c2842ce94d5c5e06d0be0ffbadcd0ca32f",
+   "sha256": "a59e700862f7052875ad8b6ae512a096282e04092de0a2ccb054c8015542d0f2",
    "size": 98162,
    "path": "docs/project_406242.edc42c40248d.json",
    "stats": {
@@ -341,7 +342,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/409119/",
-   "sha256": "a9f8c7d00f4d539da20197637771fb647b372eb38ec2626037f539e4690ef039",
+   "sha256": "f2d6898faabf924a80bddb65266321dc6c17f3c19ff8582ac774168f471cbdbd",
    "size": 31767,
    "path": "docs/project_409119.cdb36a68ffec.json",
    "stats": {
@@ -356,7 +357,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/402987/",
-   "sha256": "fe8be2476604233c411d25750ec42d87819f640ccd30cf2110a1b59d533b315c",
+   "sha256": "2b27cd63222c21e0adf30d1bca32b707a9add743a9424533fa46922c33452936",
    "size": 20193,
    "path": "docs/project_402987.871872e2f7dd.json",
    "stats": {
@@ -371,7 +372,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/409507/",
-   "sha256": "547402f9e2906a22d005c26568d322d53c2ab8f6e81abaf29546e46d2e14f58a",
+   "sha256": "6e026ba44afddb9668bc475b00c6f887142a6affe291bc427bc2f87d1c01258f",
    "size": 9147,
    "path": "docs/project_409507.f1c2964da06d.json",
    "stats": {
@@ -386,7 +387,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/404708/",
-   "sha256": "777d120936bac2f262ca8b5736904d18c50a5be3810a776eea107d525b4e1458",
+   "sha256": "7e1161e23f11916da08cd2ba2dd445cd493fe96c4eef1e01f13d725e0077c0cb",
    "size": 32997,
    "path": "docs/project_404708.bb7ce43c243d.json",
    "stats": {
@@ -401,7 +402,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/402984/",
-   "sha256": "ccbe85fe64bba3e1c17bb8fbc84767258f57f98f78d6b2e12530d5bf0b25cd46",
+   "sha256": "b8a0b702f950d023b5fa8866edb18ac6c80880966ffcdb929d3b46796500f2ea",
    "size": 16192,
    "path": "docs/project_402984.312a0db7e6a6.json",
    "stats": {
@@ -416,7 +417,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407999/",
-   "sha256": "7e5e97b99dda42c7367ae931915b32b609605b7e419f9616db17e173c9d08bfe",
+   "sha256": "c157309d8c4dbd8d27f328f6cfb3a126cfc33e32c727d41d1066a5dfa7aa9ac0",
    "size": 46137,
    "path": "docs/project_407999.cde2184cef14.json",
    "stats": {
@@ -431,7 +432,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407336/",
-   "sha256": "7f6892e52e6191413976d0d35a9ea56aa726eeab3f84fd5675f8a94b3a2d32c0",
+   "sha256": "ecaec614e74ab539a3ab7d20b6d316a8f37a7ae8759b4699973d60d67edabfa8",
    "size": 4599,
    "path": "docs/project_407336.ae68eaff294d.json",
    "stats": {
@@ -446,7 +447,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/402996/",
-   "sha256": "5f0e6721b00ff87993dc1da35263fbe7845a178808c78959b89f479c82716862",
+   "sha256": "6226e5769074fdc24371c2d02944da78e9bffd575aed3e9af67dc4530e37f0fc",
    "size": 16879,
    "path": "docs/project_402996.13ddb3f13089.json",
    "stats": {
@@ -461,7 +462,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402991/",
-   "sha256": "08828584819b18007728f044520a8349fe59d0f7d10fa9e7d0e2f62e180c0b2e",
+   "sha256": "97d849d9ecff1c2c07216ac6ef2c69f6246d165b194a9ab10b4efc3bfb9d14f4",
    "size": 52326,
    "path": "docs/project_402991.18d55e834192.json",
    "stats": {
@@ -476,7 +477,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/406244/",
-   "sha256": "b83439e6c494d0f5e9807f643a56ce7608da448ce43195c0e07aa6a0fbb7389a",
+   "sha256": "8c4c4ded0d0e3aeb392267b705bbe8841f716648d5a62ec2777d6d1d8d184b8e",
    "size": 56033,
    "path": "docs/project_406244.e79f5899d0d5.json",
    "stats": {
@@ -491,7 +492,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402994/",
-   "sha256": "690c4bd715b99f1353505f4ac6e348662834bdafef0fb17cf524ccce3e2cf2d1",
+   "sha256": "1037c8db3986124f1f9f970f22aa86a24b98ebad49e7bff4823b85e5d7106a58",
    "size": 12192,
    "path": "docs/project_402994.46340f30f47d.json",
    "stats": {
@@ -506,7 +507,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402993/",
-   "sha256": "cb3b3cf2145843fa25db8d967c80d76da2f82a6c8d7eacb70ae59242c8924e9e",
+   "sha256": "41c09c73f2d117dc69d56f0826ef26d8a765bce9e1f56bbfad7d6ca3e35f00f4",
    "size": 3359,
    "path": "docs/project_402993.8bc5de9adca0.json",
    "stats": {
@@ -521,7 +522,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402990/",
-   "sha256": "88874baaec7a7bbdc9de83798235a314c88d70afab9e4f3ed2dd35f363a963dc",
+   "sha256": "a07fca7dc69b2c2f9b21eb41fe28cf464f50f110e1a54ca9a138daeb299869ef",
    "size": 10171,
    "path": "docs/project_402990.eff841f4f7b9.json",
    "stats": {
@@ -536,7 +537,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/403001/",
-   "sha256": "d685573fddfc406b3d2c9d4929f6aee4b70f3a0d4f904115e695eda451bac50b",
+   "sha256": "ebc0a107c8adf0f7ab920ea2a54ddda3930543b7fdaaa94ad08682aa546e027e",
    "size": 9207,
    "path": "docs/project_403001.d8610ce2ccaa.json",
    "stats": {
@@ -551,7 +552,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402999/",
-   "sha256": "6c8e134ba6d8042d4781dfec1e424e11769b0ea76e75c3beba94618943e70eb1",
+   "sha256": "517991882c302d01fe0cdc3718b8a8ee674989f06c3e7ba543bc918234b73187",
    "size": 28643,
    "path": "docs/project_402999.419f694b4deb.json",
    "stats": {
@@ -566,7 +567,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/403000/",
-   "sha256": "c66e4994a9009f0d35211390f818cf672a5890bfb3886cff743fb425753fa2ae",
+   "sha256": "b282cc505b8ee72ed617e9ba5126f5cfab6598045534e243632ed00cde6f98b9",
    "size": 3271,
    "path": "docs/project_403000.eb7344c2574d.json",
    "stats": {
@@ -581,7 +582,7 @@
    "scope": "project",
    "category": "Правила проекта",
    "sourceUrl": "https://forum.nova-rp.com/threads/403002/",
-   "sha256": "755713ad5e8094ed6228540cfc551a50b90448c43b7bd77fec2d52ae4ae8855c",
+   "sha256": "322bbd5a886a7b1e8b81f377aa2c9a50c5c434acced193a6cce2f05fce471ef6",
    "size": 4406,
    "path": "docs/project_403002.1e139fb2d932.json",
    "stats": {
@@ -590,6 +591,5 @@
     "images": 0
    }
   }
- ],
- "changelog": "changelog/2026.11.09-1943.json"
+ ]
 }
