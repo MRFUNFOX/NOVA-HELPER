@@ -72,6 +72,11 @@ export interface PublishInput {
   warnings: string[];
   minAppVersion?: string;
   signingKeyPem?: string;
+  /**
+   * Разрешить сильное уменьшение числа документов (только для ручного запуска, когда
+   * уменьшение намеренное — например, перестали собирать какой-то раздел).
+   */
+  acceptShrink?: boolean;
 }
 
 export interface PublishResult {
@@ -145,7 +150,7 @@ export function publish(input: PublishInput): PublishResult {
 
   // Защита от обнуления базы: форум отдал заглушки или поменялась структура
   const prevCount = prevManifest?.documents.length ?? 0;
-  if (prevCount >= 10 && input.discoveredCount < prevCount * 0.7) {
+  if (prevCount >= 10 && input.discoveredCount < prevCount * 0.7 && !input.acceptShrink) {
     const aborted = `Обход форума нашёл ${input.discoveredCount} документов вместо ${prevCount} — публикация отменена`;
     return { changed: false, aborted, manifest: prevManifest!, warnings: [...warnings, aborted] };
   }

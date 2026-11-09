@@ -12,6 +12,10 @@ on:
         type: choice
         default: auto
         options: [auto, browser, firecrawl]
+      accept_shrink:
+        description: 'Принять сильное уменьшение базы (только если разделы убраны намеренно)'
+        type: boolean
+        default: false
 
 concurrency:
   group: rules-db
@@ -64,7 +68,7 @@ jobs:
         env:
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           NOVA_SIGNING_KEY: ${{ secrets.NOVA_SIGNING_KEY }}
-        run: npx tsx src/cli.ts scrape --out ../out --via ${{ inputs.via || 'auto' }}
+        run: npx tsx src/cli.ts scrape --out ../out --via ${{ inputs.via || 'auto' }} ${{ inputs.accept_shrink && '--accept-shrink' || '' }}
 
       - name: Публикация в ветку data
         working-directory: out

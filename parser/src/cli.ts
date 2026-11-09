@@ -78,6 +78,7 @@ async function scrapeWith(fetcher: Fetcher, outDir: string, now: Date, firecrawl
     outDir, now, servers: plan.servers, docs, failedDocIds: failed,
     discoveredCount: plan.docs.length, warnings,
     signingKeyPem: process.env.NOVA_SIGNING_KEY,
+    acceptShrink: process.argv.includes('--accept-shrink'),
   });
   report(result, firecrawl?.credits);
   if (result.aborted) process.exitCode = 2;

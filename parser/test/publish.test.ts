@@ -69,6 +69,10 @@ describe('публикация базы', () => {
     const res = run(dir, docs.slice(0, 2), [], { discoveredCount: 2 }, '2026-11-10T00:00:00Z');
     expect(res.aborted).toContain('публикация отменена');
     expect(read<Manifest>(dir, 'manifest.json').documents).toHaveLength(12);
+    // Намеренное уменьшение проходит только с явным флагом
+    const forced = run(dir, docs.slice(0, 2), [], { discoveredCount: 2, acceptShrink: true }, '2026-11-10T01:00:00Z');
+    expect(forced.aborted).toBeUndefined();
+    expect(forced.manifest.documents).toHaveLength(2);
   });
 
   it('тема не загрузилась — в базе остаётся прошлая версия, а не «документ удалён»', () => {
