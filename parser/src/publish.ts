@@ -1,7 +1,10 @@
 import { createHash, createPrivateKey, sign } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SCHEMA_VERSION, type RuleDocument, type RuleNode, type ServerInfo } from './types.js';
+import { PARSER_VERSION, SCHEMA_VERSION, type RuleDocument, type RuleNode, type ServerInfo } from './types.js';
+import type { Changelog, DocChange, Manifest, ManifestDoc, NodeChange } from './format.js';
+
+export type { ChangeKind, Changelog, DocChange, Manifest, ManifestDoc, NodeChange } from './format.js';
 
 /*
  * Формат публикации (папка out/, в CI — ветка data репозитория):
@@ -10,54 +13,6 @@ import { SCHEMA_VERSION, type RuleDocument, type RuleNode, type ServerInfo } fro
  *   changelog/<ver>.json — что изменилось в этой версии; changelog/index.json — последние версии
  *   status.json          — время последней проверки и предупреждения (меняется каждый прогон)
  */
-
-export interface ManifestDoc {
-  id: string;
-  title: string;
-  scope: RuleDocument['scope'];
-  serverId?: string;
-  category: string;
-  sourceUrl: string;
-  sha256: string;
-  size: number;
-  path: string;
-  stats: RuleDocument['stats'];
-  /** Документ не обновился в этом прогоне (сбой загрузки или блокировка валидатором) */
-  stale?: boolean;
-}
-
-export interface Manifest {
-  schema: number;
-  dbVersion: string;
-  generatedAt: string;
-  minAppVersion: string;
-  servers: ServerInfo[];
-  documents: ManifestDoc[];
-  changelog?: string;
-}
-
-export type ChangeKind = 'added' | 'removed' | 'modified';
-export interface NodeChange {
-  kind: ChangeKind;
-  nodeId: string;
-  number?: string;
-  before?: string;
-  after?: string;
-}
-export interface DocChange {
-  docId: string;
-  title: string;
-  serverId?: string;
-  kind: ChangeKind;
-  nodes: NodeChange[];
-}
-export interface Changelog {
-  dbVersion: string;
-  previousVersion?: string;
-  generatedAt: string;
-  documents: DocChange[];
-  servers: { added: string[]; archived: string[] };
-}
 
 export interface PublishInput {
   outDir: string;
@@ -183,6 +138,9 @@ export function publish(input: PublishInput): PublishResult {
   // ── Документы ──
   const finalDocs: ManifestDoc[] = [];
   const changes: DocChange[] = [];
+  // Парсер изменился — отличия от прошлой базы вызваны разбором, а не правкой правил на форуме
+  const reparsed = !!prevManifest && prevManifest.parserVersion !== PARSER_VERSION;
+  if (reparsed) warnings.push(`Парсер обновлён (версия ${PARSER_VERSION}) — изменения этого прогона не записаны в «Что изменилось»`);
   const freshIds = new Set(input.docs.map((d) => d.id));
 
   for (const doc of input.docs) {
@@ -195,16 +153,20 @@ export function publish(input: PublishInput): PublishResult {
     }
     if (problem) { warnings.push(`${doc.title}: ${problem} — не опубликован`); continue; }
 
-    const json = JSON.stringify(doc);
-    const sha = createHash('sha256').update(json).digest('hex');
+    // Имя файла — по хешу содержимого правил. Если такой файл уже опубликован (правила не менялись),
+    // он остаётся как есть, а sha256 и размер в манифесте берутся с него — иначе хеш в манифесте
+    // разойдётся с файлом на сервере (в новом JSON другое время сбора) и программа не обновится.
     const path = `docs/${safeName(doc.id)}.${doc.hash.slice(0, 12)}.json`;
-    if (!existsSync(join(outDir, path))) writeFileSync(join(outDir, path), json);
+    const file = join(outDir, path);
+    if (!existsSync(file)) writeFileSync(file, JSON.stringify(doc));
+    const json = readFileSync(file, 'utf8');
+    const sha = createHash('sha256').update(json).digest('hex');
     finalDocs.push({
       id: doc.id, title: doc.title, scope: doc.scope, serverId: doc.serverId, category: doc.category,
       sourceUrl: doc.sourceUrl, sha256: sha, size: Buffer.byteLength(json), path, stats: doc.stats,
     });
     const change = diffDocuments(prev?.doc, doc);
-    if (change) changes.push(change);
+    if (change && !reparsed) changes.push(change);
   }
 
   // Не загрузились в этом прогоне или сервер временно пропал → держим прошлую версию
@@ -239,13 +201,15 @@ export function publish(input: PublishInput): PublishResult {
     dbVersion,
     generatedAt: changed ? now.toISOString() : prevManifest!.generatedAt,
     minAppVersion: input.minAppVersion ?? prevManifest?.minAppVersion ?? '0.1.0',
+    parserVersion: PARSER_VERSION,
     servers,
     documents: finalDocs,
     changelog: prevManifest?.changelog,
   };
 
   let changelog: Changelog | undefined;
-  if (changed) {
+  const hasNews = changes.length > 0 || addedServers.length > 0 || archivedServers.length > 0;
+  if (changed && hasNews) {
     changelog = {
       dbVersion,
       previousVersion: prevManifest?.dbVersion,

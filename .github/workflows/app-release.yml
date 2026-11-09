@@ -1,0 +1,60 @@
+name: Сборка программы для Windows
+
+# Собирает установщик NOVA HELPER (.exe) и публикует релиз. Из этого же релиза
+# установленные программы скачивают обновление (latest.json + подписанный установщик).
+# Запуск: вкладка Actions → «Сборка программы для Windows» → Run workflow.
+# Версию программы задаёт app/src-tauri/tauri.conf.json → "version".
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+
+      - name: Установка
+        working-directory: app
+        run: npm ci
+
+      - name: Тесты интерфейса
+        working-directory: app
+        run: npm test
+
+      - name: Сборка и релиз
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        with:
+          projectPath: app
+          tagName: v__VERSION__
+          releaseName: NOVA HELPER __VERSION__
+          releaseBody: |
+            Скачайте файл NOVA.HELPER_…_x64-setup.exe ниже и запустите его.
+            Если Windows покажет «Система Windows защитила ваш компьютер» — нажмите «Подробнее» → «Выполнить в любом случае».
+            Уже установленная программа обновится сама.
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true

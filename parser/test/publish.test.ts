@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createPublicKey, generateKeyPairSync, verify } from 'node:crypto';
-import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { createHash, createPublicKey, generateKeyPairSync, verify } from 'node:crypto';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { publish, type Changelog, type Manifest } from '../src/publish.js';
@@ -51,6 +51,25 @@ describe('публикация базы', () => {
     expect(cl.documents[0]!.nodes).toEqual([
       expect.objectContaining({ kind: 'modified', number: '1.3', before: '1.3 Текст 3', after: '1.3 Новая редакция пункта' }),
     ]);
+  });
+
+  it('после обновления парсера отличия не попадают игрокам в «Что изменилось»', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nova-'));
+    run(dir, [doc('a', many(12))], []);
+    // Имитируем базу, собранную старым парсером
+    const mPath = join(dir, 'manifest.json');
+    const m = JSON.parse(readFileSync(mPath, 'utf8'));
+    delete m.parserVersion;
+    writeFileSync(mPath, JSON.stringify(m));
+    const edited = many(12); edited[0] = ['1.1', 'Разобрано по-новому'];
+    const r = run(dir, [doc('a', edited)], [], {}, '2026-11-10T00:00:00Z');
+    expect(r.changed).toBe(true);
+    expect(r.changelog).toBeUndefined();
+    expect(r.warnings.join()).toContain('Парсер обновлён');
+    // А следующая настоящая правка — снова в журнале
+    const edited2 = [...edited]; edited2[1] = ['1.2', 'Настоящая правка'];
+    const r2 = run(dir, [doc('a', edited2)], [], {}, '2026-11-11T00:00:00Z');
+    expect(r2.changelog!.documents[0]!.nodes.map((n) => n.number)).toEqual(['1.2']);
   });
 
   it('подозрительно «похудевший» документ не публикуется — остаётся прошлая версия', () => {
@@ -142,5 +161,21 @@ describe('публикация базы', () => {
     const pub = createPublicKey(publicKey.export({ type: 'spki', format: 'pem' }));
     expect(verify(null, manifest, pub, sig)).toBe(true);
     expect(verify(null, Buffer.from(manifest.toString().replace('"a"', '"b"')), pub, sig)).toBe(false);
+  });
+});
+
+describe('целостность опубликованной базы', () => {
+  it('sha256 и размер в манифесте всегда совпадают с файлами на диске, даже если документ не менялся', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nova-'));
+    const a1 = { ...doc('a', many(5)), fetchedAt: '2026-11-09T10:00:00Z' };
+    run(dir, [a1], [], {}, '2026-11-09T10:00:00Z');
+    // Тот же текст правил, но собран позже — файл не перезаписывается
+    const a2 = { ...doc('a', many(5)), fetchedAt: '2026-11-09T13:00:00Z' };
+    const r = run(dir, [a2], [], {}, '2026-11-09T13:00:00Z');
+    for (const d of r.manifest.documents) {
+      const data = readFileSync(join(dir, d.path));
+      expect(createHash('sha256').update(data).digest('hex')).toBe(d.sha256);
+      expect(data.length).toBe(d.size);
+    }
   });
 });

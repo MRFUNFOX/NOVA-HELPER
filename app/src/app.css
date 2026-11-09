@@ -1,0 +1,115 @@
+/* NOVA HELPER — цвета и шрифт форума NOVA RP (тёмная схема), см. design/tokens.css */
+:root {
+  --bg: #0f0f0f;
+  --surface: #1c1c1c;
+  --surface-2: #242424;
+  --surface-3: #2b2b2b;
+  --border: #2b2b2b;
+  --border-strong: #3a3a3a;
+  --text: #dedede;
+  --text-dim: #a8a8a8;
+  --text-muted: #8a8a8a;
+  --accent: #ffc300;
+  --accent-soft: #ffe180;
+  --accent-tint: #3c3410;
+  --on-accent: #171717;
+  --danger: #f4bec0;
+  --danger-line: #e0656b;
+  --danger-tint: #3a1f21;
+  --success: #c2f4be;
+
+  --font: 'Manrope Variable', Manrope, 'Segoe UI', sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13.5px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --radius: 8px;
+  --radius-sm: 5px;
+  --titlebar: 40px;
+  --gutter: 64px; /* колонка номеров пунктов */
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'tnum' 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+#app { height: 100%; }
+
+/* Текст правил можно выделять и копировать — интерфейс нет */
+.selectable { user-select: text; }
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent-soft); text-underline-offset: 2px; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::selection { background: var(--accent); color: var(--on-accent); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 10px; border: 3px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Кнопки */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-3); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn.wide { width: 100%; }
+
+kbd {
+  display: inline-block;
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  background: var(--surface-2);
+  font-family: var(--font);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+}
+
+.muted { color: var(--text-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

@@ -6,3 +6,5 @@ node_modules/
 out-offline/
 out/
 !config/*.pub.pem
+app/src-tauri/target/
+app/dist/
