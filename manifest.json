@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.09-1933",
- "generatedAt": "2026-11-09T19:33:33.299Z",
+ "dbVersion": "2026.11.09-1937",
+ "generatedAt": "2026-11-09T19:37:35.277Z",
  "minAppVersion": "0.1.0",
  "servers": [
   {
@@ -36,7 +36,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406248/",
-   "sha256": "a7af10aef61159cdc323df108536f840a935e4086cb228480d05892056db1792",
+   "sha256": "84a9129aef5a89654e27d4a8ec4a412d2c2ed22937cd301ccf1b20e2bc9a83c9",
    "size": 19959,
    "path": "docs/project_406248.58a72e7f44a5.json",
    "stats": {
@@ -51,7 +51,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406095/",
-   "sha256": "e4266bf6635298a224d9d28a5ce420967064dde80153b2a9ec9163d1a898c46f",
+   "sha256": "64d06e27d81f6edca16fbd6d794973e26022dd46add4eb68d6cdec35e3bf2f1e",
    "size": 9732,
    "path": "docs/project_406095.fd5dbb743226.json",
    "stats": {
@@ -66,7 +66,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406083/",
-   "sha256": "ffc2987f62d0d53170f32fc60c17522e78485d08d9dd0f4759d43a64b538e915",
+   "sha256": "3aad0ffabc32fa4b8d239081a80a443cbbec1e3ccb9cfaa1f8044a7df6d7005b",
    "size": 9835,
    "path": "docs/project_406083.5d6b591efce0.json",
    "stats": {
@@ -81,7 +81,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406741/",
-   "sha256": "43356cacf4232e08542547aff4460248462d0944c97651f80d42aabf2f5dd708",
+   "sha256": "273db6ea2916fb7321776748b03c4813226f1c9534780972046ceb1ac7089490",
    "size": 11204,
    "path": "docs/project_406741.64dd1ff26cf0.json",
    "stats": {
@@ -96,7 +96,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406086/",
-   "sha256": "166c0f0145846ce76c1b6992b009bfaf9b14df8f22941332af95b117422feef9",
+   "sha256": "06fb669d87dcb0e67517cf96c5b092c6eb69b7b9f9ddf7077d4b6f4a9d0c73a6",
    "size": 26547,
    "path": "docs/project_406086.e51dd953a2d1.json",
    "stats": {
@@ -111,7 +111,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406763/",
-   "sha256": "d73f77ce1fd781621aa7163d714c647a2f3e2b17634735a7fc787c82348815c5",
+   "sha256": "62f9c3901d8722553c3102d32b654c0bcddca0c849e4532a918513b88cbf32b4",
    "size": 13874,
    "path": "docs/project_406763.a6c75debce32.json",
    "stats": {
@@ -126,7 +126,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406236/",
-   "sha256": "b1945a286fd96298d4d1915a387f404d68152955992384cf3b4cd001a524688a",
+   "sha256": "cf031077294e910ed6039a758484e795e2a1a106b980b1d6572fc926f0ec5a0a",
    "size": 9071,
    "path": "docs/project_406236.e8d22e96ceb8.json",
    "stats": {
@@ -141,7 +141,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406764/",
-   "sha256": "fe5325702de4214b5040e75b8ac37f94cac336c15fce39ae60f1c4265c62e0bb",
+   "sha256": "32c1fab569b2e97dbd7ab5c197703214d034de9bcf6b3a40e71f287eb01d072d",
    "size": 15131,
    "path": "docs/project_406764.e659457d57fe.json",
    "stats": {
@@ -156,7 +156,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406080/",
-   "sha256": "d7abf3b6df9ddb75d9115bc93d677ac90777cde2a48616dfd2867777d51545ac",
+   "sha256": "8ecc5b38b1201fab85f131719299308f3ebd88a4f84f23e02a7c9ca3b8ad91e1",
    "size": 6983,
    "path": "docs/project_406080.543fa8d431d1.json",
    "stats": {
@@ -171,7 +171,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/404158/",
-   "sha256": "d04db23af3bf87dee48777a0bef400e2cf45a841b9cc6100a86fd149bd023198",
+   "sha256": "4af503d36b5b140acb808486e987e2c9d056098f64d15c0f72575ed81e0144b9",
    "size": 5315,
    "path": "docs/project_404158.4ea2fd692d5a.json",
    "stats": {
@@ -186,7 +186,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/404517/",
-   "sha256": "9d21dd790caa48d5d6deb16aec4960bccd9993ee749b3e2b1afb187ec9bc696f",
+   "sha256": "b99e1138c8c279a56bc779efaf8f90a25d721c3c6a60caa42ca740115c5d5bfe",
    "size": 9362,
    "path": "docs/project_404517.f72f5aedcee6.json",
    "stats": {
@@ -201,7 +201,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/408658/",
-   "sha256": "799b10d95e7479f551f825f10652001b8e5fb6f9e5909b37b1067ecdb5a5f1b1",
+   "sha256": "b06dfe611ae608e9335a7e00b82824ccaca7b6eebec51107591e0e68176b1626",
    "size": 5119,
    "path": "docs/project_408658.3682fbc1a860.json",
    "stats": {
@@ -216,7 +216,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406081/",
-   "sha256": "4553d6ad1db43ec61b3d3ae255371a67374c68c9be8db8423ab06bca4722784d",
+   "sha256": "bff8fdda2d79ab13134cf18f7d72c57a57dac4fe554f9fcf526b9220b88ca88f",
    "size": 14344,
    "path": "docs/project_406081.eb76e9c535dd.json",
    "stats": {
@@ -231,7 +231,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406084/",
-   "sha256": "edc84a28d0dba8f03ed94340902aa3510fffd7399c62fec37a7633305c8ea53b",
+   "sha256": "20df0c821b20aa9c140ca36114754280585abbeffcb13194febd20dfb16c1225",
    "size": 8094,
    "path": "docs/project_406084.4fd59f8754e6.json",
    "stats": {
@@ -246,7 +246,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/409353/",
-   "sha256": "e654ba48e7efb198b9161fa90aa41a1d9d86cc8a3067647f9d798ccca4fa4918",
+   "sha256": "f8220ec29bd1f724aff5648b45445737326c9f5ea1ec874cac8b284de0939347",
    "size": 30464,
    "path": "docs/project_409353.25225621445b.json",
    "stats": {
@@ -261,7 +261,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/408659/",
-   "sha256": "3610ba14cca08c46b03ed404b7fdd82d50db552c02c04aef29fd17d5679b3857",
+   "sha256": "9c8b94a8623f589d3b6e71ca1985224b72c5450e87b4d4719920aecc41e7fabb",
    "size": 10974,
    "path": "docs/project_408659.60fd3fc983a5.json",
    "stats": {
@@ -276,7 +276,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402988/",
-   "sha256": "8748c2b59d2092ffd3a1340b75acf4a5f1d87c19d610da1b1d44336ce81e2d0e",
+   "sha256": "60f7b03ecce22659f78e490865729c4320041583b33b9b64ed6938d187ebff41",
    "size": 26337,
    "path": "docs/project_402988.28f5762006b8.json",
    "stats": {
@@ -291,7 +291,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402989/",
-   "sha256": "9283d7693ae3111306a4e4dc4472368ca023e83db44cb01fad0dcae9e683f1f3",
+   "sha256": "08a79ad87f9e8631d0f66c65e386cd9067d82ceec146acde27d8d3d7fbc0d24c",
    "size": 25933,
    "path": "docs/project_402989.b08ca8d92a5d.json",
    "stats": {
@@ -306,7 +306,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/409199/",
-   "sha256": "7b616b99a67f5bc914fe2d6823b7a0e9590034625486bc0f61836aef086e49a4",
+   "sha256": "60163d5f7ae7b5ae9d19a0ada7ede4371ce6a3ab1cbcd50ad7f91ede58b412c1",
    "size": 8892,
    "path": "docs/project_409199.b22071bfa83c.json",
    "stats": {
@@ -321,7 +321,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/407655/",
-   "sha256": "0fa0be8bc515d86ccebdd996437bc0341de8c12ffe9c9a71b14f9f512803dc48",
+   "sha256": "10bc8a17daa276b41e9505f038ac4e629138bd00531d1650af382b559d7096ff",
    "size": 14962,
    "path": "docs/project_407655.88180adaddd1.json",
    "stats": {
@@ -336,7 +336,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402986/",
-   "sha256": "08e9e1aa176cf4f02dbcd89b53ce51b96575af5eb61c403820d3e42b0928a2ed",
+   "sha256": "ef6c4042835d7f0f146db0c11afd689f7ea4a77939dff3097c0673a9f2ce56ae",
    "size": 9916,
    "path": "docs/project_402986.789d13d9bd39.json",
    "stats": {
@@ -351,7 +351,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/406242/",
-   "sha256": "2f6e3f99e67fe75a17e069fc5335d8d426380ae9b033f21a159c8aed428f41b5",
+   "sha256": "79c024169a7956d61f8aaf0326e8c7740cb2bf1ce114fea1dc5b143c5c8a0d1f",
    "size": 98162,
    "path": "docs/project_406242.edc42c40248d.json",
    "stats": {
@@ -366,7 +366,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/409119/",
-   "sha256": "ca1367476e0a14af2594b6daa7c6f0c15587539298ed92cc71dac225e6c6c717",
+   "sha256": "95087c6a5dc23f2d2ec982fd6aee7ebcde7336ce35f55a548995a2a6dbc5bb15",
    "size": 31767,
    "path": "docs/project_409119.cdb36a68ffec.json",
    "stats": {
@@ -381,7 +381,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/402987/",
-   "sha256": "8c951d79b1625ff1b99f6748682c2568aa496631297f0291b15e97ad288f7516",
+   "sha256": "e963f837217fcf7f0dcf3e1110dfcced2af23547a6be77d2221be9d3b3665513",
    "size": 20193,
    "path": "docs/project_402987.871872e2f7dd.json",
    "stats": {
@@ -396,7 +396,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/409507/",
-   "sha256": "42b4c5673816de4c031d1365152f92f51201f257759c02947a1ec2c7859f87d9",
+   "sha256": "dc1e526e1002f8cf68e32727e49587d8f7841cd929128bebbf99c1c37976ea8d",
    "size": 9147,
    "path": "docs/project_409507.f1c2964da06d.json",
    "stats": {
@@ -411,7 +411,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/404708/",
-   "sha256": "33368c5afd3ab0b2dbc5b6b31b8ec57a7e22dee9a8a60d13581c3ebf1767542d",
+   "sha256": "28abb8307796ae7df5c806de9f741ace0bd599589c39a686eccf420a53c6b671",
    "size": 32997,
    "path": "docs/project_404708.bb7ce43c243d.json",
    "stats": {
@@ -426,7 +426,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/402984/",
-   "sha256": "2a8cef64f3d2aa22344897505ba91dc0c8ea56fa32671d7ebbc564316ddca244",
+   "sha256": "8129c82349a07767c60d9b0d34cc460a1b534d05f277d719bee6ce0820cc32b4",
    "size": 16192,
    "path": "docs/project_402984.312a0db7e6a6.json",
    "stats": {
@@ -441,7 +441,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407999/",
-   "sha256": "4dd6c5902cc4e9d307bc5ba5a78705410a9fef459f6b5085aaa660d93a04ec80",
+   "sha256": "08d8e94a424b8666a599c9876d2fb5afa9ccf5a2d3c7dad78bb50be4ec63903e",
    "size": 46137,
    "path": "docs/project_407999.cde2184cef14.json",
    "stats": {
@@ -456,7 +456,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407336/",
-   "sha256": "2faefccb30efa020cae11d8818a30c21f3f11bbe235d6df9893728282e527dc2",
+   "sha256": "0b014ca56a4db2b26b3c3ad2f69af9571493dcb27f94f2c99f23f793470c0471",
    "size": 4599,
    "path": "docs/project_407336.ae68eaff294d.json",
    "stats": {
@@ -471,7 +471,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/402996/",
-   "sha256": "93aeecd5d4fef788b5cd5a7f0d1f8f5eb8d4c9fb22b3ae5b457e8fa396d6a7dc",
+   "sha256": "2cc942c142df4a04ed7685537522b07b7f60aae42483e962889c3ac79adc77f9",
    "size": 16879,
    "path": "docs/project_402996.13ddb3f13089.json",
    "stats": {
@@ -486,7 +486,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402991/",
-   "sha256": "822addcddd411fb517c1755a9bdcfc072463136299b26743fac0b506dce2540a",
+   "sha256": "3f88a172fcbb5fec8a1c54be7c924e20603120846ae353940490f61debcfdf86",
    "size": 52326,
    "path": "docs/project_402991.18d55e834192.json",
    "stats": {
@@ -501,7 +501,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/406244/",
-   "sha256": "a3c7f8d15e12800ca6ce52ff906da95a9c2d17bb7b7de37a92aa23383647a611",
+   "sha256": "57bafd94625d4449c82104e7819a362c76e7a28ff3043bdfb0b690ea24909e85",
    "size": 56033,
    "path": "docs/project_406244.e79f5899d0d5.json",
    "stats": {
@@ -516,7 +516,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402994/",
-   "sha256": "703dca23d32e8a860ce03238ed1703586a92e6820d62ca2c994f8d57682396af",
+   "sha256": "0707198b3c82f2a0e0d35c0849e960b0e12fc3f7df97d8af83c3bb765e40a76b",
    "size": 12192,
    "path": "docs/project_402994.46340f30f47d.json",
    "stats": {
@@ -531,7 +531,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402993/",
-   "sha256": "8d5a34f9176862c0d74d28058d5472dbe63bc5df7edd6669cea766ad010fd991",
+   "sha256": "cec6a591e526a727697fb494a04fba20536524f430f3fe83bc07c1f5e3c9eee0",
    "size": 3359,
    "path": "docs/project_402993.8bc5de9adca0.json",
    "stats": {
@@ -546,7 +546,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402990/",
-   "sha256": "3ed5cebbaf44e970441e6a694bb95c1d4bc8981069af0eeca5cdc8d5f790d218",
+   "sha256": "4fac4007257c133acb3513c26fe28cb7f0033165e583615b0e3de97b7e920763",
    "size": 10171,
    "path": "docs/project_402990.eff841f4f7b9.json",
    "stats": {
@@ -561,7 +561,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/403001/",
-   "sha256": "1b8b79f57252be4bcbe4bea70d430e75c0239903234be957feb2b7841d549568",
+   "sha256": "b801dc44ddf211a3b43d70b5c41f963bef50124f2d96104d13ee2d596e4b3725",
    "size": 9207,
    "path": "docs/project_403001.d8610ce2ccaa.json",
    "stats": {
@@ -576,7 +576,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402999/",
-   "sha256": "d584398e5133d17d344be2103dc5f834101218324dc076eb60c1c9c0ef515ed0",
+   "sha256": "54dcec38f78f2c1d4a0b0f3c5c5ac340a5d0a3126f1594643189c84ab303e179",
    "size": 28643,
    "path": "docs/project_402999.419f694b4deb.json",
    "stats": {
@@ -591,7 +591,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/403000/",
-   "sha256": "29024a5ee5ddd61e98a73d0cbf64d3daec23f5b62393fa40c67879fe371dd77c",
+   "sha256": "41b10954674b2a1e6aeeaa29bd702d04f0262900ece5adedb8e45f0f9f58b095",
    "size": 3271,
    "path": "docs/project_403000.eb7344c2574d.json",
    "stats": {
@@ -606,7 +606,7 @@
    "scope": "project",
    "category": "Правила проекта",
    "sourceUrl": "https://forum.nova-rp.com/threads/403002/",
-   "sha256": "f7112c47dd45e7e791cc20c2b6439fca6eb09626cd511ef040dd4c9baa21fff6",
+   "sha256": "150b241ea60a8d061a36531dd4db9e7893ec22d96fb1b7c8ca0cb5fe451db613",
    "size": 4406,
    "path": "docs/project_403002.1e139fb2d932.json",
    "stats": {
@@ -622,7 +622,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411153/",
-   "sha256": "4a1f83c5c6b59e374e48afb7519f92d06c4241e9583833935965596364a5e158",
+   "sha256": "47ca80546c216b28dd44b98b195414396f06fbf07d74d880430342395c40d1fa",
    "size": 95906,
    "path": "docs/server_horizon_411153.f4bf611c4959.json",
    "stats": {
@@ -638,7 +638,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411182/",
-   "sha256": "8298405e721a0d2a659ed9d314dc2f80bfc2384a54986766d9a80f0bdcbbbda6",
+   "sha256": "9c391a157dfa6493bd07d5572b90d5aea63ca42fa0d5e9d213ad618317fc90a2",
    "size": 55554,
    "path": "docs/server_horizon_411182.57a1bfed1e08.json",
    "stats": {
@@ -654,7 +654,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411156/",
-   "sha256": "7f66b8859c69d01801c5b7c565fa06a4f751e4cbedf2c2ba81c4352f21304814",
+   "sha256": "73839c3b8e2b92c54477f636f87d170ea2276f6f980ef23b04ad7d546740210e",
    "size": 52716,
    "path": "docs/server_horizon_411156.bf0ac168db72.json",
    "stats": {
@@ -670,7 +670,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411145/",
-   "sha256": "81bdc385df2a91ab8e4e8ec20c8ba5ac97edfc966745e5ae673d235efdfd95a0",
+   "sha256": "5be709dd393325740b65497094af050714c0ee9ab4b21b1d7fe2146c4a892d7f",
    "size": 9721,
    "path": "docs/server_horizon_411145.65443ca17a7e.json",
    "stats": {
@@ -686,7 +686,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411143/",
-   "sha256": "9eecf152d150e582edf5f89ed4959d45dc45b444fb3554a2603c677d1e5b8321",
+   "sha256": "150dd9b1f5b5fc0f9a14ae58687e28d6fecdcd88d45736c17203e3bd79cdf7d1",
    "size": 71747,
    "path": "docs/server_horizon_411143.53db16f33702.json",
    "stats": {
@@ -702,7 +702,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411139/",
-   "sha256": "23e0053c0c97cc1f36430664560082ca68f815b3349820f948180a7c2b4094fe",
+   "sha256": "045666ef6e028e19e5c1799d83a1d36ef578f16dfe6fc0e6be63f800438b5684",
    "size": 28357,
    "path": "docs/server_horizon_411139.41d4919dbc9b.json",
    "stats": {
@@ -718,7 +718,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411148/",
-   "sha256": "d295e031636cbd6257a124347c6ba33e86354c28c56b31c5863b4d192915e70b",
+   "sha256": "7487d81c6220e64dc33e66230a0065c43238331fa50d00dd35777af7efc1641d",
    "size": 21207,
    "path": "docs/server_horizon_411148.31c37d7be06c.json",
    "stats": {
@@ -734,7 +734,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411135/",
-   "sha256": "6d6dac122edbe971a3e2e0e21f2d92c667405b6db74bfd64bf6408a8d4d76890",
+   "sha256": "03b09ae8f9caad1d9f96c8910aed24ea8f4d6cbab0c8532928a7d1b6376fa81f",
    "size": 41123,
    "path": "docs/server_horizon_411135.d16153053516.json",
    "stats": {
@@ -750,7 +750,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411138/",
-   "sha256": "054eb9e59261cb15abda4e56f51566c68be25fa96e286248b6b9e56d3a3dc353",
+   "sha256": "b71ee09e6baa8fc5a4062deccf0b41c01c5e914e183f3447ad70ef82eb3933c9",
    "size": 13602,
    "path": "docs/server_horizon_411138.d86691deb697.json",
    "stats": {
@@ -766,7 +766,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411142/",
-   "sha256": "fc70a1742ff430d19f1cba6c855d2a4e51732b31308511615439c5f8b28d5462",
+   "sha256": "47dd9b63e7ec73587f7c1c4e4f749f86ab7628b647f1a06db9e117d1eb5e1b2f",
    "size": 60466,
    "path": "docs/server_horizon_411142.64bf88caa8a7.json",
    "stats": {
@@ -782,7 +782,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411147/",
-   "sha256": "5e4e84589892e75f4d171ac5752fec45576ac2893d0e502c2e217c3daf5d7d12",
+   "sha256": "90573b61a953bff570b10bc63a1541fb5e7cea802948268d98a44a9f1b3c2d7a",
    "size": 61970,
    "path": "docs/server_horizon_411147.00ab9e4d5e20.json",
    "stats": {
@@ -798,7 +798,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411419/",
-   "sha256": "dc99d22cfc444e70237bb7802b7d01ed3460f01f84402675b149091d89f1938d",
+   "sha256": "d404b82d1fb7052bc0e04bedc6678f8903b0d8e3ea6196b87328d53240deda87",
    "size": 43431,
    "path": "docs/server_horizon_411419.46d6ade89425.json",
    "stats": {
@@ -814,7 +814,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411141/",
-   "sha256": "8a96065390a1d0be44af025b3cebfaaf7bc477517c2ab4073be863e8f3ff586f",
+   "sha256": "ae78a3674453310b45ba1248982460b8c22093c464a7ca9484291a97aca041ea",
    "size": 19475,
    "path": "docs/server_horizon_411141.605dede59fb2.json",
    "stats": {
@@ -830,7 +830,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411149/",
-   "sha256": "cb291054e0e14c6f99faaf78d40d88f563530aabe6940e12799fa8f0bd75a8bd",
+   "sha256": "2533ba2bc8e6cdeeaa3a1b8bf49f012405bc0c7623a00819925b3c37beabb766",
    "size": 17920,
    "path": "docs/server_horizon_411149.8ee979d621be.json",
    "stats": {
@@ -846,7 +846,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411146/",
-   "sha256": "37dbb6dbe641905b5e218c0e31bead0d4555b0cb2da8c535c7add78846b17b58",
+   "sha256": "9ba6242fc3738510f034b992574b57c82b5e7828dc4e9cc77a7fe5fba031a4d7",
    "size": 27833,
    "path": "docs/server_horizon_411146.553477068213.json",
    "stats": {
@@ -862,7 +862,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411150/",
-   "sha256": "12e7f1698c7c2b26b86be4ba2691dfeff05b6771b9dbfc6b15f83603540b463b",
+   "sha256": "3c5f3d57058e0f931de357676ed9e2de82de50a7da0408909b55afe5eda852eb",
    "size": 14113,
    "path": "docs/server_horizon_411150.73d7b765814f.json",
    "stats": {
@@ -878,7 +878,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411137/",
-   "sha256": "b6ae93f0df8ae56a47e3c6c8713aeae5c218281a133cd7caa8ea06ea696ccf3f",
+   "sha256": "1b100217a882a776fb7cb2d50890c48b3024ad0a3161053829388f615491b9ac",
    "size": 88205,
    "path": "docs/server_horizon_411137.1b89432e6ab0.json",
    "stats": {
@@ -894,7 +894,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411131/",
-   "sha256": "168ece56ebdaeb4c58cdf27cb2ecbf3d729fb0d993b7f46b4b8beb98b7d86b37",
+   "sha256": "0947844bd49ab56f22bc5ae43da5daab2948dd81b14f64317ccf0209c1441a01",
    "size": 20630,
    "path": "docs/server_horizon_411131.32dc7adb7b19.json",
    "stats": {
@@ -910,7 +910,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411132/",
-   "sha256": "a151c4ffdc34dab8cbc2be81c89c35da043377f2c6095acdbee41a763acefdf5",
+   "sha256": "7f71cf0e656646d0428e889a310633eba327921aceb4a69a2a9346585575f0dc",
    "size": 105350,
    "path": "docs/server_horizon_411132.c3141a45e487.json",
    "stats": {
@@ -926,9 +926,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411134/",
-   "sha256": "c8c834e9cce626f434622e5ee7b43e5416e58e2517e37ca8d98905c0463ab6b8",
-   "size": 27818,
-   "path": "docs/server_horizon_411134.09e53d64e129.json",
+   "sha256": "59de8ccafcdbe6383548f702464eaf002639d59280a8f4cb08ade0ba86d946db",
+   "size": 27888,
+   "path": "docs/server_horizon_411134.d479b4ca635c.json",
    "stats": {
     "nodes": 34,
     "punishments": 0,
@@ -942,7 +942,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411133/",
-   "sha256": "0b0ef716107ad9957c0cd74a46fb3dd2ca8aa3171091477222dce250f845c4c8",
+   "sha256": "05797122e47ef9aed3414e69c3c84f86f803a28af39d4708de8a14964e05eb33",
    "size": 27579,
    "path": "docs/server_horizon_411133.e474408b44f8.json",
    "stats": {
@@ -958,7 +958,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411130/",
-   "sha256": "486c867d6ed0a0c3a44ec67ffa4e9993305639def4205a51c75ba9b937ed5211",
+   "sha256": "57f856732a4621d0cd893951ccf4a0f11f15f103adc7db21acaa3f279a6321f3",
    "size": 49109,
    "path": "docs/server_horizon_411130.2116b3cc0989.json",
    "stats": {
@@ -974,7 +974,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411151/",
-   "sha256": "d0ef787333d80474eed750250876cfb9ebc47f358c7e8a9de88f91882413fceb",
+   "sha256": "bca2ec2b8f8b6caebaf9ccee25c46216470796f2bf6d16ef6e12cdc7a1bd6543",
    "size": 12611,
    "path": "docs/server_horizon_411151.77f5e20ae2e7.json",
    "stats": {
@@ -990,7 +990,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411144/",
-   "sha256": "14d774acb88721b57c0d77d5bcf5780bda17c656a9b0aa1987de26bba6592f96",
+   "sha256": "8e7cc1e334c7ead5dcfa6d878c85953a6c8781a9c3e868708c7320da7f1d623a",
    "size": 48819,
    "path": "docs/server_horizon_411144.b6465db1d868.json",
    "stats": {
@@ -1006,7 +1006,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411155/",
-   "sha256": "47286d5f38e1956bc7fb06ae1b9272604e88b02462ce3b90174f98051164d513",
+   "sha256": "ef8eafc6c5be2a106915bd2dbd504993ec4769e9de37b488e69cfd72fafbe9fd",
    "size": 98679,
    "path": "docs/server_horizon_411155.2ceb9c7fd133.json",
    "stats": {
@@ -1022,7 +1022,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411159/",
-   "sha256": "266e2b7962be93203d62d1b77d9b656e83e21d70bacba84a0a6db2cfdbcb89a9",
+   "sha256": "b852a41ddd2ed3f350913410b2ef3fdbfb9b03c71b6bff19939bdc916f610f4a",
    "size": 73909,
    "path": "docs/server_horizon_411159.28e194b08c98.json",
    "stats": {
@@ -1038,7 +1038,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411154/",
-   "sha256": "7a8928f1fdacbf4d860def8a395e2b7b6bbf0a4c3556f20020abefa13a1233ec",
+   "sha256": "a5367f40c765c5617c0e29bddd51adbe37b153e56b5731dc7f22faf73e56ba2f",
    "size": 159940,
    "path": "docs/server_horizon_411154.e812d658c34f.json",
    "stats": {
@@ -1054,7 +1054,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411157/",
-   "sha256": "cc7f5fe7fba112c9c61c450dc4d3ee27c6035c7e765cdb578619ef450cc99b8c",
+   "sha256": "b205ac79fb51ece2c7e7fff165a30efb511f03c2609c8a45a43c89137f0de6b3",
    "size": 57187,
    "path": "docs/server_horizon_411157.edf0243ab821.json",
    "stats": {
@@ -1070,7 +1070,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411152/",
-   "sha256": "6a31880b2a6d3cd1cb50f95f1219778e619b2e2ae7905b29605fd44a3248b4e7",
+   "sha256": "a56db2cd73f6805dee15e208927f59ae49ed06a8cd54b0a136ca81bfcf340566",
    "size": 218256,
    "path": "docs/server_horizon_411152.d42ceb1c3355.json",
    "stats": {
@@ -1086,7 +1086,7 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411158/",
-   "sha256": "54c4114c31f1b4ae9053b98a4ba44aae6ce0fd31bb1653dd9f72617ec43680c6",
+   "sha256": "05880092bb68d9effc5f47bb3f6c633d4f57dafcb94d7cc6844f38aed824621c",
    "size": 23645,
    "path": "docs/server_horizon_411158.02679ad9494d.json",
    "stats": {
@@ -1102,12 +1102,12 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410587/",
-   "sha256": "061049a3123c364469cac4cb2c9065733a9fa00b94498eaaa67ca2c4c6627f31",
-   "size": 21592,
-   "path": "docs/server_mirage_410587.3bb87421971f.json",
+   "sha256": "cfe64b191a6685cdc1a42a116281f042f5212f9d680376f473e5b3b1a3d8d905",
+   "size": 25815,
+   "path": "docs/server_mirage_410587.a6369c05c4bc.json",
    "stats": {
     "nodes": 31,
-    "punishments": 0,
+    "punishments": 20,
     "images": 1
    }
   },
@@ -1118,7 +1118,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410584/",
-   "sha256": "287ea7cc29d3242ed90677f72ed57ac1cd2fa4e6053fe70edf40edce02f13556",
+   "sha256": "5d6774e74dfdd87362ed2406e1b9b25036a43ca8c35b13fd754bcc23fa7bb240",
    "size": 34947,
    "path": "docs/server_mirage_410584.8bccc216fe7c.json",
    "stats": {
@@ -1134,7 +1134,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410592/",
-   "sha256": "31d5e3d2900f51a9fe57e77fd89144a95582e38f6db36a7f6adc6171e35c98fd",
+   "sha256": "e7af9b86da4bbfda39473d86fbd3948aa9e207981a2f7671b2f60d6ec2085a0a",
    "size": 22654,
    "path": "docs/server_mirage_410592.29805c2f8521.json",
    "stats": {
@@ -1150,7 +1150,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410591/",
-   "sha256": "c2cff561cfa2088f5cd3c6d74d254d0994af70fd7e208703abc9bb96a517905d",
+   "sha256": "5fdb766f09cbfb4873b48c38d9a194e37bd65b452d26a03a1dd5fe61078a70fc",
    "size": 20891,
    "path": "docs/server_mirage_410591.2077e72646cf.json",
    "stats": {
@@ -1166,13 +1166,13 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410600/",
-   "sha256": "3d299a0c25d232959cae5b371a7965c60f84e3470f4a5b2cff063f15e7445686",
-   "size": 19718,
-   "path": "docs/server_mirage_410600.8d3229818c06.json",
+   "sha256": "b589df837be90b351d56f5cbc8b0a482265d80bdc34815caffae17c6cd346ff3",
+   "size": 19642,
+   "path": "docs/server_mirage_410600.045d6ce5ce8b.json",
    "stats": {
     "nodes": 74,
     "punishments": 0,
-    "images": 6
+    "images": 2
    }
   },
   {
@@ -1182,7 +1182,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410604/",
-   "sha256": "428cc46f78c627bc22be655ff9a9f652b4507f91349599bc0f2f30ec986863db",
+   "sha256": "15452eae7ebf20d166a8297b9fc9167360f10e55cc397b500d4f5761ffdb9efd",
    "size": 7114,
    "path": "docs/server_mirage_410604.b47a934dac16.json",
    "stats": {
@@ -1198,9 +1198,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410594/",
-   "sha256": "eb43202e6ae9399abadfccc1b30f7547f2ca22f91d3030199ccd352611c16ce9",
-   "size": 23435,
-   "path": "docs/server_mirage_410594.de076b5103c1.json",
+   "sha256": "bdaf692c31619655c83c78513c3567a2610b7fe6e5346c05a2551c2c51eaa8a5",
+   "size": 23547,
+   "path": "docs/server_mirage_410594.4dcfb3e83077.json",
    "stats": {
     "nodes": 48,
     "punishments": 0,
@@ -1214,7 +1214,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410603/",
-   "sha256": "f768990704efee0261107081f6144beb5b140454085e9c66d511429208b65192",
+   "sha256": "2393ee2bf6299318acd6445a4371e4001b54f7305f96006c1d782bfd854137c5",
    "size": 40783,
    "path": "docs/server_mirage_410603.b46697d7b48c.json",
    "stats": {
@@ -1230,7 +1230,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410597/",
-   "sha256": "88fb5af33098d08cabee9c8da2fe0f8a97fc9a5e5bd4415635d7a9f2103df229",
+   "sha256": "32f3fb6ad0da9b5c4a0e5478709afbb87c36720f33d322d13687d4e85225ce3d",
    "size": 11396,
    "path": "docs/server_mirage_410597.b1eef914f54c.json",
    "stats": {
@@ -1246,7 +1246,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410601/",
-   "sha256": "08d433f4788eb2f736ba17db06f766f90059104d000e7115dcad110614e78d8f",
+   "sha256": "a260d9610553b4e76db7af926adf2dfb8478b3903bc702e61f912c27ff692b7d",
    "size": 18575,
    "path": "docs/server_mirage_410601.516a909f1c12.json",
    "stats": {
@@ -1262,7 +1262,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410590/",
-   "sha256": "5e27eb12efe152266cea15e15eccf58e2ebba6fbc38cf94262f15041626e3fc6",
+   "sha256": "2ed73e72ca05bce253fe38a71ec0d77e04577fed454dc4b52dad90a0c38db1af",
    "size": 22271,
    "path": "docs/server_mirage_410590.95f31e7efab5.json",
    "stats": {
@@ -1278,7 +1278,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410606/",
-   "sha256": "f111ccaa77bd0cc325552d3e439196824715d7b6f7f3a8d68ee72523a1a7f807",
+   "sha256": "7f26930a4665c6ea84f5e9e4cf05e27b8c1473ce131095182e0beb0b6c14e477",
    "size": 13596,
    "path": "docs/server_mirage_410606.6e65f9c7a7d3.json",
    "stats": {
@@ -1294,7 +1294,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410602/",
-   "sha256": "181475c5e111617e410e9f0f8025c412e7797c7fab4df1281e3ea51834154d5e",
+   "sha256": "3074bf8a81cd303bed510fb4c86ad8ed8f917dbbc511e3a02593c568d7c989ac",
    "size": 29460,
    "path": "docs/server_mirage_410602.fdc283d1af89.json",
    "stats": {
@@ -1310,7 +1310,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410605/",
-   "sha256": "edbf8deefb458aacf09b30da2ed6db20638d00ed07157c55108adc02fe107397",
+   "sha256": "04ef3e9590c56023260c5a315eb4b7017d3377c72707da6c803a75733bd93392",
    "size": 37698,
    "path": "docs/server_mirage_410605.12271e8a7438.json",
    "stats": {
@@ -1326,7 +1326,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410599/",
-   "sha256": "194020cea26416d67f645aaa59918af521d132b24c1f19800f94a052c4e451e2",
+   "sha256": "3d376eddf98bc9612fd243006857295c3677892d5a1aeb5c568398086147203f",
    "size": 58445,
    "path": "docs/server_mirage_410599.24b4b5f7e89e.json",
    "stats": {
@@ -1342,11 +1342,11 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410598/",
-   "sha256": "a2604f701745aa986ee279fdb57980fc0dc5115f6a93f936e662c358b4f72fba",
-   "size": 42612,
-   "path": "docs/server_mirage_410598.b8d84cfe422a.json",
+   "sha256": "4d258adb1544a0ba26cfdad72e6df718b2543d3d8a5e98affd1344bba931c4aa",
+   "size": 42918,
+   "path": "docs/server_mirage_410598.aaf2aec645de.json",
    "stats": {
-    "nodes": 66,
+    "nodes": 67,
     "punishments": 0,
     "images": 0
    }
@@ -1358,9 +1358,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410612/",
-   "sha256": "a797762f8f28d5b333c2b5b1489abe1a3ba6cb1352d1780af3ae7336e8ab18fb",
-   "size": 17301,
-   "path": "docs/server_mirage_410612.31d07710c9a0.json",
+   "sha256": "e242f6f494c204fc0dc8e412cc7b1fb1f1f70f14b92cdc55fb1436591a09b2fa",
+   "size": 17371,
+   "path": "docs/server_mirage_410612.0c4ed38041cf.json",
    "stats": {
     "nodes": 20,
     "punishments": 0,
@@ -1374,7 +1374,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410611/",
-   "sha256": "547f4422ebebcbef6af8449a8e1edc4fdf4b40a8d22595d230c60ecb1269fb3e",
+   "sha256": "b7eff51d5f3112dc3bbb8a894922ac86d5000e4b67a3599096c57ddb27619ccf",
    "size": 65334,
    "path": "docs/server_mirage_410611.25f24b420696.json",
    "stats": {
@@ -1390,9 +1390,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410609/",
-   "sha256": "a36e24d1113578432cd6d3aabd4d5bba64b8babc464b599967bd3bab62a51f0b",
-   "size": 27758,
-   "path": "docs/server_mirage_410609.80bf00b3806c.json",
+   "sha256": "3dfb0e74f48efae31ef2e8a294341178b4e868f327b187e24565ae00667cdb0d",
+   "size": 27828,
+   "path": "docs/server_mirage_410609.2380f781a1bc.json",
    "stats": {
     "nodes": 34,
     "punishments": 0,
@@ -1406,7 +1406,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410608/",
-   "sha256": "954dadfc5397563b03233c6083bb895a847fb85c27de7f780f687917334b380e",
+   "sha256": "474ea09d86723ca8277717647aced16761e4b894373d66fdb5fa0806206a6948",
    "size": 123062,
    "path": "docs/server_mirage_410608.b5a5a6785109.json",
    "stats": {
@@ -1422,9 +1422,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410610/",
-   "sha256": "6b8e4072ef1c1b8d27496ae80d84d921ec8af8094476478cf04ca5cb7f5e56dc",
-   "size": 27297,
-   "path": "docs/server_mirage_410610.7d051a477f2a.json",
+   "sha256": "4219df287308b89c5b9b7d5cd2f8ddd450e62752f41b234e4314d10a4b883ad0",
+   "size": 27367,
+   "path": "docs/server_mirage_410610.8f5a3dd0d08f.json",
    "stats": {
     "nodes": 34,
     "punishments": 0,
@@ -1438,7 +1438,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410613/",
-   "sha256": "003598534e1f87e7975a7537c5c2b76d8908e7b0371af68bd3a7878188699096",
+   "sha256": "98f6db119d68a9b4eb1c10b44bb1834a19f3993b916485d269361304ac2a63ac",
    "size": 42971,
    "path": "docs/server_mirage_410613.76e9fe76e8ad.json",
    "stats": {
@@ -1454,7 +1454,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410607/",
-   "sha256": "4a28d9cfcfadcedff39c687596df3d37a097e1856a856459d39bfc76d5daf246",
+   "sha256": "85258fb59ac944b4aee3ecc2a6c2b1a12957356b1b72a001ce20bdfeb9b99343",
    "size": 29982,
    "path": "docs/server_mirage_410607.0c868902fc8a.json",
    "stats": {
@@ -1470,7 +1470,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410589/",
-   "sha256": "05f3587d6581ac679f460c397025ef708bb7ec0304987b9d59300aac13a09176",
+   "sha256": "d584d28aada9fb263e19299c4d22f70507bb870f01f882c7941bd36f5a3c77cb",
    "size": 9110,
    "path": "docs/server_mirage_410589.3d23020cf7b2.json",
    "stats": {
@@ -1486,9 +1486,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410596/",
-   "sha256": "e2a9fe1e8b9d3748b9ff1cc7357e42ec1d9fb583edb1f8b3a855ba50d19f4025",
-   "size": 14984,
-   "path": "docs/server_mirage_410596.bc4ad3f64df5.json",
+   "sha256": "cd46b60e4abf59a113b42772816ad9244e92e71d3a1bd07092c71a491fd733ed",
+   "size": 15040,
+   "path": "docs/server_mirage_410596.46cd92984816.json",
    "stats": {
     "nodes": 26,
     "punishments": 0,
@@ -1502,7 +1502,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410581/",
-   "sha256": "d6b6465d7fc27c64a4732dfa8f4c9f0b02a07a5fede2c0ced9ffd05bb7196a7d",
+   "sha256": "49ce478cfbb88c98715a5a60ebec4f7a0a4fe8b81a6ca05f02461c9e9d443fb8",
    "size": 72961,
    "path": "docs/server_mirage_410581.1f21659f30d1.json",
    "stats": {
@@ -1518,7 +1518,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410586/",
-   "sha256": "ab1bf5c0cea982acaac944be7ffd63ef6ebb0dfc191ccc0c5b2bdf7ef2c409c5",
+   "sha256": "04a442cdbcdb2d21980e17296c3ee7e73bd7cad0f049f2cda7722988262cc418",
    "size": 122648,
    "path": "docs/server_mirage_410586.cc046bb4fc75.json",
    "stats": {
@@ -1534,9 +1534,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410585/",
-   "sha256": "6fc7a4bc6bd814146c52f77fb68cf732e7d7a199615be16069b6f8b0a359c49f",
-   "size": 81543,
-   "path": "docs/server_mirage_410585.15fb198ac442.json",
+   "sha256": "955e38e6fa4578caef9b9272692c807d71eb882c8b2cb6f928c10b1515d9b645",
+   "size": 81655,
+   "path": "docs/server_mirage_410585.c6942f905b2f.json",
    "stats": {
     "nodes": 98,
     "punishments": 0,
@@ -1550,9 +1550,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410583/",
-   "sha256": "35554767c32ce4a780ac4c209af736c6b6bf240c32145352a42f9ae6edbd55ab",
-   "size": 33153,
-   "path": "docs/server_mirage_410583.30568ffffd46.json",
+   "sha256": "fb83b4e0c80b0f1f490eba930d47dec9ac941d18ff0b47fff613e738d9c04902",
+   "size": 33251,
+   "path": "docs/server_mirage_410583.77ca300237fa.json",
    "stats": {
     "nodes": 46,
     "punishments": 0,
@@ -1566,7 +1566,7 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410588/",
-   "sha256": "ddc7f7e7026e8bdff452dcc3c6631874d6e3d9c8c8cda995f47ace936f714417",
+   "sha256": "4244cabd2a189478b0e58ff07a43e05669b6886092d8daf7706aa7a4909fd7c7",
    "size": 107070,
    "path": "docs/server_mirage_410588.f6331ac5cb4d.json",
    "stats": {
@@ -1582,9 +1582,9 @@
    "serverId": "mirage",
    "category": "Нормативно-правовые акты",
    "sourceUrl": "https://forum.nova-rp.com/threads/410582/",
-   "sha256": "780a322e83c8b1def63b9be5cc95c79d28e0f69bba174e6722cbaf0410bc18db",
-   "size": 26320,
-   "path": "docs/server_mirage_410582.04f79a310d4f.json",
+   "sha256": "8b98add2257514180e1a1c9feaf189aaef0ff3a3d2db3886037535f0963efec8",
+   "size": 26404,
+   "path": "docs/server_mirage_410582.0969e2e46690.json",
    "stats": {
     "nodes": 61,
     "punishments": 0,
@@ -1598,12 +1598,12 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404074/",
-   "sha256": "7cc627a02826b630ae2ad713cc4004da4f5b66c8f44fdfcb8e03ed87e43a4ccc",
-   "size": 21618,
-   "path": "docs/server_new-era_404074.b2d8d75d0ab9.json",
+   "sha256": "56c7b306d566da6a9cb2ca617bc4e99d15d8c4cc60a26a32fc07805a2c077be7",
+   "size": 25841,
+   "path": "docs/server_new-era_404074.537f3b41f269.json",
    "stats": {
     "nodes": 31,
-    "punishments": 0,
+    "punishments": 20,
     "images": 1
    }
   },
@@ -1614,7 +1614,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404077/",
-   "sha256": "34b642bb5db97b5095852b0af3ce7c721d8bc1bf56d75dc115a5ff6f93192dc9",
+   "sha256": "206a26cf1b19b75484bf9689706bf6d89560c82cf302c1d79d4c6e33e8faca5c",
    "size": 35002,
    "path": "docs/server_new-era_404077.5e77db3f0fa0.json",
    "stats": {
@@ -1630,7 +1630,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/405386/",
-   "sha256": "1a3cca7f6814b9fda14a2a7045591112a7d615fa2cee9c7431e8a9669bb48cbe",
+   "sha256": "f4a844c0af9969ed406ba21d976f852d792b484e4a424ca7dfa2df3738736b98",
    "size": 22679,
    "path": "docs/server_new-era_405386.3cd74b1f3adb.json",
    "stats": {
@@ -1646,7 +1646,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/405387/",
-   "sha256": "eeae22e2ebcd346ee14a1062c6562b9dab7ecbb6dca69a309ed2635653cf5310",
+   "sha256": "dc1d3cc661d10657a60d2205b249b76520ef296018b85f15c03a46c0d2d61949",
    "size": 20910,
    "path": "docs/server_new-era_405387.4ea8baf0431b.json",
    "stats": {
@@ -1662,13 +1662,13 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404090/",
-   "sha256": "c63f5e9614437e783d33720545a7851917a9a1835a7f096680e1bfc9af78fab5",
-   "size": 19787,
-   "path": "docs/server_new-era_404090.80de5c68e96d.json",
+   "sha256": "ffc648b8bbdc53970bf28c0e6c4e4fcfc17095cd758fef4344e3966830543293",
+   "size": 19711,
+   "path": "docs/server_new-era_404090.d9e40004c167.json",
    "stats": {
     "nodes": 74,
     "punishments": 0,
-    "images": 6
+    "images": 2
    }
   },
   {
@@ -1678,7 +1678,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404086/",
-   "sha256": "eb4e4c61c57125dda135ec1036115b23e3321a10cf1b23ebbd78d465335b35d8",
+   "sha256": "0255846a78d906ec91dd8041ed9b55fd6799b5003aee76a1ddc35fec66e8576f",
    "size": 7124,
    "path": "docs/server_new-era_404086.9d85719be65b.json",
    "stats": {
@@ -1694,9 +1694,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404399/",
-   "sha256": "fdf1da5690ffa2d18524906cf55f7913dda9c88ab15aadd2e712bf0f2eeaee04",
-   "size": 23478,
-   "path": "docs/server_new-era_404399.665f0e721446.json",
+   "sha256": "37172abc477b41282b125504bbd830f5c011700bd5a0da9961c593c44e6af4b0",
+   "size": 23590,
+   "path": "docs/server_new-era_404399.892349fdc1e1.json",
    "stats": {
     "nodes": 48,
     "punishments": 0,
@@ -1710,7 +1710,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404087/",
-   "sha256": "de026250fef88df76087ae97e338ac01bb27e8525bceda628286a570c0b00a38",
+   "sha256": "24d5ea0d789912fa6865d2ff5da51f6bf50a6eb78a666a30ad210e3b0ea5f8bf",
    "size": 40865,
    "path": "docs/server_new-era_404087.969f91c873c8.json",
    "stats": {
@@ -1726,7 +1726,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404093/",
-   "sha256": "49e508e1d98e66e6852cc1a77411f145eccc8becf7ebbc34879ec3e551299263",
+   "sha256": "1b538f2be306f20a915b65eb84aae94b0add9ca60fef0845fb1901d487252572",
    "size": 11421,
    "path": "docs/server_new-era_404093.ecb7976c6719.json",
    "stats": {
@@ -1742,7 +1742,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404089/",
-   "sha256": "4c592ae26252b00f53b84b62de42325c2900a2815fc8f06790a97f2e39573241",
+   "sha256": "33761a84003bbee8010e64d4da40f57224413448ae3d33c70ce5001f6dca8f8e",
    "size": 18603,
    "path": "docs/server_new-era_404089.e754d98730e7.json",
    "stats": {
@@ -1758,7 +1758,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/405388/",
-   "sha256": "8acf7d701bd5c2d6c81c3b219d8d00902068e1f10e26d119693baa664d38bcb0",
+   "sha256": "69ca3ed400fa24432ac49daa25d45845395425ce0dc086c920dc8049586888ba",
    "size": 22308,
    "path": "docs/server_new-era_405388.7cf93b1d9c59.json",
    "stats": {
@@ -1774,7 +1774,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404084/",
-   "sha256": "c309df1cd8c41c16849854d122bbcf602112eac72dfb6f4ed0f28c88e578ce8a",
+   "sha256": "9747e1102dbd5d9a5e5efc8cf106ab629310bc55f1cea21d9b0e9cf5c95d5ea0",
    "size": 13615,
    "path": "docs/server_new-era_404084.f76d9e033785.json",
    "stats": {
@@ -1790,7 +1790,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404088/",
-   "sha256": "4c133449c720752af88dd213162c9cc7755b9f35b154ad8b4ce5c83d80d4db38",
+   "sha256": "218b4eea8466943061443b6bb1c7d3b1781d84c5a8eb748eca4599cb7053c4a3",
    "size": 29284,
    "path": "docs/server_new-era_404088.e12923de12fa.json",
    "stats": {
@@ -1806,7 +1806,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404085/",
-   "sha256": "97dca991cb2372d3323955475f8ac0e43c0c9e8347820d3e2e17583922acfd1d",
+   "sha256": "fb4603e12746ca670b35083b11dadfad7eb3355a4f99327be39fc906248cb131",
    "size": 37731,
    "path": "docs/server_new-era_404085.6cc1d26232ab.json",
    "stats": {
@@ -1822,7 +1822,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404091/",
-   "sha256": "5d2e9c6b935a0eefd70973e2f0b150af0c0a451fc4678e5afe86485fa0b1a2ff",
+   "sha256": "a1c5b1bafd204b8abf0ab9b3acee2558718f7d9fd2ca06711048fe052a0bea8a",
    "size": 58563,
    "path": "docs/server_new-era_404091.a0c4ce7fab57.json",
    "stats": {
@@ -1838,11 +1838,11 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404092/",
-   "sha256": "73b709e57e27bbca927a3592918a265e28297ce24dbf7ca57d59d25b7aeb3be2",
-   "size": 42673,
-   "path": "docs/server_new-era_404092.2376bfdcf71a.json",
+   "sha256": "1f1da61c27705aea49925bae6cd6e69c9ab6b2344c17e5edbcf7abb6c210d183",
+   "size": 42980,
+   "path": "docs/server_new-era_404092.eb642e7c302e.json",
    "stats": {
-    "nodes": 66,
+    "nodes": 67,
     "punishments": 0,
     "images": 0
    }
@@ -1854,9 +1854,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404068/",
-   "sha256": "f2d552d600e640d20715584b9f11cfd7c967d6f4d8696601e3c9f756f5760711",
-   "size": 17316,
-   "path": "docs/server_new-era_404068.06de55b979b8.json",
+   "sha256": "4878ec4d2a239b77cdf005cbcfdd67e0c7d67f625b5be4bd13db4816f73be801",
+   "size": 17386,
+   "path": "docs/server_new-era_404068.85ecb10035ad.json",
    "stats": {
     "nodes": 20,
     "punishments": 0,
@@ -1870,7 +1870,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404069/",
-   "sha256": "009502be084bc51c70170adddd4e099e82129e6382df5f0b530e4acf4ddc3366",
+   "sha256": "c90d0437d6d57355d20f7e5e413b7d27abffc9a73fdbb58184cb0f9190e11fb8",
    "size": 65230,
    "path": "docs/server_new-era_404069.b31bc72e0cdf.json",
    "stats": {
@@ -1886,9 +1886,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404071/",
-   "sha256": "a01a5e78d5001541e033d78cbb36f2e605a25cb2102b9a36ceba33a3343eb82e",
-   "size": 27787,
-   "path": "docs/server_new-era_404071.f966c0db6a53.json",
+   "sha256": "1d1e3bd60befc267cbdd9e34ddd378d1331e27591b578dfda60f116259ba5a34",
+   "size": 27857,
+   "path": "docs/server_new-era_404071.6fe740157438.json",
    "stats": {
     "nodes": 34,
     "punishments": 0,
@@ -1902,7 +1902,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404072/",
-   "sha256": "956599bc466023e51961ac96b37b158d3b76f60a0433af8c4cb9c45593982a21",
+   "sha256": "534eb22919c37b947a27db1a10321f6f703855d65985676c9e53c557b27b6f6e",
    "size": 123323,
    "path": "docs/server_new-era_404072.9aafb27a78f2.json",
    "stats": {
@@ -1918,9 +1918,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404070/",
-   "sha256": "93e1db759311d07542aa015ba2e7ab1cd1f8926ef940e7a393340eec060e6864",
-   "size": 27326,
-   "path": "docs/server_new-era_404070.010fd78d9cc3.json",
+   "sha256": "472273df1aacebe913d0c3e304e0057c59c778dc9ca8348c8152d89b4382cf9c",
+   "size": 27396,
+   "path": "docs/server_new-era_404070.b7c8011551e9.json",
    "stats": {
     "nodes": 34,
     "punishments": 0,
@@ -1934,7 +1934,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404067/",
-   "sha256": "173c79c9f89d61968dce927c22df73d91e1ea906601613d4f2a5955053a248ce",
+   "sha256": "f7be538470841e833cb0e4ac0e2d1617a69e4f69dde9c4e912db03806f7b189a",
    "size": 42975,
    "path": "docs/server_new-era_404067.0f6792318f24.json",
    "stats": {
@@ -1950,7 +1950,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404082/",
-   "sha256": "0636d93dcbd47880eb2004f9fab992d366262ad7b58b22d990a7c6e848d5e6fd",
+   "sha256": "d544f2e9284781826259733a28f76ac8a4f74fd5614c0eca08de465a1056f84a",
    "size": 30016,
    "path": "docs/server_new-era_404082.b8eadcd6bc4c.json",
    "stats": {
@@ -1966,7 +1966,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/409236/",
-   "sha256": "ddc9aea28b576b5d5990338365928a42de15f3d5d0ab93135160001afe697de3",
+   "sha256": "6fd72e5f1bac721c0c1d95adb48e9301a360d8548f820af6e49077a3ce2ffbc3",
    "size": 9127,
    "path": "docs/server_new-era_409236.4890346786e3.json",
    "stats": {
@@ -1982,9 +1982,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404094/",
-   "sha256": "49cd7d9848b3b2cdde69df32508ef0b2f107d54cd4790af40bbf4e831642d37e",
-   "size": 15005,
-   "path": "docs/server_new-era_404094.a1991ac60ffd.json",
+   "sha256": "126cd7334f9df302e92b348ab00ae7503ce83b9dcb270225188dabb67ecd6bda",
+   "size": 15061,
+   "path": "docs/server_new-era_404094.230f306f8fa9.json",
    "stats": {
     "nodes": 26,
     "punishments": 0,
@@ -1998,7 +1998,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404080/",
-   "sha256": "ec182f90c96c612ca272ad6c806093b937dc18c996933c8af07220bd223e6832",
+   "sha256": "df906b2416b0ed8eddbc17abf8d9838ad9f50ca79efca2a76c95c742655fead6",
    "size": 73083,
    "path": "docs/server_new-era_404080.4215acd2148e.json",
    "stats": {
@@ -2014,7 +2014,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404075/",
-   "sha256": "fe447ab76f5abbaf8fbbcfdd40309a3c54c6be98fd2a6f67e67957b39f260e1b",
+   "sha256": "24ea4be36dbec8eabb6e5bbb4faa283a189c170565ac87f1c387981fb4ac3951",
    "size": 122886,
    "path": "docs/server_new-era_404075.f4dff4609e67.json",
    "stats": {
@@ -2030,9 +2030,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404076/",
-   "sha256": "4162057720d1a72f00fcc8d69cd983385b921ec04f7bef7a42b0b3ef3cbea386",
-   "size": 81636,
-   "path": "docs/server_new-era_404076.fd48fdf7c52a.json",
+   "sha256": "6339bbf37692d1da5d1f833faf1a4e65d543b1c70a117aca9d3741c3264f533e",
+   "size": 81748,
+   "path": "docs/server_new-era_404076.727bd26056d4.json",
    "stats": {
     "nodes": 98,
     "punishments": 0,
@@ -2046,9 +2046,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404078/",
-   "sha256": "2f381b08c629b9487448d920521f2729ec1f5579cc9351a179f452658a0038fe",
-   "size": 33194,
-   "path": "docs/server_new-era_404078.6f37e5691ddc.json",
+   "sha256": "77b688c60ceb89e5772c496500fe9f22f67d95efcd19f29a1038de9cad6de666",
+   "size": 33292,
+   "path": "docs/server_new-era_404078.eedefe203d3a.json",
    "stats": {
     "nodes": 46,
     "punishments": 0,
@@ -2062,7 +2062,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404073/",
-   "sha256": "bbb414af61e374988c86e4079be3ceddf25c43c5220d3b8602393f6608de6b78",
+   "sha256": "55f7a0feedd984748b6284d85b969da3e001b79db5ebfd222d8ebf65aa68095f",
    "size": 107225,
    "path": "docs/server_new-era_404073.7490e1f0eb49.json",
    "stats": {
@@ -2078,9 +2078,9 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/404079/",
-   "sha256": "6f8a2c1264343043051f2a088b0084a6c4652ea38204a7f96f60402b4748422f",
-   "size": 26376,
-   "path": "docs/server_new-era_404079.91c31911d5f3.json",
+   "sha256": "94a4a032cea1def38de735970282579a005a15d4ef52bbb9f75250010587cca9",
+   "size": 26460,
+   "path": "docs/server_new-era_404079.c1b34f12a70d.json",
    "stats": {
     "nodes": 61,
     "punishments": 0,
@@ -2094,7 +2094,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412045/",
-   "sha256": "924130ed4c29c67119550cb3fe1018831ef2f41a0e972485ffc70047101d989a",
+   "sha256": "c647aba7a0a749732602ba655214c8f94c0541a701cc3c203560842a95cc5870",
    "size": 101646,
    "path": "docs/server_new-era_412045.3c779dd0a868.json",
    "stats": {
@@ -2110,7 +2110,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412044/",
-   "sha256": "623f05d7d608ae2b3e1654b3cc9ac0fd6f1066edfa867e737d43c4503137bfca",
+   "sha256": "dfefbf7f8173c59a38f9b3016ced7db814260558708c2d9100b8870c6373a712",
    "size": 56054,
    "path": "docs/server_new-era_412044.384e558c73c1.json",
    "stats": {
@@ -2126,7 +2126,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412067/",
-   "sha256": "0d007dfcaff7e6f513f5d417d8f3dcb322fe3f39654d27f9752e402230ddfec4",
+   "sha256": "ae550a67b169382127b922cdef5c1cb4488060c4b6044bbae358f8ab1317cad9",
    "size": 19431,
    "path": "docs/server_new-era_412067.76e1d6051808.json",
    "stats": {
@@ -2142,7 +2142,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412086/",
-   "sha256": "242b16cf33c8b85478836a15f97d640495997334b6a9af8d574ecb1bd96e75af",
+   "sha256": "3d2d4845f67264a7486da0641d74772524a97bea6a0e9e374bb868eb3e1cb0a1",
    "size": 28892,
    "path": "docs/server_new-era_412086.8bc2cbfc6273.json",
    "stats": {
@@ -2158,7 +2158,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412062/",
-   "sha256": "fd6f56e3bd91b2a63af3eb2fa24c77bc591b510072d6d51cfceb09928f301900",
+   "sha256": "115e6a9372e34fdff19636b96eb0b691f980e9f6dfc33654d431ed71073349f6",
    "size": 81460,
    "path": "docs/server_new-era_412062.e3679ed54e83.json",
    "stats": {
@@ -2174,7 +2174,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412060/",
-   "sha256": "247bfbebb9f4864928073aaf6a8866216169fc98313d640fbe15299d25359d7b",
+   "sha256": "5b57e4dd59176a9a97f1c2ae514e11f852766d11c65254949d1b3f746442c9f7",
    "size": 32600,
    "path": "docs/server_new-era_412060.da0e5c27b3d7.json",
    "stats": {
@@ -2190,7 +2190,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412071/",
-   "sha256": "e264182c9ca7d252a0a07da644df42422cf4a886fda031cffeafaeefdf0cd47c",
+   "sha256": "2e4a00d5070cb740f69285e227e0fce03dbbe6bb8af0b841b875f7cd04f5d50d",
    "size": 48233,
    "path": "docs/server_new-era_412071.2d69e15e9864.json",
    "stats": {
@@ -2206,7 +2206,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412073/",
-   "sha256": "88b50083a21940db7f5f372312be13d9608e3086442bdd993d7a30cb1db418fb",
+   "sha256": "3f019483de64c83b18d146869796bf00d3f102346d4b923dd0e743906469b431",
    "size": 55256,
    "path": "docs/server_new-era_412073.be7644b44ebf.json",
    "stats": {
@@ -2222,12 +2222,12 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412041/",
-   "sha256": "c9de1f02da596acedf813fedd19a5045c4342492c2a4f3a987b42309b8afbdc5",
-   "size": 54827,
-   "path": "docs/server_new-era_412041.01f344bd1fdd.json",
+   "sha256": "1a2f16a003676ecef2ba24e9035817b84d2dd5a25fdcf02ae29791123c60a066",
+   "size": 55284,
+   "path": "docs/server_new-era_412041.fd3dcbb523c6.json",
    "stats": {
     "nodes": 110,
-    "punishments": 0,
+    "punishments": 2,
     "images": 0
    }
   },
@@ -2238,7 +2238,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412064/",
-   "sha256": "02d22032a694e880086913adaa60687aeb36cbae5ba4b42033a6cb3f67293e5e",
+   "sha256": "370d389a05ef708c7b1c2d93abc98c851e96e3e36a60f2b43cdcc0a94517beea",
    "size": 47255,
    "path": "docs/server_new-era_412064.84909d21fa4c.json",
    "stats": {
@@ -2254,7 +2254,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412068/",
-   "sha256": "f2e9c87b5c67385f09b9e945d407d8257af0b3d4d4de126e047565ca82060610",
+   "sha256": "ead0d9c94990ddae23ca99d4e22d1b78117ce07995c448b0532abfbe184ed0a0",
    "size": 8868,
    "path": "docs/server_new-era_412068.2b67618064c5.json",
    "stats": {
@@ -2270,7 +2270,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412059/",
-   "sha256": "8eab1aeaef294cf08964e07e78e3db7d706a34710812d23dd234a7e90aaa7382",
+   "sha256": "9f897e69dacda91a73d19b690a2a96fb329725bf2c4b0bd746b12c5291b699b7",
    "size": 23248,
    "path": "docs/server_new-era_412059.eecf434279ef.json",
    "stats": {
@@ -2286,7 +2286,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412082/",
-   "sha256": "cd74f3309abc181754dc65c236942d0399dd15f1f7bc949a3e7aac2c9a9abe5b",
+   "sha256": "100b668376ad832827575bacff50ee6054bc793e4a19651428b6824d9bddac0f",
    "size": 38411,
    "path": "docs/server_new-era_412082.c9d3a97e625e.json",
    "stats": {
@@ -2302,7 +2302,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412078/",
-   "sha256": "310ef1bc853a2e1bbaba8c24f50f27bb75c243713e2c0817ffa7c640a2fb8457",
+   "sha256": "aa3d75725f0d524060b5e399414b0ce6722c2d89bad6a92c6d5931c532204ce7",
    "size": 38420,
    "path": "docs/server_new-era_412078.1c2da63e6229.json",
    "stats": {
@@ -2318,7 +2318,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412070/",
-   "sha256": "6f3573fc31fdaec584138c828fc08e58a10ac20ab7f066d54686dd07ccac8e8a",
+   "sha256": "54114dccecf0b0f9c07a958a75b4726b6f77fb1e3d144f5c397c3e7eba44bec1",
    "size": 71327,
    "path": "docs/server_new-era_412070.a0b67840fbcc.json",
    "stats": {
@@ -2334,7 +2334,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412058/",
-   "sha256": "253d37523bf73ab632a51e6635a5400150e17bfd554b0660c2a6dc32283835da",
+   "sha256": "5de5b92ba48c43f8771d4f0f9e0c7bd6c13b2418172c352b843f037280fbc149",
    "size": 16122,
    "path": "docs/server_new-era_412058.916f7b463b11.json",
    "stats": {
@@ -2350,7 +2350,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412085/",
-   "sha256": "4259421c4065f623dbfcec78d86ae0a86c1943a5bd51959fd76798e6011fff4b",
+   "sha256": "466fbed87048083026b65661856fe58667c504f6e7876d8c71ac1fa951af8910",
    "size": 25963,
    "path": "docs/server_new-era_412085.ed1c63410e86.json",
    "stats": {
@@ -2366,7 +2366,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412053/",
-   "sha256": "cf1e745c2be5c15c9080810b4f0a9076b92c3e550d5f9599f294c5c75d86a4c9",
+   "sha256": "97a9d8e2b205b121ed9127586245034bc8503796076fa50232daf180ad037196",
    "size": 47686,
    "path": "docs/server_new-era_412053.df05732857b2.json",
    "stats": {
@@ -2382,7 +2382,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412055/",
-   "sha256": "2626b5eac78f09a8a659cea48392308b0e6848dc60d6c08d40bdc84fcd538a12",
+   "sha256": "45450cdeb360ebc913ac8a39e2500bc1682f470c7fc7351aa0957d4541ca4073",
    "size": 38475,
    "path": "docs/server_new-era_412055.8aa3d676765f.json",
    "stats": {
@@ -2398,7 +2398,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412072/",
-   "sha256": "dd3b3bf4049810eb9e558d7744d324916e6d10a04f50eb8185cc2523e2dc6834",
+   "sha256": "7dea5bac75d673e209755102560d1c948b1bdcc0479b59d887d45f0b3ab74bb4",
    "size": 14165,
    "path": "docs/server_new-era_412072.e6dbb05affda.json",
    "stats": {
@@ -2414,7 +2414,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412084/",
-   "sha256": "dff5762af2aafcd1935c7445444c42e37b4437fefb5e6d7b0c90db95bf6a337f",
+   "sha256": "c895b22375ca3862864683d1df474bc33053d40ee294a00fbe05d25cdcce9fdb",
    "size": 39839,
    "path": "docs/server_new-era_412084.eab4121378d8.json",
    "stats": {
@@ -2430,7 +2430,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412054/",
-   "sha256": "7339edcc68d1cd279074c8fffa7587b4a7b282d5a4b826dc1335d02d08bb8b47",
+   "sha256": "dd3db00d359b91b175e9172949e624f29bc55739419dcb9ab759b59a34511a6f",
    "size": 63631,
    "path": "docs/server_new-era_412054.c655c7a82520.json",
    "stats": {
@@ -2446,7 +2446,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412080/",
-   "sha256": "96adc71ec5a5566434207acf57397fd024194f8f6c42125cee8d51cfd6f0b97a",
+   "sha256": "ab073a2c0c9337cc2f381271c7d5d351b16f07923b767338aa9c663d52970851",
    "size": 57292,
    "path": "docs/server_new-era_412080.fffcc8bad0d0.json",
    "stats": {
@@ -2462,7 +2462,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412083/",
-   "sha256": "c77684258934daa0635a33faa199c76c8486541b1afbb77d0f95807ba1551cb8",
+   "sha256": "939ed861bae3641dc2784fc69101b1bd831fc4e89e0a06d647b2d92b112b405b",
    "size": 57205,
    "path": "docs/server_new-era_412083.b8d0e53d7eb9.json",
    "stats": {
@@ -2478,7 +2478,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412077/",
-   "sha256": "3ef94e249e37b4f95fc0282ea3ec661774778cec23da695611627a68abdb46a9",
+   "sha256": "2aba9608651914318935cde08a25075440948c43a81a4679762a22a280fdb6e2",
    "size": 42264,
    "path": "docs/server_new-era_412077.78bfb0fe67dd.json",
    "stats": {
@@ -2494,7 +2494,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412057/",
-   "sha256": "516e236a789823d485433be6ad7b474e92a332e022a33439827213c25541d6b9",
+   "sha256": "6122accc2e4cbd08513ba8471477ff79153cd4c3b47cc92f6a63292dc0baefbc",
    "size": 67046,
    "path": "docs/server_new-era_412057.dddcd623a229.json",
    "stats": {
@@ -2510,7 +2510,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412069/",
-   "sha256": "bedc1338a34ab05a87ad9a8e2aceaa813e0e94617c4cbef5c68514d116e1ad9c",
+   "sha256": "f9118231d292024aa4ff13b1223f3eda44230cf5c6967ed6d9ffbec70b2dda15",
    "size": 28396,
    "path": "docs/server_new-era_412069.241159bce7a8.json",
    "stats": {
@@ -2526,7 +2526,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412075/",
-   "sha256": "20dc8981276e08d0ed831d0d5ff870853123d74ebc9b81443ffb161f8d2063e4",
+   "sha256": "219df45ab685549f88703f8a823c5d7281feb6c8d9050035b11fe7f7bdf7c2b5",
    "size": 16553,
    "path": "docs/server_new-era_412075.7aa1921418da.json",
    "stats": {
@@ -2542,7 +2542,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412049/",
-   "sha256": "bf30210da47bd5ef754d6d9f08162023559ef142cc10b4c4254fb0d811d5a4a3",
+   "sha256": "dd17713ea03241a46452e7695fa60f6daf872dce04fa4a4d8fe12160e36e6a56",
    "size": 241646,
    "path": "docs/server_new-era_412049.a716bbd17e11.json",
    "stats": {
@@ -2558,7 +2558,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412038/",
-   "sha256": "c455aedb0607759fa315b0c6d1263fadb2f247c1b8ea329a6ff4d68441c2dd5d",
+   "sha256": "ec054f46cb47fc3ffaf940bb3b9bbd2fd9047f8685249c8e124d610784853373",
    "size": 76085,
    "path": "docs/server_new-era_412038.3f037ef18d1a.json",
    "stats": {
@@ -2574,7 +2574,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412042/",
-   "sha256": "6afcdee00c016d1fa6d681807a7a3c92372da861f45745c54c8a29566a10d91d",
+   "sha256": "41900e74c99d78b29c236d3cb699f90dc3b3df2e85a8a4bf09ff42bce4b35474",
    "size": 188253,
    "path": "docs/server_new-era_412042.45d3944e5978.json",
    "stats": {
@@ -2590,7 +2590,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412048/",
-   "sha256": "9929f52aa7d672fe524f40152743971591a858984abc7c7726a059c1533c36d8",
+   "sha256": "bdbad3457eb6b3b47aef1042d4d18799e6c6402514980e5e1d9f1a618d9c9f1e",
    "size": 90742,
    "path": "docs/server_new-era_412048.9dee849b0579.json",
    "stats": {
@@ -2606,7 +2606,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412046/",
-   "sha256": "3abfd7fef0522e90cf551aa7bb7973c72661d888e35ce0742fae2e67adb233e2",
+   "sha256": "f7918079e8c086a996bd0493282f0d19c1d5eba5bd488a2c3c49de3bc2f1c03d",
    "size": 141666,
    "path": "docs/server_new-era_412046.55ccdc3fa622.json",
    "stats": {
@@ -2622,7 +2622,7 @@
    "serverId": "new-era",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/412050/",
-   "sha256": "25c7c08b00a45d3d8d19b6b60e744151726f90ba33d0f644587d90b0eed8f383",
+   "sha256": "ec1d8cc8a42801c709f479cc4de8e05041686e81c15d35e0a6ef80da2f3f135d",
    "size": 22348,
    "path": "docs/server_new-era_412050.fff3d2dc0e2f.json",
    "stats": {
@@ -2632,5 +2632,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.09-1933.json"
+ "changelog": "changelog/2026.11.09-1937.json"
 }
