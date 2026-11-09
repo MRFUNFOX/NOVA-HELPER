@@ -5,3 +5,4 @@ keys/
 node_modules/
 out-offline/
 out/
+!config/*.pub.pem
