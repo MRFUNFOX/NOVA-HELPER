@@ -67,7 +67,15 @@ export function splitPipePunishments(line: string): { text: string; punishments:
 const RE_ENTAILS = /(?:влеч[её]т|влекут|влечёт)(?:\s+за\s+собой)?\s+(.+)$/iu;
 const RE_SANCTION_WORD = /штраф|арест|лишени\p{L}*\s+(?:свобод|лиценз|прав)|выговор|увольнен|изъяти|конфиск|предупрежден|взыскани|(?<!\p{L})(ban|warn|jail|mute|бан|варн|мут)(?!\p{L})/iu;
 
+/** «3.3.1 Водитель остановился после второго требования: штраф 10.000$.» */
+const RE_AFTER_COLON = /:\s*((?:штраф|лишени\p{L}*\s+(?:водительск|прав|лиценз)|эвакуац|арест\s+имущества)[^:]*)$/iu;
+
 export function inlinePunishment(line: string): Punishment | undefined {
+  const colon = RE_AFTER_COLON.exec(line);
+  if (colon && !RE_ENTAILS.test(line)) {
+    const c = colon[1]!.trim().replace(/\s+/g, ' ');
+    return classifyPunishment(c.charAt(0).toUpperCase() + c.slice(1));
+  }
   const m = RE_ENTAILS.exec(line);
   if (!m) return undefined;
   const clause = m[1]!.trim().replace(/\s+/g, ' ');

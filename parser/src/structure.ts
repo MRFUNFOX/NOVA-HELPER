@@ -24,6 +24,8 @@ const RE_SECTION_NUM = /^(\d{1,2})\.\s+(\S.*)$/;
 const RE_ANNOTATION = /^(примечани[ея]|исключени[ея]|пояснени[ея]|уточнени[ея]|комментари[йи])\s*(?:№?\s*\d+)?\s*(?::\s*(.*)|$)/i;
 /** «Наказание: …», «Санкция: …» (Horizon, New Era) и «Наказывается лишением свободы…» (Mirage) */
 const RE_PUNISHMENT_LINE = /^(?:наказани[ея]|санкци[яи]|меры?\s+наказани[яе])\s*[:—–-]\s*(.+)$/i;
+/** «Санкции водителю: штраф 10.000$» / «Санкции пешеходу: …» (дорожные кодексы Mirage/New Era) */
+const RE_SANCTION_TO = /^санкци[яи]\s+([а-яё]+)\s*[:—–-]\s*(.+)$/i;
 const RE_PUNISHABLE_LINE = /^(?:наказыва[её]тся|карается)\s+\S/i;
 /** «Приоритет розыска: 3.» / «Уровень розыска: 1-2» (Mirage) */
 const RE_WANTED_LINE = /^(?:приоритет|уровень)\s+розыска\s*[:—–-]?\s*(\d)(?:\s*[-–]\s*(\d))?\.?\s*$/i;
@@ -194,6 +196,12 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
     if ((m = RE_PUNISHMENT_LINE.exec(t)) && top()) {
       closeAnnotation(top());
       top()!.node.punishments.push(classifyPunishment(m[1]!));
+      continue;
+    }
+    if ((m = RE_SANCTION_TO.exec(t)) && top()) {
+      closeAnnotation(top());
+      const who = m[1]!.charAt(0).toUpperCase() + m[1]!.slice(1).toLowerCase();
+      top()!.node.punishments.push(classifyPunishment(`${who}: ${m[2]!}`));
       continue;
     }
     if (RE_PUNISHABLE_LINE.test(t) && top()) {
