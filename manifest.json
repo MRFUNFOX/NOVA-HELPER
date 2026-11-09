@@ -1,34 +1,9 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.09-1937",
- "generatedAt": "2026-11-09T19:37:35.277Z",
+ "dbVersion": "2026.11.09-1943",
+ "generatedAt": "2026-11-09T19:43:49.352Z",
  "minAppVersion": "0.1.0",
- "servers": [
-  {
-   "id": "new-era",
-   "name": "New Era",
-   "forumUrl": "https://forum.nova-rp.com/forums/1000/",
-   "lawBaseUrl": "https://forum.nova-rp.com/forums/1320/",
-   "missingRuns": 0,
-   "archived": false
-  },
-  {
-   "id": "mirage",
-   "name": "Mirage",
-   "forumUrl": "https://forum.nova-rp.com/gta5/",
-   "lawBaseUrl": "https://forum.nova-rp.com/forums/929/",
-   "missingRuns": 0,
-   "archived": false
-  },
-  {
-   "id": "horizon",
-   "name": "Horizon",
-   "forumUrl": "https://forum.nova-rp.com/forums/1456/",
-   "lawBaseUrl": "https://forum.nova-rp.com/forums/1478/",
-   "missingRuns": 0,
-   "archived": false
-  }
- ],
+ "servers": [],
  "documents": [
   {
    "id": "project/406248",
@@ -36,7 +11,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406248/",
-   "sha256": "84a9129aef5a89654e27d4a8ec4a412d2c2ed22937cd301ccf1b20e2bc9a83c9",
+   "sha256": "e9fc0ebf730b8f98d90617ffe4f372c56bf1edf038ec6d4f65b4846f0ce11d73",
    "size": 19959,
    "path": "docs/project_406248.58a72e7f44a5.json",
    "stats": {
@@ -51,7 +26,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406095/",
-   "sha256": "64d06e27d81f6edca16fbd6d794973e26022dd46add4eb68d6cdec35e3bf2f1e",
+   "sha256": "2e3782daa064b384d2d2c2779e3e0e8a54f464b3db72e469e0e199e42e244225",
    "size": 9732,
    "path": "docs/project_406095.fd5dbb743226.json",
    "stats": {
@@ -66,7 +41,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406083/",
-   "sha256": "3aad0ffabc32fa4b8d239081a80a443cbbec1e3ccb9cfaa1f8044a7df6d7005b",
+   "sha256": "fc6f1da971c3fcec103f6f42403414f0fa19b69d70bf9a4f23c67bb4eb1dc054",
    "size": 9835,
    "path": "docs/project_406083.5d6b591efce0.json",
    "stats": {
@@ -81,7 +56,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406741/",
-   "sha256": "273db6ea2916fb7321776748b03c4813226f1c9534780972046ceb1ac7089490",
+   "sha256": "12f314a27389ccd38285ec34556c824292339b0dd14833c4f8b8182941807520",
    "size": 11204,
    "path": "docs/project_406741.64dd1ff26cf0.json",
    "stats": {
@@ -96,7 +71,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406086/",
-   "sha256": "06fb669d87dcb0e67517cf96c5b092c6eb69b7b9f9ddf7077d4b6f4a9d0c73a6",
+   "sha256": "dbec32c0414dd536cd3311a731f1c139c4bfe191f2429244a5b6cabebc54738a",
    "size": 26547,
    "path": "docs/project_406086.e51dd953a2d1.json",
    "stats": {
@@ -111,7 +86,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406763/",
-   "sha256": "62f9c3901d8722553c3102d32b654c0bcddca0c849e4532a918513b88cbf32b4",
+   "sha256": "ef124f554e1993c2174586ed6d52b114e6cb2218d61f0a0ef1d76e358c27cf3e",
    "size": 13874,
    "path": "docs/project_406763.a6c75debce32.json",
    "stats": {
@@ -126,7 +101,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406236/",
-   "sha256": "cf031077294e910ed6039a758484e795e2a1a106b980b1d6572fc926f0ec5a0a",
+   "sha256": "f8eb5b751c5947fc7dbfc882e604edf7874c58c68c42e697e948bd9780a4ef3b",
    "size": 9071,
    "path": "docs/project_406236.e8d22e96ceb8.json",
    "stats": {
@@ -141,7 +116,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406764/",
-   "sha256": "32c1fab569b2e97dbd7ab5c197703214d034de9bcf6b3a40e71f287eb01d072d",
+   "sha256": "268a9989eb654f4c44beb6b050f947a93a9508af37c4383a272dce99194a837c",
    "size": 15131,
    "path": "docs/project_406764.e659457d57fe.json",
    "stats": {
@@ -156,7 +131,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406080/",
-   "sha256": "8ecc5b38b1201fab85f131719299308f3ebd88a4f84f23e02a7c9ca3b8ad91e1",
+   "sha256": "d83b76a095b22d9b6e3358c07ce6234d2fb7c10abfd4a3e26ddc713488d21c60",
    "size": 6983,
    "path": "docs/project_406080.543fa8d431d1.json",
    "stats": {
@@ -171,7 +146,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/404158/",
-   "sha256": "4af503d36b5b140acb808486e987e2c9d056098f64d15c0f72575ed81e0144b9",
+   "sha256": "55dc8bbb6f7bfb5df4a5bda6b40b7199cd60c3d594cad8e49e3531207a39eb3b",
    "size": 5315,
    "path": "docs/project_404158.4ea2fd692d5a.json",
    "stats": {
@@ -186,7 +161,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/404517/",
-   "sha256": "b99e1138c8c279a56bc779efaf8f90a25d721c3c6a60caa42ca740115c5d5bfe",
+   "sha256": "695597739a5b006189234d3187b90ffdb105f788ef42beca53f01a663b515820",
    "size": 9362,
    "path": "docs/project_404517.f72f5aedcee6.json",
    "stats": {
@@ -201,7 +176,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/408658/",
-   "sha256": "b06dfe611ae608e9335a7e00b82824ccaca7b6eebec51107591e0e68176b1626",
+   "sha256": "71817209ba7891a5dfde71bcddfe39f503aaaa0d83ed25f920fe4befb1e8841d",
    "size": 5119,
    "path": "docs/project_408658.3682fbc1a860.json",
    "stats": {
@@ -216,7 +191,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406081/",
-   "sha256": "bff8fdda2d79ab13134cf18f7d72c57a57dac4fe554f9fcf526b9220b88ca88f",
+   "sha256": "a6d73b436d72ed390cd7ba9644867f90c7982bb4baf3e4e87f49cf83299e2bba",
    "size": 14344,
    "path": "docs/project_406081.eb76e9c535dd.json",
    "stats": {
@@ -231,7 +206,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406084/",
-   "sha256": "20df0c821b20aa9c140ca36114754280585abbeffcb13194febd20dfb16c1225",
+   "sha256": "cdabb2ab9b750628c533955688586827d9b669508bbbe5dd7b6c2b7e1b567b24",
    "size": 8094,
    "path": "docs/project_406084.4fd59f8754e6.json",
    "stats": {
@@ -246,7 +221,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/409353/",
-   "sha256": "f8220ec29bd1f724aff5648b45445737326c9f5ea1ec874cac8b284de0939347",
+   "sha256": "420b7c0e81ac3943c85cecaabd1ab7b00e1e0724b43fdfd6415a03ad2bd87383",
    "size": 30464,
    "path": "docs/project_409353.25225621445b.json",
    "stats": {
@@ -261,7 +236,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/408659/",
-   "sha256": "9c8b94a8623f589d3b6e71ca1985224b72c5450e87b4d4719920aecc41e7fabb",
+   "sha256": "35e59be89176b507cc7843716321c2220877336069f7511f3dca9d20782091f5",
    "size": 10974,
    "path": "docs/project_408659.60fd3fc983a5.json",
    "stats": {
@@ -276,7 +251,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402988/",
-   "sha256": "60f7b03ecce22659f78e490865729c4320041583b33b9b64ed6938d187ebff41",
+   "sha256": "3afcbdb88ad45666a2eb3c41a9f98474836fbf1868a05b79e8558ecf39e0b931",
    "size": 26337,
    "path": "docs/project_402988.28f5762006b8.json",
    "stats": {
@@ -291,7 +266,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402989/",
-   "sha256": "08a79ad87f9e8631d0f66c65e386cd9067d82ceec146acde27d8d3d7fbc0d24c",
+   "sha256": "6ecc470f11eb6d4a71fcf8a0842d1cf9b4c9afe1dd78c73a38685c835b86cae9",
    "size": 25933,
    "path": "docs/project_402989.b08ca8d92a5d.json",
    "stats": {
@@ -306,7 +281,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/409199/",
-   "sha256": "60163d5f7ae7b5ae9d19a0ada7ede4371ce6a3ab1cbcd50ad7f91ede58b412c1",
+   "sha256": "003276102447b40469d20488515a42987e47c824ea1e5c5d0d8204d50553af8c",
    "size": 8892,
    "path": "docs/project_409199.b22071bfa83c.json",
    "stats": {
@@ -321,7 +296,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/407655/",
-   "sha256": "10bc8a17daa276b41e9505f038ac4e629138bd00531d1650af382b559d7096ff",
+   "sha256": "fe52bb31da7991cd70b3a2c8c6d19e70593dbb7cc7c8a84fc3326130f9ef59f2",
    "size": 14962,
    "path": "docs/project_407655.88180adaddd1.json",
    "stats": {
@@ -336,7 +311,7 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/402986/",
-   "sha256": "ef6c4042835d7f0f146db0c11afd689f7ea4a77939dff3097c0673a9f2ce56ae",
+   "sha256": "155e6654871269b49a3c86b1c481368389de248a99ede91ccd663402dea0a8fa",
    "size": 9916,
    "path": "docs/project_402986.789d13d9bd39.json",
    "stats": {
@@ -351,7 +326,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/406242/",
-   "sha256": "79c024169a7956d61f8aaf0326e8c7740cb2bf1ce114fea1dc5b143c5c8a0d1f",
+   "sha256": "863284d1819d7627fba0b4a3b125c5c2842ce94d5c5e06d0be0ffbadcd0ca32f",
    "size": 98162,
    "path": "docs/project_406242.edc42c40248d.json",
    "stats": {
@@ -366,7 +341,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/409119/",
-   "sha256": "95087c6a5dc23f2d2ec982fd6aee7ebcde7336ce35f55a548995a2a6dbc5bb15",
+   "sha256": "a9f8c7d00f4d539da20197637771fb647b372eb38ec2626037f539e4690ef039",
    "size": 31767,
    "path": "docs/project_409119.cdb36a68ffec.json",
    "stats": {
@@ -381,7 +356,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/402987/",
-   "sha256": "e963f837217fcf7f0dcf3e1110dfcced2af23547a6be77d2221be9d3b3665513",
+   "sha256": "fe8be2476604233c411d25750ec42d87819f640ccd30cf2110a1b59d533b315c",
    "size": 20193,
    "path": "docs/project_402987.871872e2f7dd.json",
    "stats": {
@@ -396,7 +371,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/409507/",
-   "sha256": "dc1e526e1002f8cf68e32727e49587d8f7841cd929128bebbf99c1c37976ea8d",
+   "sha256": "547402f9e2906a22d005c26568d322d53c2ab8f6e81abaf29546e46d2e14f58a",
    "size": 9147,
    "path": "docs/project_409507.f1c2964da06d.json",
    "stats": {
@@ -411,7 +386,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/404708/",
-   "sha256": "28abb8307796ae7df5c806de9f741ace0bd599589c39a686eccf420a53c6b671",
+   "sha256": "777d120936bac2f262ca8b5736904d18c50a5be3810a776eea107d525b4e1458",
    "size": 32997,
    "path": "docs/project_404708.bb7ce43c243d.json",
    "stats": {
@@ -426,7 +401,7 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/402984/",
-   "sha256": "8129c82349a07767c60d9b0d34cc460a1b534d05f277d719bee6ce0820cc32b4",
+   "sha256": "ccbe85fe64bba3e1c17bb8fbc84767258f57f98f78d6b2e12530d5bf0b25cd46",
    "size": 16192,
    "path": "docs/project_402984.312a0db7e6a6.json",
    "stats": {
@@ -441,7 +416,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407999/",
-   "sha256": "08d8e94a424b8666a599c9876d2fb5afa9ccf5a2d3c7dad78bb50be4ec63903e",
+   "sha256": "7e5e97b99dda42c7367ae931915b32b609605b7e419f9616db17e173c9d08bfe",
    "size": 46137,
    "path": "docs/project_407999.cde2184cef14.json",
    "stats": {
@@ -456,7 +431,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407336/",
-   "sha256": "0b014ca56a4db2b26b3c3ad2f69af9571493dcb27f94f2c99f23f793470c0471",
+   "sha256": "7f6892e52e6191413976d0d35a9ea56aa726eeab3f84fd5675f8a94b3a2d32c0",
    "size": 4599,
    "path": "docs/project_407336.ae68eaff294d.json",
    "stats": {
@@ -471,7 +446,7 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/402996/",
-   "sha256": "2cc942c142df4a04ed7685537522b07b7f60aae42483e962889c3ac79adc77f9",
+   "sha256": "5f0e6721b00ff87993dc1da35263fbe7845a178808c78959b89f479c82716862",
    "size": 16879,
    "path": "docs/project_402996.13ddb3f13089.json",
    "stats": {
@@ -486,7 +461,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402991/",
-   "sha256": "3f88a172fcbb5fec8a1c54be7c924e20603120846ae353940490f61debcfdf86",
+   "sha256": "08828584819b18007728f044520a8349fe59d0f7d10fa9e7d0e2f62e180c0b2e",
    "size": 52326,
    "path": "docs/project_402991.18d55e834192.json",
    "stats": {
@@ -501,7 +476,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/406244/",
-   "sha256": "57bafd94625d4449c82104e7819a362c76e7a28ff3043bdfb0b690ea24909e85",
+   "sha256": "b83439e6c494d0f5e9807f643a56ce7608da448ce43195c0e07aa6a0fbb7389a",
    "size": 56033,
    "path": "docs/project_406244.e79f5899d0d5.json",
    "stats": {
@@ -516,7 +491,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402994/",
-   "sha256": "0707198b3c82f2a0e0d35c0849e960b0e12fc3f7df97d8af83c3bb765e40a76b",
+   "sha256": "690c4bd715b99f1353505f4ac6e348662834bdafef0fb17cf524ccce3e2cf2d1",
    "size": 12192,
    "path": "docs/project_402994.46340f30f47d.json",
    "stats": {
@@ -531,7 +506,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402993/",
-   "sha256": "cec6a591e526a727697fb494a04fba20536524f430f3fe83bc07c1f5e3c9eee0",
+   "sha256": "cb3b3cf2145843fa25db8d967c80d76da2f82a6c8d7eacb70ae59242c8924e9e",
    "size": 3359,
    "path": "docs/project_402993.8bc5de9adca0.json",
    "stats": {
@@ -546,7 +521,7 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402990/",
-   "sha256": "4fac4007257c133acb3513c26fe28cb7f0033165e583615b0e3de97b7e920763",
+   "sha256": "88874baaec7a7bbdc9de83798235a314c88d70afab9e4f3ed2dd35f363a963dc",
    "size": 10171,
    "path": "docs/project_402990.eff841f4f7b9.json",
    "stats": {
@@ -561,7 +536,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/403001/",
-   "sha256": "b801dc44ddf211a3b43d70b5c41f963bef50124f2d96104d13ee2d596e4b3725",
+   "sha256": "d685573fddfc406b3d2c9d4929f6aee4b70f3a0d4f904115e695eda451bac50b",
    "size": 9207,
    "path": "docs/project_403001.d8610ce2ccaa.json",
    "stats": {
@@ -576,7 +551,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/402999/",
-   "sha256": "54dcec38f78f2c1d4a0b0f3c5c5ac340a5d0a3126f1594643189c84ab303e179",
+   "sha256": "6c8e134ba6d8042d4781dfec1e424e11769b0ea76e75c3beba94618943e70eb1",
    "size": 28643,
    "path": "docs/project_402999.419f694b4deb.json",
    "stats": {
@@ -591,7 +566,7 @@
    "scope": "project",
    "category": "Правила неофициальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/403000/",
-   "sha256": "41b10954674b2a1e6aeeaa29bd702d04f0262900ece5adedb8e45f0f9f58b095",
+   "sha256": "c66e4994a9009f0d35211390f818cf672a5890bfb3886cff743fb425753fa2ae",
    "size": 3271,
    "path": "docs/project_403000.eb7344c2574d.json",
    "stats": {
@@ -606,7 +581,7 @@
    "scope": "project",
    "category": "Правила проекта",
    "sourceUrl": "https://forum.nova-rp.com/threads/403002/",
-   "sha256": "150b241ea60a8d061a36531dd4db9e7893ec22d96fb1b7c8ca0cb5fe451db613",
+   "sha256": "755713ad5e8094ed6228540cfc551a50b90448c43b7bd77fec2d52ae4ae8855c",
    "size": 4406,
    "path": "docs/project_403002.1e139fb2d932.json",
    "stats": {
@@ -614,2023 +589,7 @@
     "punishments": 0,
     "images": 0
    }
-  },
-  {
-   "id": "server/horizon/411153",
-   "title": "Административный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411153/",
-   "sha256": "47ca80546c216b28dd44b98b195414396f06fbf07d74d880430342395c40d1fa",
-   "size": 95906,
-   "path": "docs/server_horizon_411153.f4bf611c4959.json",
-   "stats": {
-    "nodes": 168,
-    "punishments": 59,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411182",
-   "title": "Гражданский кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411182/",
-   "sha256": "9c391a157dfa6493bd07d5572b90d5aea63ca42fa0d5e9d213ad618317fc90a2",
-   "size": 55554,
-   "path": "docs/server_horizon_411182.57a1bfed1e08.json",
-   "stats": {
-    "nodes": 50,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411156",
-   "title": "Дорожный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411156/",
-   "sha256": "73839c3b8e2b92c54477f636f87d170ea2276f6f980ef23b04ad7d546740210e",
-   "size": 52716,
-   "path": "docs/server_horizon_411156.bf0ac168db72.json",
-   "stats": {
-    "nodes": 91,
-    "punishments": 52,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411145",
-   "title": "Закон \"О государственной тайне”\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411145/",
-   "sha256": "5be709dd393325740b65497094af050714c0ee9ab4b21b1d7fe2146c4a892d7f",
-   "size": 9721,
-   "path": "docs/server_horizon_411145.65443ca17a7e.json",
-   "stats": {
-    "nodes": 11,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411143",
-   "title": "Закон \"О деятельности офиса Генерального Прокурора\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411143/",
-   "sha256": "150dd9b1f5b5fc0f9a14ae58687e28d6fecdcd88d45736c17203e3bd79cdf7d1",
-   "size": 71747,
-   "path": "docs/server_horizon_411143.53db16f33702.json",
-   "stats": {
-    "nodes": 136,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411139",
-   "title": "Закон \"О регулировании оборота оружия, боеприпасов и спецсредств\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411139/",
-   "sha256": "045666ef6e028e19e5c1799d83a1d36ef578f16dfe6fc0e6be63f800438b5684",
-   "size": 28357,
-   "path": "docs/server_horizon_411139.41d4919dbc9b.json",
-   "stats": {
-    "nodes": 61,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411148",
-   "title": "Закон \"О системе ордеров\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411148/",
-   "sha256": "7487d81c6220e64dc33e66230a0065c43238331fa50d00dd35777af7efc1641d",
-   "size": 21207,
-   "path": "docs/server_horizon_411148.31c37d7be06c.json",
-   "stats": {
-    "nodes": 30,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411135",
-   "title": "Закон \"О чрезвычайном и военном положении\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411135/",
-   "sha256": "03b09ae8f9caad1d9f96c8910aed24ea8f4d6cbab0c8532928a7d1b6376fa81f",
-   "size": 41123,
-   "path": "docs/server_horizon_411135.d16153053516.json",
-   "stats": {
-    "nodes": 58,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411138",
-   "title": "Закон \"О Юрисдикции Штата San-Andreas\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411138/",
-   "sha256": "b71ee09e6baa8fc5a4062deccf0b41c01c5e914e183f3447ad70ef82eb3933c9",
-   "size": 13602,
-   "path": "docs/server_horizon_411138.d86691deb697.json",
-   "stats": {
-    "nodes": 20,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/horizon/411142",
-   "title": "Закон \"О NG National Guard [NG]\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411142/",
-   "sha256": "47dd9b63e7ec73587f7c1c4e4f749f86ab7628b647f1a06db9e117d1eb5e1b2f",
-   "size": 60466,
-   "path": "docs/server_horizon_411142.64bf88caa8a7.json",
-   "stats": {
-    "nodes": 81,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411147",
-   "title": "Закон \"Об адвокатской деятельности\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411147/",
-   "sha256": "90573b61a953bff570b10bc63a1541fb5e7cea802948268d98a44a9f1b3c2d7a",
-   "size": 61970,
-   "path": "docs/server_horizon_411147.00ab9e4d5e20.json",
-   "stats": {
-    "nodes": 85,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411419",
-   "title": "Закон “Об оперативно-розыскной деятельности\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411419/",
-   "sha256": "d404b82d1fb7052bc0e04bedc6678f8903b0d8e3ea6196b87328d53240deda87",
-   "size": 43431,
-   "path": "docs/server_horizon_411419.46d6ade89425.json",
-   "stats": {
-    "nodes": 52,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411141",
-   "title": "Закон «О неприкосновенности госслужащих»",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411141/",
-   "sha256": "ae78a3674453310b45ba1248982460b8c22093c464a7ca9484291a97aca041ea",
-   "size": 19475,
-   "path": "docs/server_horizon_411141.605dede59fb2.json",
-   "stats": {
-    "nodes": 32,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411149",
-   "title": "Закон «О публичных мероприятиях»",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411149/",
-   "sha256": "2533ba2bc8e6cdeeaa3a1b8bf49f012405bc0c7623a00819925b3c37beabb766",
-   "size": 17920,
-   "path": "docs/server_horizon_411149.8ee979d621be.json",
-   "stats": {
-    "nodes": 27,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411146",
-   "title": "Закон «О Сенате»",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411146/",
-   "sha256": "9ba6242fc3738510f034b992574b57c82b5e7828dc4e9cc77a7fe5fba031a4d7",
-   "size": 27833,
-   "path": "docs/server_horizon_411146.553477068213.json",
-   "stats": {
-    "nodes": 53,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411150",
-   "title": "Закон «О средствах массовой информации штата San Andreas»",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411150/",
-   "sha256": "3c5f3d57058e0f931de357676ed9e2de82de50a7da0408909b55afe5eda852eb",
-   "size": 14113,
-   "path": "docs/server_horizon_411150.73d7b765814f.json",
-   "stats": {
-    "nodes": 21,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411137",
-   "title": "Закон о Правительстве штата San Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411137/",
-   "sha256": "1b100217a882a776fb7cb2d50890c48b3024ad0a3161053829388f615491b9ac",
-   "size": 88205,
-   "path": "docs/server_horizon_411137.1b89432e6ab0.json",
-   "stats": {
-    "nodes": 149,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411131",
-   "title": "Закон о статусе Emergency Medical Service [EMS]",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411131/",
-   "sha256": "0947844bd49ab56f22bc5ae43da5daab2948dd81b14f64317ccf0209c1441a01",
-   "size": 20630,
-   "path": "docs/server_horizon_411131.32dc7adb7b19.json",
-   "stats": {
-    "nodes": 24,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411132",
-   "title": "Закон о статусе Federal Investigation Bureau [FIB]",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411132/",
-   "sha256": "7f71cf0e656646d0428e889a310633eba327921aceb4a69a2a9346585575f0dc",
-   "size": 105350,
-   "path": "docs/server_horizon_411132.c3141a45e487.json",
-   "stats": {
-    "nodes": 128,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411134",
-   "title": "Закон о статусе Los Santos Police Department [LSPD]",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411134/",
-   "sha256": "59de8ccafcdbe6383548f702464eaf002639d59280a8f4cb08ade0ba86d946db",
-   "size": 27888,
-   "path": "docs/server_horizon_411134.d479b4ca635c.json",
-   "stats": {
-    "nodes": 34,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411133",
-   "title": "Закон о статусе San Andreas Highway Patrol [SAHP]",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411133/",
-   "sha256": "05797122e47ef9aed3414e69c3c84f86f803a28af39d4708de8a14964e05eb33",
-   "size": 27579,
-   "path": "docs/server_horizon_411133.e474408b44f8.json",
-   "stats": {
-    "nodes": 35,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411130",
-   "title": "Закон о статусе United States Secret Service [USSS]",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411130/",
-   "sha256": "57f856732a4621d0cd893951ccf4a0f11f15f103adc7db21acaa3f279a6321f3",
-   "size": 49109,
-   "path": "docs/server_horizon_411130.2116b3cc0989.json",
-   "stats": {
-    "nodes": 62,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411151",
-   "title": "Закон об охоте и о сохранении охотничьих ресурсов",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411151/",
-   "sha256": "bca2ec2b8f8b6caebaf9ccee25c46216470796f2bf6d16ef6e12cdc7a1bd6543",
-   "size": 12611,
-   "path": "docs/server_horizon_411151.77f5e20ae2e7.json",
-   "stats": {
-    "nodes": 26,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411144",
-   "title": "Закон штата San-Andreas О ЗАКРЫТЫХ, ОХРАНЯЕМЫХ И ОСОБО ОХРАНЯЕМЫХ ТЕРРИТОРИЯХ ШТАТА San-Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411144/",
-   "sha256": "8e7cc1e334c7ead5dcfa6d878c85953a6c8781a9c3e868708c7320da7f1d623a",
-   "size": 48819,
-   "path": "docs/server_horizon_411144.b6465db1d868.json",
-   "stats": {
-    "nodes": 76,
-    "punishments": 0,
-    "images": 12
-   }
-  },
-  {
-   "id": "server/horizon/411155",
-   "title": "Кодекс штата San-Andreas «О судопроизводстве и статусе судей»",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411155/",
-   "sha256": "ef8eafc6c5be2a106915bd2dbd504993ec4769e9de37b488e69cfd72fafbe9fd",
-   "size": 98679,
-   "path": "docs/server_horizon_411155.2ceb9c7fd133.json",
-   "stats": {
-    "nodes": 110,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411159",
-   "title": "Конституция Штата San-Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411159/",
-   "sha256": "b852a41ddd2ed3f350913410b2ef3fdbfb9b03c71b6bff19939bdc916f610f4a",
-   "size": 73909,
-   "path": "docs/server_horizon_411159.28e194b08c98.json",
-   "stats": {
-    "nodes": 95,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411154",
-   "title": "Процессуальный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411154/",
-   "sha256": "a5367f40c765c5617c0e29bddd51adbe37b153e56b5731dc7f22faf73e56ba2f",
-   "size": 159940,
-   "path": "docs/server_horizon_411154.e812d658c34f.json",
-   "stats": {
-    "nodes": 263,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411157",
-   "title": "Трудовой Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411157/",
-   "sha256": "b205ac79fb51ece2c7e7fff165a30efb511f03c2609c8a45a43c89137f0de6b3",
-   "size": 57187,
-   "path": "docs/server_horizon_411157.edf0243ab821.json",
-   "stats": {
-    "nodes": 99,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411152",
-   "title": "Уголовный Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411152/",
-   "sha256": "a56db2cd73f6805dee15e208927f59ae49ed06a8cd54b0a136ca81bfcf340566",
-   "size": 218256,
-   "path": "docs/server_horizon_411152.d42ceb1c3355.json",
-   "stats": {
-    "nodes": 371,
-    "punishments": 141,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411158",
-   "title": "Этический Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411158/",
-   "sha256": "05880092bb68d9effc5f47bb3f6c633d4f57dafcb94d7cc6844f38aed824621c",
-   "size": 23645,
-   "path": "docs/server_horizon_411158.02679ad9494d.json",
-   "stats": {
-    "nodes": 38,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410587",
-   "title": "Административный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410587/",
-   "sha256": "cfe64b191a6685cdc1a42a116281f042f5212f9d680376f473e5b3b1a3d8d905",
-   "size": 25815,
-   "path": "docs/server_mirage_410587.a6369c05c4bc.json",
-   "stats": {
-    "nodes": 31,
-    "punishments": 20,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/mirage/410584",
-   "title": "Дорожный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410584/",
-   "sha256": "5d6774e74dfdd87362ed2406e1b9b25036a43ca8c35b13fd754bcc23fa7bb240",
-   "size": 34947,
-   "path": "docs/server_mirage_410584.8bccc216fe7c.json",
-   "stats": {
-    "nodes": 60,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/mirage/410592",
-   "title": "Закон \"О борьбе с организованной преступностью\"",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410592/",
-   "sha256": "e7af9b86da4bbfda39473d86fbd3948aa9e207981a2f7671b2f60d6ec2085a0a",
-   "size": 22654,
-   "path": "docs/server_mirage_410592.29805c2f8521.json",
-   "stats": {
-    "nodes": 30,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410591",
-   "title": "Закон \"О государственной службе\"",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410591/",
-   "sha256": "5fdb766f09cbfb4873b48c38d9a194e37bd65b452d26a03a1dd5fe61078a70fc",
-   "size": 20891,
-   "path": "docs/server_mirage_410591.2077e72646cf.json",
-   "stats": {
-    "nodes": 24,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410600",
-   "title": "Закон \"О парковках в общественных местах\"",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410600/",
-   "sha256": "b589df837be90b351d56f5cbc8b0a482265d80bdc34815caffae17c6cd346ff3",
-   "size": 19642,
-   "path": "docs/server_mirage_410600.045d6ce5ce8b.json",
-   "stats": {
-    "nodes": 74,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/mirage/410604",
-   "title": "Закон \"О Юрисдикции Штата San-Andreas\"",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410604/",
-   "sha256": "15452eae7ebf20d166a8297b9fc9167360f10e55cc397b500d4f5761ffdb9efd",
-   "size": 7114,
-   "path": "docs/server_mirage_410604.b47a934dac16.json",
-   "stats": {
-    "nodes": 15,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/mirage/410594",
-   "title": "Закон \"Об адвокатской деятельности\"",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410594/",
-   "sha256": "bdaf692c31619655c83c78513c3567a2610b7fe6e5346c05a2551c2c51eaa8a5",
-   "size": 23547,
-   "path": "docs/server_mirage_410594.4dcfb3e83077.json",
-   "stats": {
-    "nodes": 48,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410603",
-   "title": "Закон \"Об обороте оружия\"",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410603/",
-   "sha256": "2393ee2bf6299318acd6445a4371e4001b54f7305f96006c1d782bfd854137c5",
-   "size": 40783,
-   "path": "docs/server_mirage_410603.b46697d7b48c.json",
-   "stats": {
-    "nodes": 87,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410597",
-   "title": "Закон \"O государственной тайне штата SA\"",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410597/",
-   "sha256": "32f3fb6ad0da9b5c4a0e5478709afbb87c36720f33d322d13687d4e85225ce3d",
-   "size": 11396,
-   "path": "docs/server_mirage_410597.b1eef914f54c.json",
-   "stats": {
-    "nodes": 30,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410601",
-   "title": "Закон «О неприкосновенности должностных лиц»",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410601/",
-   "sha256": "a260d9610553b4e76db7af926adf2dfb8478b3903bc702e61f912c27ff692b7d",
-   "size": 18575,
-   "path": "docs/server_mirage_410601.516a909f1c12.json",
-   "stats": {
-    "nodes": 33,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/mirage/410590",
-   "title": "Закон «О средствах массовой информации штата San Andreas»",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410590/",
-   "sha256": "2ed73e72ca05bce253fe38a71ec0d77e04577fed454dc4b52dad90a0c38db1af",
-   "size": 22271,
-   "path": "docs/server_mirage_410590.95f31e7efab5.json",
-   "stats": {
-    "nodes": 42,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410606",
-   "title": "Закон о документообороте",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410606/",
-   "sha256": "7f26930a4665c6ea84f5e9e4cf05e27b8c1473ce131095182e0beb0b6c14e477",
-   "size": 13596,
-   "path": "docs/server_mirage_410606.6e65f9c7a7d3.json",
-   "stats": {
-    "nodes": 24,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410602",
-   "title": "Закон о посещении государственных учреждений",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410602/",
-   "sha256": "3074bf8a81cd303bed510fb4c86ad8ed8f917dbbc511e3a02593c568d7c989ac",
-   "size": 29460,
-   "path": "docs/server_mirage_410602.fdc283d1af89.json",
-   "stats": {
-    "nodes": 57,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/mirage/410605",
-   "title": "Закон о Правительстве штата San Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410605/",
-   "sha256": "04ef3e9590c56023260c5a315eb4b7017d3377c72707da6c803a75733bd93392",
-   "size": 37698,
-   "path": "docs/server_mirage_410605.12271e8a7438.json",
-   "stats": {
-    "nodes": 38,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410599",
-   "title": "Закон о Прокуратуре",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410599/",
-   "sha256": "3d376eddf98bc9612fd243006857295c3677892d5a1aeb5c568398086147203f",
-   "size": 58445,
-   "path": "docs/server_mirage_410599.24b4b5f7e89e.json",
-   "stats": {
-    "nodes": 123,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410598",
-   "title": "Закон о статусе Исправительного Учреждения",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410598/",
-   "sha256": "4d258adb1544a0ba26cfdad72e6df718b2543d3d8a5e98affd1344bba931c4aa",
-   "size": 42918,
-   "path": "docs/server_mirage_410598.aaf2aec645de.json",
-   "stats": {
-    "nodes": 67,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410612",
-   "title": "Закон о статусе Emergency Medical Service [EMS]",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410612/",
-   "sha256": "e242f6f494c204fc0dc8e412cc7b1fb1f1f70f14b92cdc55fb1436591a09b2fa",
-   "size": 17371,
-   "path": "docs/server_mirage_410612.0c4ed38041cf.json",
-   "stats": {
-    "nodes": 20,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410611",
-   "title": "Закон о статусе Federal Investigation Bureau [FIB]",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410611/",
-   "sha256": "b7eff51d5f3112dc3bbb8a894922ac86d5000e4b67a3599096c57ddb27619ccf",
-   "size": 65334,
-   "path": "docs/server_mirage_410611.25f24b420696.json",
-   "stats": {
-    "nodes": 129,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/mirage/410609",
-   "title": "Закон о статусе Los Santos Police Department [LSPD]",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410609/",
-   "sha256": "3dfb0e74f48efae31ef2e8a294341178b4e868f327b187e24565ae00667cdb0d",
-   "size": 27828,
-   "path": "docs/server_mirage_410609.2380f781a1bc.json",
-   "stats": {
-    "nodes": 34,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410608",
-   "title": "Закон о статусе National Guard [NG]",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410608/",
-   "sha256": "474ea09d86723ca8277717647aced16761e4b894373d66fdb5fa0806206a6948",
-   "size": 123062,
-   "path": "docs/server_mirage_410608.b5a5a6785109.json",
-   "stats": {
-    "nodes": 266,
-    "punishments": 0,
-    "images": 3
-   }
-  },
-  {
-   "id": "server/mirage/410610",
-   "title": "Закон о статусе San Andreas Highway Patrol [SAHP]",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410610/",
-   "sha256": "4219df287308b89c5b9b7d5cd2f8ddd450e62752f41b234e4314d10a4b883ad0",
-   "size": 27367,
-   "path": "docs/server_mirage_410610.8f5a3dd0d08f.json",
-   "stats": {
-    "nodes": 34,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410613",
-   "title": "Закон о статусе United States Secret Service [USSS]",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410613/",
-   "sha256": "98f6db119d68a9b4eb1c10b44bb1834a19f3993b916485d269361304ac2a63ac",
-   "size": 42971,
-   "path": "docs/server_mirage_410613.76e9fe76e8ad.json",
-   "stats": {
-    "nodes": 6,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410607",
-   "title": "Закон об особых положениях",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410607/",
-   "sha256": "85258fb59ac944b4aee3ecc2a6c2b1a12957356b1b72a001ce20bdfeb9b99343",
-   "size": 29982,
-   "path": "docs/server_mirage_410607.0c868902fc8a.json",
-   "stats": {
-    "nodes": 39,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410589",
-   "title": "Закон об охоте и о сохранении охотничьих ресурсов",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410589/",
-   "sha256": "d584d28aada9fb263e19299c4d22f70507bb870f01f882c7941bd36f5a3c77cb",
-   "size": 9110,
-   "path": "docs/server_mirage_410589.3d23020cf7b2.json",
-   "stats": {
-    "nodes": 22,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/mirage/410596",
-   "title": "Закон об частном предпринимательстве",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410596/",
-   "sha256": "cd46b60e4abf59a113b42772816ad9244e92e71d3a1bd07092c71a491fd733ed",
-   "size": 15040,
-   "path": "docs/server_mirage_410596.46cd92984816.json",
-   "stats": {
-    "nodes": 26,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410581",
-   "title": "Конституция Штата San-Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410581/",
-   "sha256": "49ce478cfbb88c98715a5a60ebec4f7a0a4fe8b81a6ca05f02461c9e9d443fb8",
-   "size": 72961,
-   "path": "docs/server_mirage_410581.1f21659f30d1.json",
-   "stats": {
-    "nodes": 127,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/mirage/410586",
-   "title": "Процессуальный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410586/",
-   "sha256": "04a442cdbcdb2d21980e17296c3ee7e73bd7cad0f049f2cda7722988262cc418",
-   "size": 122648,
-   "path": "docs/server_mirage_410586.cc046bb4fc75.json",
-   "stats": {
-    "nodes": 243,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410585",
-   "title": "Судебный Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410585/",
-   "sha256": "955e38e6fa4578caef9b9272692c807d71eb882c8b2cb6f928c10b1515d9b645",
-   "size": 81655,
-   "path": "docs/server_mirage_410585.c6942f905b2f.json",
-   "stats": {
-    "nodes": 98,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410583",
-   "title": "Трудовой Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410583/",
-   "sha256": "fb83b4e0c80b0f1f490eba930d47dec9ac941d18ff0b47fff613e738d9c04902",
-   "size": 33251,
-   "path": "docs/server_mirage_410583.77ca300237fa.json",
-   "stats": {
-    "nodes": 46,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410588",
-   "title": "Уголовный Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410588/",
-   "sha256": "4244cabd2a189478b0e58ff07a43e05669b6886092d8daf7706aa7a4909fd7c7",
-   "size": 107070,
-   "path": "docs/server_mirage_410588.f6331ac5cb4d.json",
-   "stats": {
-    "nodes": 160,
-    "punishments": 92,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/mirage/410582",
-   "title": "Этический Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "mirage",
-   "category": "Нормативно-правовые акты",
-   "sourceUrl": "https://forum.nova-rp.com/threads/410582/",
-   "sha256": "8b98add2257514180e1a1c9feaf189aaef0ff3a3d2db3886037535f0963efec8",
-   "size": 26404,
-   "path": "docs/server_mirage_410582.0969e2e46690.json",
-   "stats": {
-    "nodes": 61,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404074",
-   "title": "Административный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404074/",
-   "sha256": "56c7b306d566da6a9cb2ca617bc4e99d15d8c4cc60a26a32fc07805a2c077be7",
-   "size": 25841,
-   "path": "docs/server_new-era_404074.537f3b41f269.json",
-   "stats": {
-    "nodes": 31,
-    "punishments": 20,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/new-era/404077",
-   "title": "Дорожный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404077/",
-   "sha256": "206a26cf1b19b75484bf9689706bf6d89560c82cf302c1d79d4c6e33e8faca5c",
-   "size": 35002,
-   "path": "docs/server_new-era_404077.5e77db3f0fa0.json",
-   "stats": {
-    "nodes": 60,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/new-era/405386",
-   "title": "Закон \"О борьбе с организованной преступностью\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/405386/",
-   "sha256": "f4a844c0af9969ed406ba21d976f852d792b484e4a424ca7dfa2df3738736b98",
-   "size": 22679,
-   "path": "docs/server_new-era_405386.3cd74b1f3adb.json",
-   "stats": {
-    "nodes": 30,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/405387",
-   "title": "Закон \"О государственной службе\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/405387/",
-   "sha256": "dc1d3cc661d10657a60d2205b249b76520ef296018b85f15c03a46c0d2d61949",
-   "size": 20910,
-   "path": "docs/server_new-era_405387.4ea8baf0431b.json",
-   "stats": {
-    "nodes": 24,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404090",
-   "title": "Закон \"О парковках в общественных местах\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404090/",
-   "sha256": "ffc648b8bbdc53970bf28c0e6c4e4fcfc17095cd758fef4344e3966830543293",
-   "size": 19711,
-   "path": "docs/server_new-era_404090.d9e40004c167.json",
-   "stats": {
-    "nodes": 74,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/new-era/404086",
-   "title": "Закон \"О Юрисдикции Штата San-Andreas\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404086/",
-   "sha256": "0255846a78d906ec91dd8041ed9b55fd6799b5003aee76a1ddc35fec66e8576f",
-   "size": 7124,
-   "path": "docs/server_new-era_404086.9d85719be65b.json",
-   "stats": {
-    "nodes": 15,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/new-era/404399",
-   "title": "Закон \"Об адвокатской деятельности\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404399/",
-   "sha256": "37172abc477b41282b125504bbd830f5c011700bd5a0da9961c593c44e6af4b0",
-   "size": 23590,
-   "path": "docs/server_new-era_404399.892349fdc1e1.json",
-   "stats": {
-    "nodes": 48,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404087",
-   "title": "Закон \"Об обороте оружия\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404087/",
-   "sha256": "24d5ea0d789912fa6865d2ff5da51f6bf50a6eb78a666a30ad210e3b0ea5f8bf",
-   "size": 40865,
-   "path": "docs/server_new-era_404087.969f91c873c8.json",
-   "stats": {
-    "nodes": 87,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404093",
-   "title": "Закон \"O государственной тайне штата SA\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404093/",
-   "sha256": "1b538f2be306f20a915b65eb84aae94b0add9ca60fef0845fb1901d487252572",
-   "size": 11421,
-   "path": "docs/server_new-era_404093.ecb7976c6719.json",
-   "stats": {
-    "nodes": 30,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404089",
-   "title": "Закон «О неприкосновенности должностных лиц»",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404089/",
-   "sha256": "33761a84003bbee8010e64d4da40f57224413448ae3d33c70ce5001f6dca8f8e",
-   "size": 18603,
-   "path": "docs/server_new-era_404089.e754d98730e7.json",
-   "stats": {
-    "nodes": 33,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/new-era/405388",
-   "title": "Закон «О средствах массовой информации штата San Andreas»",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/405388/",
-   "sha256": "69ca3ed400fa24432ac49daa25d45845395425ce0dc086c920dc8049586888ba",
-   "size": 22308,
-   "path": "docs/server_new-era_405388.7cf93b1d9c59.json",
-   "stats": {
-    "nodes": 42,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404084",
-   "title": "Закон о документообороте",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404084/",
-   "sha256": "9747e1102dbd5d9a5e5efc8cf106ab629310bc55f1cea21d9b0e9cf5c95d5ea0",
-   "size": 13615,
-   "path": "docs/server_new-era_404084.f76d9e033785.json",
-   "stats": {
-    "nodes": 24,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404088",
-   "title": "Закон о посещении государственных учреждений",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404088/",
-   "sha256": "218b4eea8466943061443b6bb1c7d3b1781d84c5a8eb748eca4599cb7053c4a3",
-   "size": 29284,
-   "path": "docs/server_new-era_404088.e12923de12fa.json",
-   "stats": {
-    "nodes": 56,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/new-era/404085",
-   "title": "Закон о Правительстве штата San Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404085/",
-   "sha256": "fb4603e12746ca670b35083b11dadfad7eb3355a4f99327be39fc906248cb131",
-   "size": 37731,
-   "path": "docs/server_new-era_404085.6cc1d26232ab.json",
-   "stats": {
-    "nodes": 38,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404091",
-   "title": "Закон о Прокуратуре",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404091/",
-   "sha256": "a1c5b1bafd204b8abf0ab9b3acee2558718f7d9fd2ca06711048fe052a0bea8a",
-   "size": 58563,
-   "path": "docs/server_new-era_404091.a0c4ce7fab57.json",
-   "stats": {
-    "nodes": 123,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404092",
-   "title": "Закон о статусе Исправительного Учреждения",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404092/",
-   "sha256": "1f1da61c27705aea49925bae6cd6e69c9ab6b2344c17e5edbcf7abb6c210d183",
-   "size": 42980,
-   "path": "docs/server_new-era_404092.eb642e7c302e.json",
-   "stats": {
-    "nodes": 67,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404068",
-   "title": "Закон о статусе Emergency Medical Service [EMS]",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404068/",
-   "sha256": "4878ec4d2a239b77cdf005cbcfdd67e0c7d67f625b5be4bd13db4816f73be801",
-   "size": 17386,
-   "path": "docs/server_new-era_404068.85ecb10035ad.json",
-   "stats": {
-    "nodes": 20,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404069",
-   "title": "Закон о статусе Federal Investigation Bureau [FIB]",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404069/",
-   "sha256": "c90d0437d6d57355d20f7e5e413b7d27abffc9a73fdbb58184cb0f9190e11fb8",
-   "size": 65230,
-   "path": "docs/server_new-era_404069.b31bc72e0cdf.json",
-   "stats": {
-    "nodes": 128,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/new-era/404071",
-   "title": "Закон о статусе Los Santos Police Department [LSPD]",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404071/",
-   "sha256": "1d1e3bd60befc267cbdd9e34ddd378d1331e27591b578dfda60f116259ba5a34",
-   "size": 27857,
-   "path": "docs/server_new-era_404071.6fe740157438.json",
-   "stats": {
-    "nodes": 34,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404072",
-   "title": "Закон о статусе National Guard [NG]",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404072/",
-   "sha256": "534eb22919c37b947a27db1a10321f6f703855d65985676c9e53c557b27b6f6e",
-   "size": 123323,
-   "path": "docs/server_new-era_404072.9aafb27a78f2.json",
-   "stats": {
-    "nodes": 266,
-    "punishments": 0,
-    "images": 3
-   }
-  },
-  {
-   "id": "server/new-era/404070",
-   "title": "Закон о статусе San Andreas Highway Patrol [SAHP]",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404070/",
-   "sha256": "472273df1aacebe913d0c3e304e0057c59c778dc9ca8348c8152d89b4382cf9c",
-   "size": 27396,
-   "path": "docs/server_new-era_404070.b7c8011551e9.json",
-   "stats": {
-    "nodes": 34,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404067",
-   "title": "Закон о статусе United States Secret Service [USSS]",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404067/",
-   "sha256": "f7be538470841e833cb0e4ac0e2d1617a69e4f69dde9c4e912db03806f7b189a",
-   "size": 42975,
-   "path": "docs/server_new-era_404067.0f6792318f24.json",
-   "stats": {
-    "nodes": 6,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404082",
-   "title": "Закон об особых положениях",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404082/",
-   "sha256": "d544f2e9284781826259733a28f76ac8a4f74fd5614c0eca08de465a1056f84a",
-   "size": 30016,
-   "path": "docs/server_new-era_404082.b8eadcd6bc4c.json",
-   "stats": {
-    "nodes": 39,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/409236",
-   "title": "Закон об охоте и о сохранении охотничьих ресурсов",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/409236/",
-   "sha256": "6fd72e5f1bac721c0c1d95adb48e9301a360d8548f820af6e49077a3ce2ffbc3",
-   "size": 9127,
-   "path": "docs/server_new-era_409236.4890346786e3.json",
-   "stats": {
-    "nodes": 22,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/new-era/404094",
-   "title": "Закон об частном предпринимательстве",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404094/",
-   "sha256": "126cd7334f9df302e92b348ab00ae7503ce83b9dcb270225188dabb67ecd6bda",
-   "size": 15061,
-   "path": "docs/server_new-era_404094.230f306f8fa9.json",
-   "stats": {
-    "nodes": 26,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404080",
-   "title": "Конституция Штата San-Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404080/",
-   "sha256": "df906b2416b0ed8eddbc17abf8d9838ad9f50ca79efca2a76c95c742655fead6",
-   "size": 73083,
-   "path": "docs/server_new-era_404080.4215acd2148e.json",
-   "stats": {
-    "nodes": 127,
-    "punishments": 0,
-    "images": 2
-   }
-  },
-  {
-   "id": "server/new-era/404075",
-   "title": "Процессуальный Кодекс Штата San Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404075/",
-   "sha256": "24ea4be36dbec8eabb6e5bbb4faa283a189c170565ac87f1c387981fb4ac3951",
-   "size": 122886,
-   "path": "docs/server_new-era_404075.f4dff4609e67.json",
-   "stats": {
-    "nodes": 243,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404076",
-   "title": "Судебный Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404076/",
-   "sha256": "6339bbf37692d1da5d1f833faf1a4e65d543b1c70a117aca9d3741c3264f533e",
-   "size": 81748,
-   "path": "docs/server_new-era_404076.727bd26056d4.json",
-   "stats": {
-    "nodes": 98,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404078",
-   "title": "Трудовой Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404078/",
-   "sha256": "77b688c60ceb89e5772c496500fe9f22f67d95efcd19f29a1038de9cad6de666",
-   "size": 33292,
-   "path": "docs/server_new-era_404078.eedefe203d3a.json",
-   "stats": {
-    "nodes": 46,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404073",
-   "title": "Уголовный Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404073/",
-   "sha256": "55f7a0feedd984748b6284d85b969da3e001b79db5ebfd222d8ebf65aa68095f",
-   "size": 107225,
-   "path": "docs/server_new-era_404073.7490e1f0eb49.json",
-   "stats": {
-    "nodes": 160,
-    "punishments": 92,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/404079",
-   "title": "Этический Кодекс Штата San-Andreas",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/404079/",
-   "sha256": "94a4a032cea1def38de735970282579a005a15d4ef52bbb9f75250010587cca9",
-   "size": 26460,
-   "path": "docs/server_new-era_404079.c1b34f12a70d.json",
-   "stats": {
-    "nodes": 61,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412045",
-   "title": "NEW Административный кодекс Штата San Andreas (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412045/",
-   "sha256": "c647aba7a0a749732602ba655214c8f94c0541a701cc3c203560842a95cc5870",
-   "size": 101646,
-   "path": "docs/server_new-era_412045.3c779dd0a868.json",
-   "stats": {
-    "nodes": 99,
-    "punishments": 65,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412044",
-   "title": "NEW Дорожный кодекс Штата San Andreas (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412044/",
-   "sha256": "dfefbf7f8173c59a38f9b3016ced7db814260558708c2d9100b8870c6373a712",
-   "size": 56054,
-   "path": "docs/server_new-era_412044.384e558c73c1.json",
-   "stats": {
-    "nodes": 77,
-    "punishments": 62,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412067",
-   "title": "NEW Закон ''Об управлении государственной собственностью, деятельности организаций'' (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412067/",
-   "sha256": "ae550a67b169382127b922cdef5c1cb4488060c4b6044bbae358f8ab1317cad9",
-   "size": 19431,
-   "path": "docs/server_new-era_412067.76e1d6051808.json",
-   "stats": {
-    "nodes": 33,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412086",
-   "title": "NEW Закон \"Закон “О Сенате штата Сан-Андреас” (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412086/",
-   "sha256": "3d2d4845f67264a7486da0641d74772524a97bea6a0e9e374bb868eb3e1cb0a1",
-   "size": 28892,
-   "path": "docs/server_new-era_412086.8bc2cbfc6273.json",
-   "stats": {
-    "nodes": 54,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412062",
-   "title": "NEW Закон \"О взаимодействии государственных структур штата Сан-Андреас\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412062/",
-   "sha256": "115e6a9372e34fdff19636b96eb0b691f980e9f6dfc33654d431ed71073349f6",
-   "size": 81460,
-   "path": "docs/server_new-era_412062.e3679ed54e83.json",
-   "stats": {
-    "nodes": 131,
-    "punishments": 0,
-    "images": 1
-   }
-  },
-  {
-   "id": "server/new-era/412060",
-   "title": "NEW Закон “О государственной и служебной тайне” (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412060/",
-   "sha256": "5b57e4dd59176a9a97f1c2ae514e11f852766d11c65254949d1b3f746442c9f7",
-   "size": 32600,
-   "path": "docs/server_new-era_412060.da0e5c27b3d7.json",
-   "stats": {
-    "nodes": 30,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412071",
-   "title": "NEW Закон “О деятельности органов следствия” (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412071/",
-   "sha256": "2e4a00d5070cb740f69285e227e0fce03dbbe6bb8af0b841b875f7cd04f5d50d",
-   "size": 48233,
-   "path": "docs/server_new-era_412071.2d69e15e9864.json",
-   "stats": {
-    "nodes": 59,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412073",
-   "title": "NEW Закон \"О деятельности офиса Генерального прокурора Штата Сан-Андреас\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412073/",
-   "sha256": "3f019483de64c83b18d146869796bf00d3f102346d4b923dd0e743906469b431",
-   "size": 55256,
-   "path": "docs/server_new-era_412073.be7644b44ebf.json",
-   "stats": {
-    "nodes": 92,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412041",
-   "title": "NEW Закон \"О Правительстве штата Сан-Андреас\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412041/",
-   "sha256": "1a2f16a003676ecef2ba24e9035817b84d2dd5a25fdcf02ae29791123c60a066",
-   "size": 55284,
-   "path": "docs/server_new-era_412041.fd3dcbb523c6.json",
-   "stats": {
-    "nodes": 110,
-    "punishments": 2,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412064",
-   "title": "NEW Закон \"О регулировании оборота оружия, боеприпасов и спецсредств в штате Сан-Андреас\"",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412064/",
-   "sha256": "370d389a05ef708c7b1c2d93abc98c851e96e3e36a60f2b43cdcc0a94517beea",
-   "size": 47255,
-   "path": "docs/server_new-era_412064.84909d21fa4c.json",
-   "stats": {
-    "nodes": 77,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412068",
-   "title": "NEW Закон “О регулировании охоты\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412068/",
-   "sha256": "ead0d9c94990ddae23ca99d4e22d1b78117ce07995c448b0532abfbe184ed0a0",
-   "size": 8868,
-   "path": "docs/server_new-era_412068.2b67618064c5.json",
-   "stats": {
-    "nodes": 21,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412059",
-   "title": "NEW Закон “О системе ордеров”. (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412059/",
-   "sha256": "9f897e69dacda91a73d19b690a2a96fb329725bf2c4b0bd746b12c5291b699b7",
-   "size": 23248,
-   "path": "docs/server_new-era_412059.eecf434279ef.json",
-   "stats": {
-    "nodes": 30,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412082",
-   "title": "NEW Закон \"О San Andreas Highway Patrol\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412082/",
-   "sha256": "100b668376ad832827575bacff50ee6054bc793e4a19651428b6824d9bddac0f",
-   "size": 38411,
-   "path": "docs/server_new-era_412082.c9d3a97e625e.json",
-   "stats": {
-    "nodes": 31,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412078",
-   "title": "NEW Закон \"Об исправительном учреждении Bolingbroke Penitentiary” (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412078/",
-   "sha256": "aa3d75725f0d524060b5e399414b0ce6722c2d89bad6a92c6d5931c532204ce7",
-   "size": 38420,
-   "path": "docs/server_new-era_412078.1c2da63e6229.json",
-   "stats": {
-    "nodes": 60,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412070",
-   "title": "NEW Закон “Об экспертизе и экспертной деятельности” (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412070/",
-   "sha256": "54114dccecf0b0f9c07a958a75b4726b6f77fb1e3d144f5c397c3e7eba44bec1",
-   "size": 71327,
-   "path": "docs/server_new-era_412070.a0b67840fbcc.json",
-   "stats": {
-    "nodes": 44,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412058",
-   "title": "NEW Закон «О неприкосновенности должностных лиц» (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412058/",
-   "sha256": "5de5b92ba48c43f8771d4f0f9e0c7bd6c13b2418172c352b843f037280fbc149",
-   "size": 16122,
-   "path": "docs/server_new-era_412058.916f7b463b11.json",
-   "stats": {
-    "nodes": 10,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412085",
-   "title": "NEW Закон о \"Журналистской деятельности (СМИ) (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412085/",
-   "sha256": "466fbed87048083026b65661856fe58667c504f6e7876d8c71ac1fa951af8910",
-   "size": 25963,
-   "path": "docs/server_new-era_412085.ed1c63410e86.json",
-   "stats": {
-    "nodes": 42,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412053",
-   "title": "NEW Закон о \"Закрытых и охраняемых территориях\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412053/",
-   "sha256": "97a9d8e2b205b121ed9127586245034bc8503796076fa50232daf180ad037196",
-   "size": 47686,
-   "path": "docs/server_new-era_412053.df05732857b2.json",
-   "stats": {
-    "nodes": 58,
-    "punishments": 0,
-    "images": 17
-   }
-  },
-  {
-   "id": "server/new-era/412055",
-   "title": "NEW Закон о \"Министерстве Юстиции и его структурных подразделениях\" (Для Ознакомлени)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412055/",
-   "sha256": "45450cdeb360ebc913ac8a39e2500bc1682f470c7fc7351aa0957d4541ca4073",
-   "size": 38475,
-   "path": "docs/server_new-era_412055.8aa3d676765f.json",
-   "stats": {
-    "nodes": 62,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412072",
-   "title": "NEW Закон о “Силах специального назначения” (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412072/",
-   "sha256": "7dea5bac75d673e209755102560d1c948b1bdcc0479b59d887d45f0b3ab74bb4",
-   "size": 14165,
-   "path": "docs/server_new-era_412072.e6dbb05affda.json",
-   "stats": {
-    "nodes": 16,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412084",
-   "title": "NEW Закон о \"Emergency Medical Service\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412084/",
-   "sha256": "c895b22375ca3862864683d1df474bc33053d40ee294a00fbe05d25cdcce9fdb",
-   "size": 39839,
-   "path": "docs/server_new-era_412084.eab4121378d8.json",
-   "stats": {
-    "nodes": 73,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412054",
-   "title": "NEW Закон о \"Federal Investigation Bureau\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412054/",
-   "sha256": "dd3db00d359b91b175e9172949e624f29bc55739419dcb9ab759b59a34511a6f",
-   "size": 63631,
-   "path": "docs/server_new-era_412054.c655c7a82520.json",
-   "stats": {
-    "nodes": 86,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412080",
-   "title": "NEW Закон о \"Los Santos Police Department\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412080/",
-   "sha256": "ab073a2c0c9337cc2f381271c7d5d351b16f07923b767338aa9c663d52970851",
-   "size": 57292,
-   "path": "docs/server_new-era_412080.fffcc8bad0d0.json",
-   "stats": {
-    "nodes": 105,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412083",
-   "title": "NEW Закон о \"National Guard\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412083/",
-   "sha256": "939ed861bae3641dc2784fc69101b1bd831fc4e89e0a06d647b2d92b112b405b",
-   "size": 57205,
-   "path": "docs/server_new-era_412083.b8d0e53d7eb9.json",
-   "stats": {
-    "nodes": 70,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412077",
-   "title": "NEW Закон о United States Secret Service (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412077/",
-   "sha256": "2aba9608651914318935cde08a25075440948c43a81a4679762a22a280fdb6e2",
-   "size": 42264,
-   "path": "docs/server_new-era_412077.78bfb0fe67dd.json",
-   "stats": {
-    "nodes": 38,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412057",
-   "title": "NEW Закон об \"Адвокатуре и адвокатской деятельности\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412057/",
-   "sha256": "6122accc2e4cbd08513ba8471477ff79153cd4c3b47cc92f6a63292dc0baefbc",
-   "size": 67046,
-   "path": "docs/server_new-era_412057.dddcd623a229.json",
-   "stats": {
-    "nodes": 83,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412069",
-   "title": "NEW ЗАКОН об «Особых положениях» (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412069/",
-   "sha256": "f9118231d292024aa4ff13b1223f3eda44230cf5c6967ed6d9ffbec70b2dda15",
-   "size": 28396,
-   "path": "docs/server_new-era_412069.241159bce7a8.json",
-   "stats": {
-    "nodes": 50,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412075",
-   "title": "NEW Избирательный кодекс штата San Andreas (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412075/",
-   "sha256": "219df45ab685549f88703f8a823c5d7281feb6c8d9050035b11fe7f7bdf7c2b5",
-   "size": 16553,
-   "path": "docs/server_new-era_412075.7aa1921418da.json",
-   "stats": {
-    "nodes": 20,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412049",
-   "title": "NEW Конституционный закон \"О судебной системе штата Сан-Андреас\" (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412049/",
-   "sha256": "dd17713ea03241a46452e7695fa60f6daf872dce04fa4a4d8fe12160e36e6a56",
-   "size": 241646,
-   "path": "docs/server_new-era_412049.a716bbd17e11.json",
-   "stats": {
-    "nodes": 393,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412038",
-   "title": "NEW Конституция штата Сан-Андреас (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412038/",
-   "sha256": "ec054f46cb47fc3ffaf940bb3b9bbd2fd9047f8685249c8e124d610784853373",
-   "size": 76085,
-   "path": "docs/server_new-era_412038.3f037ef18d1a.json",
-   "stats": {
-    "nodes": 98,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412042",
-   "title": "NEW Процессуальный кодекс Штата San Andreas (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412042/",
-   "sha256": "41900e74c99d78b29c236d3cb699f90dc3b3df2e85a8a4bf09ff42bce4b35474",
-   "size": 188253,
-   "path": "docs/server_new-era_412042.45d3944e5978.json",
-   "stats": {
-    "nodes": 288,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412048",
-   "title": "NEW Трудовой кодекс Штата San Andreas (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412048/",
-   "sha256": "bdbad3457eb6b3b47aef1042d4d18799e6c6402514980e5e1d9f1a618d9c9f1e",
-   "size": 90742,
-   "path": "docs/server_new-era_412048.9dee849b0579.json",
-   "stats": {
-    "nodes": 66,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412046",
-   "title": "NEW Уголовный кодекс штата San Andreas (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412046/",
-   "sha256": "f7918079e8c086a996bd0493282f0d19c1d5eba5bd488a2c3c49de3bc2f1c03d",
-   "size": 141666,
-   "path": "docs/server_new-era_412046.55ccdc3fa622.json",
-   "stats": {
-    "nodes": 192,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/new-era/412050",
-   "title": "NEW Этический Кодекс Штата Сан-Андреас (Для Ознакомления)",
-   "scope": "server",
-   "serverId": "new-era",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412050/",
-   "sha256": "ec1d8cc8a42801c709f479cc4de8e05041686e81c15d35e0a6ef80da2f3f135d",
-   "size": 22348,
-   "path": "docs/server_new-era_412050.fff3d2dc0e2f.json",
-   "stats": {
-    "nodes": 35,
-    "punishments": 0,
-    "images": 0
-   }
   }
  ],
- "changelog": "changelog/2026.11.09-1937.json"
+ "changelog": "changelog/2026.11.09-1943.json"
 }
