@@ -1,0 +1,35 @@
+/*
+ * NOVA HELPER — design tokens
+ * Снято со стилей forum.nova-rp.com (XenForo, style 33, тёмная схема :root:not([data-variation]))
+ * 09.11.2026. Оверлей использует тёмную схему форума как основную.
+ */
+:root {
+  /* Поверхности (от самой глубокой к самой высокой) */
+  --nv-bg:            #0f0f0f; /* pageBg / chromeBg */
+  --nv-surface:       #1c1c1c; /* contentBg */
+  --nv-surface-2:     #242424; /* paletteColor1 */
+  --nv-surface-3:     #2b2b2b; /* paletteColor2 */
+  --nv-input:         #141414; /* inputBgColor */
+  --nv-border:        #2b2b2b; /* borderColor */
+  --nv-border-strong: #595959; /* paletteColor3 */
+
+  /* Текст */
+  --nv-text:          #dedede; /* textColor */
+  --nv-text-dim:      #a8a8a8; /* textColorDimmed */
+  --nv-text-muted:    #8a8a8a; /* textColorMuted */
+
+  /* Фирменный акцент NOVA */
+  --nv-accent:        #ffc300; /* paletteAccent2 / buttonPrimaryBg */
+  --nv-accent-soft:   #ffe180; /* paletteAccent1 (dark) — текст-акцент на тёмном */
+  --nv-accent-tint:   #3c3410; /* paletteAccent3 (dark) — подложка акцента */
+  --nv-on-accent:     #171717; /* buttonTextColor */
+
+  /* Статусы (приглушённые, как в тёмной схеме форума) */
+  --nv-danger:        #f4bec0; /* errorColor (dark) */
+  --nv-success:       #c2f4be; /* successColor (dark) */
+  --nv-warning:       #f4ebbe; /* warningColor (dark) */
+
+  /* Типографика */
+  --nv-font: Manrope, "Segoe UI", "Helvetica Neue", Helvetica, Roboto, sans-serif;
+  --nv-font-mono: "Cascadia Mono", Consolas, "Roboto Mono", monospace;
+}

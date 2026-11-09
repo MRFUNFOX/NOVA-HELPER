@@ -1,0 +1,26 @@
+{
+  "name": "nova-helper-parser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Сбор правил и законов NOVA RP с форума в структурированную базу для NOVA HELPER",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "scrape": "tsx src/cli.ts scrape",
+    "build:offline": "tsx src/cli.ts offline",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "playwright-core": "^1.65.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

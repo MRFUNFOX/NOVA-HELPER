@@ -1,0 +1,99 @@
+name: База правил NOVA RP
+
+# Каждые 3 часа собирает правила проекта и законы всех серверов с forum.nova-rp.com
+# и публикует базу в ветку `data`. Программа NOVA HELPER скачивает её оттуда.
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+    inputs:
+      via:
+        description: 'Чем загружать страницы форума'
+        type: choice
+        default: auto
+        options: [auto, browser, firecrawl]
+
+concurrency:
+  group: rules-db
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Подключить ветку data (прошлая версия базы)
+        run: |
+          git config user.name "nova-helper-bot"
+          git config user.email "nova-helper-bot@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git fetch --depth=1 origin data
+            git worktree add out FETCH_HEAD
+            git -C out checkout -B data
+          else
+            git worktree add --orphan -b data out
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: parser/package-lock.json
+
+      - name: Установка
+        working-directory: parser
+        run: npm ci
+
+      - name: Тесты парсера
+        working-directory: parser
+        run: npm test
+
+      - name: Браузер Chromium
+        working-directory: parser
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Сбор правил и законов
+        id: scrape
+        working-directory: parser
+        env:
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          NOVA_SIGNING_KEY: ${{ secrets.NOVA_SIGNING_KEY }}
+        run: npx tsx src/cli.ts scrape --out ../out --via ${{ inputs.via || 'auto' }}
+
+      - name: Публикация в ветку data
+        working-directory: out
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Нечего публиковать"
+          else
+            git commit -q -m "База $(jq -r .dbVersion manifest.json) — $(date -u +%FT%TZ)"
+            git push -q origin data
+          fi
+
+      - name: Сброс кэша CDN для манифеста
+        if: steps.scrape.outputs.changed == 'true'
+        run: |
+          for f in manifest.json manifest.sig status.json changelog/index.json; do
+            curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@data/$f" >/dev/null || true
+          done
+
+      - name: Уведомление о расхождениях на форуме
+        if: steps.scrape.outputs.warnings != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          body=$(jq -r '"Проверка " + .checkedAt + ", база " + .dbVersion + "\n\n" + (.warnings | map("- " + .) | join("\n"))' out/status.json)
+          num=$(gh issue list --label parser-warnings --state open --json number --jq '.[0].number')
+          if [ -z "$num" ]; then
+            gh label create parser-warnings --color FFC300 --description "Предупреждения парсера правил" 2>/dev/null || true
+            gh issue create --title "Парсер: предупреждения по правилам" --label parser-warnings --body "$body"
+          else
+            gh issue edit "$num" --body "$body"
+          fi
