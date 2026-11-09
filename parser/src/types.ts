@@ -115,6 +115,11 @@ export interface RuleDocument {
   publishedAt?: string;
   fetchedAt: string;
   locked: boolean;
+  /**
+   * Проект или текст «для ознакомления» (например «NEW Уголовный кодекс… (Для Ознакомления)»):
+   * программа помечает его как ещё не действующий и не подставляет в ответы ИИ как закон.
+   */
+  draft?: boolean;
   children: RuleNode[];
   /** Поправки, которые не удалось привязать к конкретному пункту. */
   looseAmendments: Amendment[];

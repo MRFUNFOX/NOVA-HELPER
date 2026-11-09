@@ -10,8 +10,14 @@ export const CONFIG = {
   serversPage: 'https://forum.nova-rp.com/categories/21/',
   serversScope: '.block--category21',
   serverTitle: /^сервер\s*\|\s*(.+)$/i,
-  /** Путь внутри каждого сервера — сопоставляется по названию, а не по адресу */
-  lawPath: ['Государственные организации', 'Правительство', 'Законодательная база'],
+  /**
+   * Путь внутри каждого сервера — сопоставляется по названию, а не по адресу.
+   * На разных серверах названия различаются: у Horizon и New Era «Законодательная база»,
+   * у Mirage — «Законодательство» с подразделами «Нормативно-правовые акты», «Указы Губернатора»…
+   */
+  lawPath: [['Государственные организации'], ['Правительство'], ['Законодательная база', 'Законодательство']],
+  /** Глубина вложенных подразделов внутри законодательного раздела */
+  lawSubforumDepth: 2,
   rulesForum: 'https://forum.nova-rp.com/forums/893/',
   /** Подразделы, которые не являются действующими документами */
   skipForums: [/архив/i],
@@ -76,21 +82,35 @@ export async function discover(fetcher: Fetcher, log: (s: string) => void = () =
     try {
       let current: NodeLink = node;
       let html = await get(node.url);
-      for (const step of CONFIG.lawPath) {
-        const next = parseNodeList(html).find((n) => titleMatches(n.title, step));
-        if (!next) throw new Error(`в «${current.title}» нет подраздела «${step}»`);
+      for (const variants of CONFIG.lawPath) {
+        const nodes = parseNodeList(html);
+        const next = variants.map((v) => nodes.find((n) => titleMatches(n.title, v))).find(Boolean);
+        if (!next) throw new Error(`в «${current.title}» нет подраздела «${variants.join('» или «')}»`);
         current = next;
         html = await get(next.url);
       }
       server.lawBaseUrl = current.url;
-      const threads = await listThreads(current.url, html);
-      for (const t of threads) {
-        out.docs.push({
-          scope: 'server', serverId: server.id, category: 'Законодательная база',
-          threadId: t.id, sourceUrl: t.url, listTitle: t.title, listItem: t,
-        });
-      }
-      log(`    законов: ${threads.length}`);
+
+      // Темы самого раздела и всех вложенных подразделов (кроме архива)
+      let count = 0;
+      const collect = async (forum: NodeLink, forumHtml: string, category: string, depth: number) => {
+        const threads = await listThreads(forum.url, forumHtml);
+        for (const t of threads) {
+          out.docs.push({
+            scope: 'server', serverId: server.id, category,
+            threadId: t.id, sourceUrl: t.url, listTitle: t.title, listItem: t,
+          });
+        }
+        count += threads.length;
+        if (depth >= CONFIG.lawSubforumDepth) return;
+        for (const sub of parseNodeList(forumHtml)) {
+          if (CONFIG.skipForums.some((re) => re.test(sub.title))) continue;
+          await collect(sub, await get(sub.url), sub.title, depth + 1);
+        }
+      };
+      await collect(current, html, 'Законодательная база', 0);
+      if (!count) out.warnings.push(`Сервер ${name}: в «${current.title}» не найдено ни одной темы`);
+      log(`    законов: ${count}`);
     } catch (e) {
       out.warnings.push(`Сервер ${name}: ${(e as Error).message}`);
     }

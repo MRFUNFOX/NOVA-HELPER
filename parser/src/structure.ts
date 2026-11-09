@@ -88,7 +88,9 @@ export function parseStructure(lines: Line[], opts: ParseOptions): RuleNode[] {
   /** Первая строка узла: звёзды розыска, юрисдикция, наказание после « | ». */
   function applyHeadText(d: Draft, raw: string) {
     let text = raw.trim();
-    for (let guard = 0; guard < 4; guard++) {
+    // Звёзды и «[юрисдикция]» бывают только у статей и их частей; в заголовках «[Лидер]» — это сам заголовок
+    const legal = d.node.kind === 'article' || d.node.kind === 'part' || d.node.kind === 'point';
+    for (let guard = 0; legal && guard < 4; guard++) {
       const stars = RE_STARS.exec(text);
       if (stars) {
         const a = stars[1]!.length;

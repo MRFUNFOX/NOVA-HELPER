@@ -41,18 +41,21 @@ export function buildDocument(pages: ThreadPage[], meta: DocMeta, now: Date): Bu
 
   const stats = { nodes: 0, punishments: 0, images: 0 };
   const dupNumbers = new Set<string>();
-  const seen = new Set<string>();
   (function walk(ns: RuleNode[]) {
     for (const n of ns) {
       stats.nodes++;
       stats.punishments += n.punishments.length;
       stats.images += n.images.length;
-      if (n.id.includes('~')) dupNumbers.add(n.number ?? n.id);
-      seen.add(n.id);
+      // Повтор подзаголовков — норма; предупреждаем только о повторе номеров статей и пунктов
+      if (n.id.includes('~') && n.number && (n.kind === 'article' || n.kind === 'point')) dupNumbers.add(n.number);
       walk(n.children);
     }
   })(children);
-  for (const d of dupNumbers) warnings.push(`${title}: номер ${d} встречается на форуме дважды`);
+  if (dupNumbers.size) {
+    const list = [...dupNumbers];
+    const shown = list.slice(0, 8).join(', ') + (list.length > 8 ? ` и ещё ${list.length - 8}` : '');
+    warnings.push(`${title}: номера встречаются на форуме дважды — ${shown}`);
+  }
 
   const doc: RuleDocument = {
     id: docId,
@@ -65,6 +68,7 @@ export function buildDocument(pages: ThreadPage[], meta: DocMeta, now: Date): Bu
     publishedAt: main.postedAt,
     fetchedAt: now.toISOString(),
     locked: pages[0]?.locked ?? false,
+    draft: /для\s+ознакомлени|законопроект|проект\s+(закона|кодекса)/i.test(title) || undefined,
     children,
     looseAmendments,
     stats,
