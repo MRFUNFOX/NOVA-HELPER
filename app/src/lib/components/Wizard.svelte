@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import HotkeyField from './HotkeyField.svelte';
   import { app } from '../state.svelte';
   import { backend } from '../backend';
   import { pretty } from '../hotkey';
+  import { enter } from '../motion';
 
   let step = $state(0);
   let download = $state<'idle' | 'loading' | 'done' | 'error'>(app.ready ? 'done' : 'idle');
@@ -36,7 +38,8 @@
     {/each}
   </ol>
 
-  <div class="card">
+  {#key step}
+  <div class="card" in:fly={enter}>
     {#if step === 0}
       <div class="mark" aria-hidden="true">§</div>
       <h1>Правила NOVA RP — не сворачивая игру</h1>
@@ -89,7 +92,7 @@
           </div>
         {:else}
           <span class="spinner" aria-hidden="true"></span>
-          <p>Загружаю правила с сервера…</p>
+          <div class="loading"><p>Загружаю правила с сервера…</p><span class="sk" style="height: 8px; width: 100%"></span></div>
         {/if}
       </div>
       <p>Окно открывается на <b>{pretty(app.settings?.hotkey ?? '')}</b>. Справа внизу экрана будет маленькая подсказка с этой клавишей — её можно выключить в настройках.</p>
@@ -99,24 +102,27 @@
       </div>
     {/if}
   </div>
+  {/key}
 </div>
 
 <style>
-  .wizard { flex: 1; overflow-y: auto; padding: 22px 22px 32px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .wizard { flex: 1; overflow-y: auto; padding: 28px 22px 32px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
   .steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; width: 100%; max-width: 520px; }
   .steps li { flex: 1; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-xs); color: var(--text-muted); }
   .steps li::before { content: ''; height: 3px; border-radius: 3px; background: var(--surface-3); }
   .steps li.done::before, .steps li.current::before { background: var(--accent); }
   .steps li.current { color: var(--text); font-weight: 700; }
   .dot { display: none; }
-  .card { width: 100%; max-width: 520px; }
+  .card { width: 100%; max-width: 540px; padding: 28px; }
+  .loading { flex: 1; }
+  @media (max-width: 479px) { .card { padding: 20px 16px; } }
   .mark { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-size: 32px; font-weight: 800; margin-bottom: 18px; }
   h1 { margin: 0 0 10px; font-size: var(--fs-xl); font-weight: 800; line-height: 1.25; }
   p { margin: 0 0 14px; color: var(--text-dim); }
   p b { color: var(--text); }
   .small { font-size: var(--fs-sm); }
   .facts { margin: 0 0 22px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
-  .facts li { padding-left: 14px; border-left: 3px solid var(--accent); font-size: var(--fs-sm); color: var(--text); }
+  .facts li { padding: 10px 12px 10px 14px; border-left: 3px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface-2); font-size: var(--fs-sm); color: var(--text); }
   .next { width: 100%; height: 44px; font-size: var(--fs-md); }
   .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
   .nav .btn.primary { min-width: 160px; height: 40px; }
@@ -125,9 +131,9 @@
   .howto-row { display: flex; justify-content: space-between; padding: 9px 12px; border-top: 1px solid var(--border); color: var(--text-dim); }
   .howto-row.hl { background: var(--accent-tint); color: var(--text); font-weight: 700; }
   .howto-row.hl .v { color: var(--accent); }
-  .try { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); font-size: var(--fs-sm); }
+  .try { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface-2); font-size: var(--fs-sm); }
   .try :global(svg) { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
-  .loadstate { display: flex; gap: 12px; align-items: flex-start; padding: 14px; margin-bottom: 14px; border-radius: var(--radius); background: var(--surface); }
+  .loadstate { display: flex; gap: 12px; align-items: flex-start; padding: 14px; margin-bottom: 14px; border-radius: var(--radius); background: var(--surface-2); }
   .loadstate p { margin: 0 0 8px; color: var(--text); font-size: var(--fs-sm); }
   .loadstate :global(svg) { flex-shrink: 0; color: var(--accent); }
   .spinner { width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--surface-3); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }

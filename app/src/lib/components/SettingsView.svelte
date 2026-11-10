@@ -100,27 +100,29 @@
 </div>
 
 <style>
-  .settings { max-width: 620px; padding: 18px 22px 64px; }
-  h1 { margin: 0 0 14px; font-size: var(--fs-xl); font-weight: 800; }
-  section { padding: 16px 0; border-bottom: 1px solid var(--border); }
+  .settings { max-width: 680px; padding: 22px 24px 64px; display: flex; flex-direction: column; gap: 12px; }
+  h1 { margin: 0 0 8px; font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.01em; }
+  section { padding: 18px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
   h2 { margin: 0 0 2px; font-size: var(--fs-md); font-weight: 800; }
   .hint { display: block; margin: 0 0 10px; font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.45; }
   .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
-  .segmented button { border: 0; background: none; padding: 6px 14px; border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
-  .segmented button.on { background: var(--surface-3); color: var(--text); }
+  .segmented button { border: 0; background: none; padding: 7px 14px; transition: background 0.15s var(--ease), color 0.15s var(--ease); border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
+  .segmented button.on { background: var(--accent); color: var(--on-accent); }
   .toggles { display: flex; flex-direction: column; gap: 14px; }
   .toggle { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
   .toggle b { display: block; font-size: var(--fs-sm); }
   .toggle .hint { margin: 2px 0 0; }
   .toggle input { appearance: none; flex-shrink: 0; width: 36px; height: 20px; margin: 1px 0 0; border-radius: 999px; background: var(--surface-3); position: relative; cursor: pointer; transition: background 0.15s; }
-  .toggle input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-dim); transition: transform 0.15s, background 0.15s; }
+  .toggle input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-dim); transition: transform 0.2s var(--ease), background 0.15s; }
   .toggle input:checked { background: var(--accent); }
   .toggle input:checked::after { transform: translateX(16px); background: var(--on-accent); }
   .row { display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
   .value { margin: 4px 0 2px; font-size: var(--fs-sm); font-weight: 700; }
   .row .hint { margin: 0; }
-  .game { display: flex; gap: 10px; align-items: flex-start; color: var(--text-dim); font-size: var(--fs-sm); border-bottom: 0; }
+  .game { display: flex; gap: 12px; align-items: flex-start; color: var(--text-dim); font-size: var(--fs-sm); background: var(--accent-glow), var(--surface); border-color: var(--accent-line); }
   .game p { margin: 0; }
   .game :global(svg) { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
-  .quit { margin-top: 4px; padding-left: 0; }
+  .quit { align-self: flex-start; margin-top: 4px; color: var(--danger); }
+  .quit:hover { background: var(--danger-tint); color: var(--danger); }
+  @media (max-width: 639px) { .settings { padding: 16px 14px 48px; } section { padding: 16px; } }
 </style>

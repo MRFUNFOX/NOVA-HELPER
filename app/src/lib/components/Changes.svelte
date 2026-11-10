@@ -13,6 +13,11 @@
       .filter((c) => c.documents.length),
   );
 
+  // Номер пункта уже стоит на плашке — убираем его из начала текста
+  function strip(t: string | undefined | null, num?: string | null) {
+    return num ? (t ?? '').replace(new RegExp(`^${num.replace(/\./g, '\\.')}\\.?\\s*`), '') : (t ?? '');
+  }
+
   function go(docId: string, nodeId: string) {
     if (app.doc(docId) && app.index.byId.has(nodeId)) app.open(docId, nodeId);
   }
@@ -45,9 +50,9 @@
                 <span class="kind" class:add={n.kind === 'added'} class:del={n.kind === 'removed'}>{KIND[n.kind]}</span>
                 <span class="diff selectable">
                   {#if n.kind === 'modified'}
-                    {#each wordDiff(n.before ?? '', n.after ?? '') as p, i (i)}<span class={p.op}>{p.s}</span>{/each}
-                  {:else if n.kind === 'added'}<span class="add">{n.after}</span>
-                  {:else}<span class="del">{n.before}</span>{/if}
+                    {#each wordDiff(strip(n.before, n.number), strip(n.after, n.number)) as p, i (i)}<span class={p.op}>{p.s}</span>{/each}
+                  {:else if n.kind === 'added'}<span class="add">{strip(n.after, n.number)}</span>
+                  {:else}<span class="del">{strip(n.before, n.number)}</span>{/if}
                 </span>
               </span>
             </button>
@@ -59,38 +64,44 @@
 </div>
 
 <style>
-  .changes { max-width: 760px; padding: 18px 22px 64px; }
-  h1 { margin: 0 0 4px; font-size: var(--fs-xl); font-weight: 800; }
-  .lead { margin: 0 0 18px; font-size: var(--fs-sm); }
-  .empty { color: var(--text-dim); }
-  .release { margin-bottom: 26px; }
-  h2 { font-size: var(--fs-md); font-weight: 800; color: var(--accent); margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-  .doc { margin-bottom: 14px; }
-  h3 { font-size: var(--fs-sm); font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .doclink { border: 0; background: none; padding: 0; color: var(--text); font-weight: 700; text-align: left; }
+  .changes { max-width: 860px; padding: 22px 24px 64px; }
+  h1 { margin: 0 0 6px; font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.01em; }
+  .lead { margin: 0 0 20px; font-size: var(--fs-sm); }
+  .empty { padding: 20px; color: var(--text-dim); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+  .release { margin-bottom: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  h2 { display: flex; align-items: center; gap: 10px; font-size: var(--fs-md); font-weight: 800; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  h2::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+  .doc { padding: 12px 16px 8px; }
+  .doc + .doc { border-top: 1px solid var(--border); }
+  h3 { font-size: var(--fs-sm); font-weight: 700; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .doclink { border: 0; background: none; padding: 0; color: var(--text); font-weight: 800; text-align: left; font-size: var(--fs-md); }
   .doclink:hover { color: var(--accent-soft); }
-  .tag { font-size: var(--fs-xs); font-weight: 600; color: var(--success); }
-  .tag.gone { color: var(--danger); }
+  .tag { padding: 2px 8px; border-radius: var(--radius-sm); font-size: var(--fs-xs); font-weight: 700; color: var(--success); background: var(--success-tint); }
+  .tag.gone { color: var(--danger); background: var(--danger-tint); }
   .change {
     display: grid;
-    grid-template-columns: 52px 1fr;
-    gap: 10px;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
     width: 100%;
-    padding: 8px 8px 8px 0;
+    padding: 10px;
+    margin: 0 -10px;
+    width: calc(100% + 20px);
     border: 0;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius);
     background: transparent;
     text-align: left;
     font-size: var(--fs-sm);
+    transition: background 0.15s var(--ease);
   }
-  .change:not(:disabled):hover { background: var(--surface); }
+  .change:not(:disabled):hover { background: var(--surface-2); }
   .change:disabled { cursor: default; }
-  .num { font-weight: 800; color: var(--accent); text-align: right; font-variant-numeric: tabular-nums; }
-  .what { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .num { display: grid; place-items: center; min-width: 54px; height: 28px; padding: 0 8px; border-radius: var(--radius-sm); background: var(--accent-tint); color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .what { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .kind { font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); }
   .kind.add { color: var(--success); }
   .kind.del { color: var(--danger); }
-  .diff { color: var(--text-dim); white-space: pre-line; line-height: 1.5; }
-  .diff .add { background: var(--accent-tint); color: var(--accent-soft); border-radius: 2px; }
+  .diff { color: var(--text-dim); white-space: pre-line; line-height: 1.55; }
+  .diff .add { background: rgba(255, 195, 0, 0.2); color: var(--accent-soft); border-radius: 3px; }
   .diff .del { color: var(--text-muted); text-decoration: line-through; }
+  @media (max-width: 639px) { .changes { padding: 16px 14px 48px; } }
 </style>

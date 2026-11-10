@@ -1,6 +1,7 @@
 import type { RuleDocument } from '@shared/types';
 import { backend, checkAppUpdate, type AppUpdate, type CheckResult, type Db, type Settings } from './backend';
 import { buildIndex, search, type Hit, type Index } from './search';
+import type { IconName } from './components/Icon.svelte';
 
 export type View =
   | { kind: 'home' }
@@ -9,14 +10,18 @@ export type View =
   | { kind: 'settings' };
 
 /** Короткие подписи разделов в левом меню (полное название — в заголовке документа) */
-const CATEGORY_ORDER: [string, string][] = [
-  ['Общие правила', 'Общие правила'],
-  ['Общие правила мероприятий', 'Мероприятия'],
-  ['Правила для криминальных организаций', 'Криминальные организации'],
-  ['Правила для государственных структур', 'Госструктуры'],
-  ['Правила неофициальных организаций', 'Семьи и неофициальные'],
-  ['Правила проекта', 'Правила форума'],
+const CATEGORY_ORDER: [string, string, IconName][] = [
+  ['Общие правила', 'Общие правила', 'book'],
+  ['Общие правила мероприятий', 'Мероприятия', 'calendar'],
+  ['Правила для криминальных организаций', 'Криминал', 'mask'],
+  ['Правила для государственных структур', 'Госструктуры', 'building'],
+  ['Правила неофициальных организаций', 'Семьи', 'users'],
+  ['Правила проекта', 'Правила форума', 'chat'],
 ];
+
+export function categoryIcon(c: string): IconName {
+  return CATEGORY_ORDER.find(([k]) => k === c)?.[2] ?? 'book';
+}
 
 export function categoryLabel(c: string): string {
   return CATEGORY_ORDER.find(([k]) => k === c)?.[1] ?? c.replace(/^Правила\s+(для\s+)?/i, '').replace(/^./, (x) => x.toUpperCase());
@@ -40,7 +45,15 @@ class AppState {
   view = $state<View>({ kind: 'home' });
   query = $state('');
   sidebarOpen = $state(false);
+  /** Меню свёрнуто до колонки иконок (запоминается между запусками) */
+  sidebarCollapsed = $state(readFlag('sidebarCollapsed'));
   aiOpen = $state(false);
+  /** Свёрнутые разделы документа: id узла → true */
+  collapsed = $state<Record<string, boolean>>({});
+  /** Фильтр пунктов в документе */
+  filter = $state<'all' | 'punished' | 'severe'>('all');
+  /** База ещё ни разу не загружалась в этом запуске — показываем скелет */
+  loaded = $state(false);
   version = $state('');
 
   /** Обновление базы правил */
@@ -71,7 +84,7 @@ class AppState {
     const order = (c: string) => { const i = CATEGORY_ORDER.findIndex(([k]) => k === c); return i < 0 ? 99 : i; };
     return [...groups.entries()]
       .sort((a, b) => order(a[0]) - order(b[0]))
-      .map(([category, docs]) => ({ category, label: categoryLabel(category), docs }));
+      .map(([category, docs]) => ({ category, label: categoryLabel(category), icon: categoryIcon(category), docs }));
   });
 
   /** Сколько пунктов изменилось в последнем обновлении — бейдж «Что изменилось» */
@@ -86,6 +99,7 @@ class AppState {
   setDb(db: Db) {
     this.db = db;
     this.index = buildIndex(db.docs);
+    this.loaded = true;
   }
 
   async start() {
@@ -175,8 +189,32 @@ class AppState {
   }
 
   open(docId: string, focus?: string) {
+    if (this.view.kind !== 'doc' || this.view.docId !== docId) this.filter = 'all';
+    if (focus) this.revealNode(docId, focus);
     this.view = { kind: 'doc', docId, focus };
     this.sidebarOpen = false;
+  }
+
+  /** Раскрыть свёрнутые разделы, внутри которых лежит пункт */
+  revealNode(docId: string, nodeId: string) {
+    const doc = this.doc(docId);
+    if (!doc) return;
+    const path: string[] = [];
+    const find = (ns: typeof doc.children): boolean => ns.some((n) => {
+      path.push(n.id);
+      if (n.id === nodeId || find(n.children)) return true;
+      path.pop();
+      return false;
+    });
+    find(doc.children);
+    for (const id of path) if (this.collapsed[id]) delete this.collapsed[id];
+    // Пункт должен быть виден и при включённом фильтре
+    this.filter = 'all';
+  }
+
+  toggleSidebar() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    writeFlag('sidebarCollapsed', this.sidebarCollapsed);
   }
 
   notify(text: string, tone: 'ok' | 'error' = 'ok') {
@@ -184,6 +222,13 @@ class AppState {
     clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => (this.toast = null), tone === 'error' ? 7000 : 3500);
   }
+}
+
+function readFlag(key: string): boolean {
+  try { return localStorage.getItem(`nova.${key}`) === '1'; } catch { return false; }
+}
+function writeFlag(key: string, v: boolean) {
+  try { localStorage.setItem(`nova.${key}`, v ? '1' : '0'); } catch { /* хранилище недоступно — не страшно */ }
 }
 
 export const app = new AppState();

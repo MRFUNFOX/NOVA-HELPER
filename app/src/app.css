@@ -1,33 +1,45 @@
-/* NOVA HELPER — цвета и шрифт форума NOVA RP (тёмная схема), см. design/tokens.css */
+/* NOVA HELPER — графитовые панели, скруглённые карточки, жёлтый акцент NOVA */
 :root {
-  --bg: #0f0f0f;
-  --surface: #1c1c1c;
-  --surface-2: #242424;
-  --surface-3: #2b2b2b;
-  --border: #2b2b2b;
-  --border-strong: #3a3a3a;
-  --text: #dedede;
-  --text-dim: #a8a8a8;
-  --text-muted: #8a8a8a;
+  --bg: #1a1b1e;          /* основа окна: меню и область содержимого */
+  --surface: #212226;     /* карточки */
+  --surface-2: #27282d;   /* наведение, поля ввода, активный пункт меню */
+  --surface-3: #313238;   /* нажатие, переключатели */
+  --border: #2d2f34;
+  --border-strong: #3a3c42;
+  --text: #f3f4f6;
+  --text-dim: #b3b6bd;
+  --text-muted: #7f838b;
+
   --accent: #ffc300;
-  --accent-soft: #ffe180;
-  --accent-tint: #3c3410;
-  --on-accent: #171717;
-  --danger: #f4bec0;
-  --danger-line: #e0656b;
-  --danger-tint: #3a1f21;
-  --success: #c2f4be;
+  --accent-soft: #ffd453;
+  --accent-tint: rgba(255, 195, 0, 0.12);
+  --accent-line: rgba(255, 195, 0, 0.38);
+  --accent-glow: linear-gradient(140deg, rgba(255, 195, 0, 0.17) 0%, rgba(255, 195, 0, 0.04) 45%, rgba(255, 195, 0, 0) 70%);
+  --on-accent: #1a1400;
+
+  --danger: #ff8a8a;
+  --danger-line: #ff5a5f;
+  --danger-tint: rgba(255, 90, 95, 0.12);
+  --orange: #ffad5c;
+  --orange-line: #ff9f43;
+  --orange-tint: rgba(255, 159, 67, 0.12);
+  --success: #6fdc9a;
+  --success-tint: rgba(95, 211, 141, 0.1);
+  --info: #8fb0ff;
+  --info-tint: rgba(122, 162, 255, 0.1);
 
   --font: 'Manrope Variable', Manrope, 'Segoe UI', sans-serif;
   --fs-xs: 12px;
   --fs-sm: 13.5px;
   --fs-md: 15px;
-  --fs-lg: 18px;
+  --fs-lg: 17px;
   --fs-xl: 22px;
-  --radius: 8px;
-  --radius-sm: 5px;
-  --titlebar: 40px;
-  --gutter: 64px; /* колонка номеров пунктов */
+  --fs-2xl: 26px;
+  --radius-sm: 7px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --topbar: 56px;
+  --ease: cubic-bezier(0.22, 0.7, 0.2, 1);
 
   color-scheme: dark;
 }
@@ -43,7 +55,6 @@ html, body {
   font-size: var(--fs-md);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: 'tnum' 0;
   overflow: hidden;
   user-select: none;
 }
@@ -76,40 +87,65 @@ a { color: var(--accent-soft); text-underline-offset: 2px; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 36px;
+  height: 38px;
   padding: 0 16px;
   border-radius: var(--radius);
   border: 1px solid var(--border-strong);
-  background: var(--surface-2);
+  background: var(--surface);
   font-size: var(--fs-sm);
   font-weight: 600;
   white-space: nowrap;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease), transform 0.1s var(--ease);
 }
-.btn:hover { background: var(--surface-3); }
-.btn:disabled { opacity: 0.5; cursor: default; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
 .btn.primary:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
 .btn.ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
 .btn.ghost:hover { background: var(--surface-2); color: var(--text); }
 .btn.wide { width: 100%; }
+.btn.sm { height: 32px; padding: 0 12px; font-size: var(--fs-xs); }
+
+/* Карточка — основной контейнер содержимого */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
 
 kbd {
-  display: inline-block;
-  min-width: 26px;
-  padding: 1px 8px;
-  border-radius: var(--radius-sm);
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
   border: 1px solid var(--border-strong);
-  border-bottom-width: 2px;
   background: var(--surface-2);
   font-family: var(--font);
-  font-size: var(--fs-xs);
+  font-size: 11px;
   font-weight: 700;
-  text-align: center;
-  color: var(--text);
+  color: var(--text-dim);
 }
 
 .muted { color: var(--text-muted); }
 
+/* Скелетная загрузка: серые плашки на месте будущего содержимого с мягким переливом */
+.sk {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-2) 35%, #34353b 50%, var(--surface-2) 65%, var(--surface-2) 100%);
+  background-size: 300% 100%;
+  animation: sk-shimmer 1.4s linear infinite;
+}
+@keyframes sk-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -50% 0; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

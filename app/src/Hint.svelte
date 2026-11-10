@@ -29,14 +29,14 @@
     height: 34px;
     padding: 0 12px 0 6px;
     border-radius: 999px;
-    background: rgba(15, 15, 15, 0.82);
+    background: rgba(26, 27, 30, 0.9);
     border: 1px solid rgba(255, 195, 0, 0.35);
     color: var(--text);
     font-size: var(--fs-xs);
     font-weight: 700;
     white-space: nowrap;
   }
-  .mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 800; }
+  .mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 800; }
   .keys { display: inline-flex; align-items: center; gap: 3px; }
   .keys kbd { padding: 0 6px; min-width: 22px; font-size: 11px; background: rgba(255, 255, 255, 0.08); }
   .plus { color: var(--text-muted); font-size: 10px; }

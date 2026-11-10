@@ -1,8 +1,14 @@
 <script lang="ts">
+  import { fade, scale } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import { app } from '../state.svelte';
+  import { ease, ms } from '../motion';
+
+  const pop = { start: 0.96, duration: ms(220), easing: ease };
 
   const c = $derived(app.check);
+  // В описании релиза первый абзац — «что нового», дальше инструкция для скачивания с сайта
+  const whatsNew = $derived(app.appUpdate?.notes?.trim().split(/\n\s*\n/)[0]?.replace(/^Скачайте[\s\S]*/, '').trim() ?? '');
   const total = $derived((c?.changedDocs ?? 0) + (c?.addedDocs ?? 0) + (c?.removedDocs ?? 0));
 
   function plural(n: number, one: string, few: string, many: string) {
@@ -12,8 +18,8 @@
 </script>
 
 {#if app.updateDialog && c}
-  <div class="backdrop">
-    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="upd-title">
+  <div class="backdrop" transition:fade={{ duration: ms(160) }}>
+    <div class="dialog" transition:scale={pop} role="alertdialog" aria-modal="true" aria-labelledby="upd-title">
       {#if c.status === 'appTooOld'}
         <h2 id="upd-title">Нужна новая версия программы</h2>
         <p>Правила на сервере обновились в новом формате, который эта версия не понимает. Обновите программу — правила подтянутся после перезапуска.</p>
@@ -44,12 +50,12 @@
 {/if}
 
 {#if app.appUpdateDialog && app.appUpdate}
-  <div class="backdrop">
-    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="app-title">
+  <div class="backdrop" transition:fade={{ duration: ms(160) }}>
+    <div class="dialog" transition:scale={pop} role="alertdialog" aria-modal="true" aria-labelledby="app-title">
       <div class="icon"><Icon name="download" size={22} /></div>
       <h2 id="app-title">Вышла новая версия NOVA HELPER {app.appUpdate.version}</h2>
       <p>Программа обновится сама и перезапустится — удалять и устанавливать заново не нужно. Правила и настройки сохранятся.</p>
-      {#if app.appUpdate.notes}<p class="what">{app.appUpdate.notes}</p>{/if}
+      {#if whatsNew}<p class="what">{whatsNew}</p>{/if}
       {#if app.appUpdateProgress !== null}
         <div class="bar" role="progressbar" aria-valuenow={Math.round(app.appUpdateProgress * 100)}><span style="width: {Math.max(4, app.appUpdateProgress * 100)}%"></span></div>
       {/if}
@@ -64,8 +70,8 @@
 {/if}
 
 <style>
-  .backdrop { position: absolute; inset: var(--titlebar) 0 0 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.6); }
-  .dialog { width: 100%; max-width: 440px; padding: 22px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); }
+  .backdrop { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(10, 10, 12, 0.66); backdrop-filter: blur(2px); }
+  .dialog { width: 100%; max-width: 440px; padding: 24px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border-strong); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55); }
   .icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--accent-tint); color: var(--accent); margin-bottom: 14px; }
   h2 { margin: 0 0 8px; font-size: var(--fs-lg); font-weight: 800; line-height: 1.3; }
   p { margin: 0 0 10px; font-size: var(--fs-sm); color: var(--text-dim); }

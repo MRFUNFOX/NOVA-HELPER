@@ -6,6 +6,11 @@ name: Сборка программы для Windows
 # Версию программы задаёт app/src-tauri/tauri.conf.json → "version".
 on:
   workflow_dispatch:
+    inputs:
+      notes:
+        description: Что нового (это увидят игроки в окне обновления)
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -52,6 +57,8 @@ jobs:
           tagName: v__VERSION__
           releaseName: NOVA HELPER __VERSION__
           releaseBody: |
+            ${{ inputs.notes }}
+
             Скачайте файл NOVA.HELPER_…_x64-setup.exe ниже и запустите его.
             Если Windows покажет «Система Windows защитила ваш компьютер» — нажмите «Подробнее» → «Выполнить в любом случае».
             Уже установленная программа обновится сама.

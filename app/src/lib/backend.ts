@@ -129,6 +129,8 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
   await new Promise((r) => setTimeout(r, 120));
   switch (cmd) {
     case 'db_load': {
+      // ?slow — медленный диск/первый запуск: посмотреть скелетную загрузку
+      if (params.has('slow')) await new Promise((r) => setTimeout(r, Number(params.get('slow')) || 4000));
       if (params.has('empty') && !mockState.dbLoaded) return JSON.stringify({ manifest: null, docs: [], changelogs: [] });
       const r = await fetch('/dev/mock-db.json');
       return r.text();
@@ -141,7 +143,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
         changedDocs: 2, addedDocs: 0, removedDocs: 0, summary: ['изменено пунктов: 3'],
       } satisfies CheckResult;
     case 'db_update': {
-      await new Promise((r) => setTimeout(r, 900));
+      await new Promise((r) => setTimeout(r, params.has('slowupdate') ? 6000 : 900));
       mockState.dbLoaded = true;
       return (await fetch('/dev/mock-db.json')).text();
     }
@@ -159,7 +161,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       mockState.settings.firstRunDone = true;
       return;
     case 'app_version':
-      return '0.1.0';
+      return '0.2.0';
     default:
       return;
   }
