@@ -1,0 +1,171 @@
+<script lang="ts">
+  /**
+   * Пошаговая настройка ИИ-помощника: получить бесплатный ключ Groq и вставить его.
+   * Показывается в мастере первого запуска, один раз после обновления у тех, кто ставил
+   * программу раньше, и по кнопке «Настроить» в окне помощника.
+   */
+  import { fly } from 'svelte/transition';
+  import Icon from './Icon.svelte';
+  import { ai } from '../ai.svelte';
+  import { backend } from '../backend';
+  import { enter } from '../motion';
+
+  /** `onDone(true)` — ключ настроен, `onDone(false)` — пропустили */
+  let { onDone, compact = false }: { onDone: (configured: boolean) => void; compact?: boolean } = $props();
+
+  const KEYS_URL = 'https://console.groq.com/keys';
+  // Ключ уже есть (смена ключа) — сразу к шагу «получите ключ»
+  let step = $state(ai.ready ? 1 : 0);
+  let key = $state('');
+  let checking = $state(false);
+  let error = $state('');
+  let confirmSkip = $state(false);
+  let opened = $state(false);
+
+  async function check() {
+    if (checking) return;
+    checking = true;
+    error = '';
+    // С ключом часто копируют пробелы, кавычки или перенос строки — убираем
+    key = key.replace(/[\s"'«»“”]/g, '');
+    try {
+      await ai.setKey(key);
+      step = 3;
+    } catch (e) {
+      error = String(e);
+    } finally {
+      checking = false;
+    }
+  }
+
+  async function paste() {
+    try {
+      key = (await navigator.clipboard.readText()).trim();
+      error = '';
+    } catch {
+      error = 'Не получилось вставить автоматически — нажмите в поле и Ctrl+V.';
+    }
+  }
+
+  function openGroq() {
+    backend.openUrl(KEYS_URL);
+    opened = true;
+  }
+</script>
+
+<div class="setup" class:compact>
+  {#if confirmSkip}
+    <div class="pane" in:fly={enter}>
+      <span class="ico warn"><Icon name="alert" size={22} /></span>
+      <h2>Пропустить настройку?</h2>
+      <p>Без ключа ИИ-помощник работать не будет. Всё остальное — правила, законы и поиск — работает как обычно.</p>
+      <p class="muted">Настроить можно в любой момент: кнопка <b>«ИИ-помощник»</b> справа вверху → <b>«Настроить»</b>.</p>
+      <div class="nav">
+        <button class="btn ghost" onclick={() => onDone(false)}>Всё равно пропустить</button>
+        <button class="btn primary" onclick={() => (confirmSkip = false)}>Вернуться к настройке</button>
+      </div>
+    </div>
+  {:else}
+    {#key step}
+      <div class="pane" in:fly={enter}>
+        {#if step === 0}
+          <span class="ico"><Icon name="spark" size={24} /></span>
+          <h2>ИИ-помощник</h2>
+          <p>Спросите своими словами — например, «можно ли убить копа, если он первый достал оружие» — помощник ответит по правилам проекта и законам штата и покажет, на какие пункты опирается.</p>
+          <ul class="facts">
+            <li>Бесплатно: нужен личный ключ сервиса <b>Groq</b> — это нейросеть, которая пишет ответы.</li>
+            <li>Займёт 2 минуты. Ключ хранится только на вашем компьютере.</li>
+          </ul>
+          <div class="nav">
+            <button class="btn ghost skip" onclick={() => (confirmSkip = true)}>Пропустить</button>
+            <button class="btn primary" onclick={() => (step = 1)}>Настроить</button>
+          </div>
+
+        {:else if step === 1}
+          <p class="stepno">Шаг 1 из 2</p>
+          <h2>Получите ключ на сайте Groq</h2>
+          <ol class="howto">
+            <li><span>1</span><div>Нажмите кнопку ниже — сайт Groq откроется в браузере.</div></li>
+            <li><span>2</span><div>Войдите: <b>«Continue with Google»</b> или по почте. Регистрация бесплатная.</div></li>
+            <li><span>3</span><div>Нажмите <b>«Create API Key»</b>. В поле названия напишите что угодно, например <b>NOVA</b>, и нажмите <b>«Submit»</b>.</div></li>
+            <li><span>4</span><div>Нажмите <b>«Copy»</b> рядом с ключом. Он начинается с <code>gsk_</code>.<br /><small>Ключ показывается один раз. Если закрыли окно — просто создайте новый.</small></div></li>
+          </ol>
+          <button class="btn wide open" class:primary={!opened} onclick={openGroq}><Icon name="external" size={16} />Открыть сайт Groq</button>
+          <div class="nav">
+            <button class="btn ghost" onclick={() => (step = 0)}>Назад</button>
+            <button class="btn" class:primary={opened} onclick={() => (step = 2)}>Я скопировал ключ</button>
+          </div>
+
+        {:else if step === 2}
+          <p class="stepno">Шаг 2 из 2</p>
+          <h2>Вставьте ключ</h2>
+          <p>Нажмите в поле и <b>Ctrl+V</b> — или кнопку «Вставить».</p>
+          <div class="field" class:bad={!!error}>
+            <input
+              type="text"
+              placeholder="gsk_…"
+              spellcheck="false"
+              autocomplete="off"
+              bind:value={key}
+              oninput={() => (error = '')}
+              onkeydown={(e) => { if (e.key === 'Enter') check(); }}
+            />
+            <button class="btn sm" onclick={paste}>Вставить</button>
+          </div>
+          {#if error}<p class="error" role="alert"><Icon name="alert" size={15} />{error}</p>{/if}
+          <div class="nav">
+            <button class="btn ghost" onclick={() => (step = 1)}>Назад</button>
+            <button class="btn primary" onclick={check} disabled={checking || !key.trim()}>
+              {#if checking}<span class="spinner" aria-hidden="true"></span>Проверяю…{:else}Проверить ключ{/if}
+            </button>
+          </div>
+          <p class="muted small">Не получается? Проверьте, что скопировали ключ целиком, или создайте новый на сайте Groq.</p>
+
+        {:else}
+          <span class="ico ok"><Icon name="check" size={24} /></span>
+          <h2>Помощник готов</h2>
+          <p>Ключ {ai.status?.keyHint} подошёл. Задавайте вопросы через кнопку <b>«ИИ-помощник»</b> справа вверху.</p>
+          <p class="muted small">Ответ — подсказка по правилам. Окончательно решает администрация проекта.</p>
+          <div class="nav end">
+            <button class="btn primary" onclick={() => onDone(true)}>Готово</button>
+          </div>
+        {/if}
+      </div>
+    {/key}
+  {/if}
+</div>
+
+<style>
+  .setup { width: 100%; }
+  .pane { display: flex; flex-direction: column; }
+  .ico { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--accent); color: var(--on-accent); margin-bottom: 16px; }
+  .ico.ok { background: var(--success-tint); color: var(--success); }
+  .ico.warn { background: var(--accent-tint); color: var(--accent); }
+  h2 { margin: 0 0 10px; font-size: var(--fs-xl); font-weight: 800; line-height: 1.25; }
+  p { margin: 0 0 12px; color: var(--text-dim); }
+  p b, li b { color: var(--text); }
+  .stepno { margin: 0 0 4px; font-size: var(--fs-xs); font-weight: 700; color: var(--accent); }
+  .small { font-size: var(--fs-sm); }
+  .facts { margin: 0 0 6px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .facts li { padding: 10px 12px 10px 14px; border-left: 3px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface-2); font-size: var(--fs-sm); color: var(--text-dim); }
+  .howto { margin: 4px 0 14px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .howto li { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-sm); color: var(--text-dim); line-height: 1.5; }
+  .howto li > span { display: grid; place-items: center; flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--accent-tint); color: var(--accent); font-weight: 800; font-size: var(--fs-xs); }
+  .howto small { color: var(--text-muted); }
+  code { padding: 1px 5px; border-radius: 4px; background: var(--surface-3); color: var(--accent-soft); font-size: 0.92em; }
+  .open { height: 42px; }
+  .field { display: flex; gap: 8px; padding: 4px 4px 4px 12px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); transition: border-color 0.15s, box-shadow 0.15s; }
+  .field:focus-within { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-tint); }
+  .field.bad { border-color: color-mix(in srgb, var(--danger-line) 60%, transparent); }
+  .field input { flex: 1; min-width: 0; height: 34px; border: 0; outline: 0; background: none; color: var(--text); font-family: ui-monospace, Consolas, monospace; font-size: var(--fs-sm); }
+  .error { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; padding: 10px 12px; border-radius: var(--radius); background: var(--danger-tint); color: var(--danger); font-size: var(--fs-sm); }
+  .error :global(svg) { flex-shrink: 0; margin-top: 2px; }
+  .nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 20px; }
+  .nav.end { justify-content: flex-end; }
+  .nav .btn.primary { min-width: 150px; height: 40px; }
+  .skip { color: var(--text-muted); }
+  .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.25); border-top-color: var(--on-accent); animation: spin 0.8s linear infinite; }
+  .compact h2 { font-size: var(--fs-lg); }
+  .compact .nav { flex-wrap: wrap; }
+  .compact .nav .btn.primary { min-width: 0; flex: 1; }
+</style>

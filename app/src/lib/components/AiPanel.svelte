@@ -1,43 +1,169 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
-  import { app, focusSearch } from '../state.svelte';
+  import { app } from '../state.svelte';
+  import { ai, pieces, sourceLabel, type Source, type Turn } from '../ai.svelte';
   import { ease, ms } from '../motion';
 
-  // ИИ-помощник подключается следующим этапом (нужен сервер-посредник с ключами нейросети).
-  // Пока панель честно говорит об этом и предлагает поиск, который уже понимает сленг.
-  const examples = ['Можно ли убивать без причины на мероприятии?', 'Что будет за оскорбление родных?', 'Сколько можно иметь аккаунтов?'];
+  let input = $state('');
+  let list: HTMLElement | undefined = $state();
+  let field: HTMLTextAreaElement | undefined = $state();
+  const examples = [
+    'Можно ли убить человека без причины?',
+    'Что будет за оскорбление родных?',
+    'Какое наказание за кражу машины?',
+    'Можно ли грабить в зелёной зоне?',
+  ];
+
+  // Новое сообщение и каждый кусочек ответа — прокрутка вниз
+  $effect(() => {
+    const last = ai.turns[ai.turns.length - 1];
+    last?.a; last?.error; ai.turns.length;
+    if (list) requestAnimationFrame(() => list!.scrollTo({ top: list!.scrollHeight }));
+  });
+  $effect(() => { if (ai.ready) field?.focus(); });
+
+  function send(text = input) {
+    if (!text.trim() || ai.busy) return;
+    ai.ask(text);
+    input = '';
+  }
+
+  function onKey(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  function open(s: Source) {
+    app.query = '';
+    app.open(s.entry.doc.id, s.entry.node.id);
+  }
+
+  /** Источники, на которые ответ действительно сослался (их показываем под ответом) */
+  function cited(t: Turn): Source[] {
+    const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' ? [p.n] : [])));
+    return t.sources.filter((s) => used.has(s.n));
+  }
 </script>
 
 <aside class="ai" transition:fly={{ x: 24, duration: ms(220), easing: ease }} aria-label="ИИ-помощник">
   <header>
     <span class="title"><Icon name="spark" size={17} /> ИИ-помощник</span>
-    <button class="close" aria-label="Закрыть" onclick={() => (app.aiOpen = false)}><Icon name="close" size={16} /></button>
+    <span class="tools">
+      {#if ai.turns.length}
+        <button class="tool" title="Начать заново" aria-label="Начать заново" onclick={() => ai.clear()} disabled={ai.busy}><Icon name="refresh" size={15} /></button>
+      {/if}
+      <button class="tool" aria-label="Закрыть" onclick={() => (app.aiOpen = false)}><Icon name="close" size={16} /></button>
+    </span>
   </header>
-  <div class="body">
-    <p class="lead">Скоро здесь можно будет спросить своими словами — помощник ответит по правилам проекта и сошлётся на нужные пункты.</p>
-    <p class="muted">Он появится в одном из ближайших обновлений — программа обновится сама.</p>
-    <div class="examples">
-      {#each examples as q (q)}<span>{q}</span>{/each}
+
+  {#if !ai.ready}
+    <div class="body">
+      <div class="setup-card">
+        <span class="ico"><Icon name="spark" size={22} /></span>
+        <h2>Помощник не настроен</h2>
+        <p>Чтобы задавать вопросы своими словами, подключите бесплатный ключ Groq. Это займёт 2 минуты — программа проведёт по шагам.</p>
+        <button class="btn primary wide" onclick={() => (ai.setupOpen = true)}>Настроить</button>
+      </div>
     </div>
-    <p class="muted">А пока — поиск: он понимает сленг и номера пунктов.</p>
-    <button class="btn" onclick={() => { app.aiOpen = false; focusSearch(); }}><Icon name="search" size={16} />Перейти к поиску</button>
-  </div>
+  {:else}
+    <div class="body" bind:this={list}>
+      {#if !ai.turns.length}
+        <p class="lead">Спросите своими словами — помощник ответит по правилам проекта и законам штата и покажет пункты, на которые опирается.</p>
+        <div class="examples">
+          {#each examples as q (q)}<button onclick={() => send(q)}>{q}</button>{/each}
+        </div>
+      {/if}
+
+      {#each ai.turns as t (t.id)}
+        <div class="q">{t.q}</div>
+        <div class="a" aria-live="polite">
+          {#if t.error}
+            <p class="error"><Icon name="alert" size={15} />{t.error}</p>
+            <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); send(t.q); }} disabled={ai.busy}>Спросить снова</button>
+          {:else if !t.a}
+            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : 'Ищу подходящие пункты…'}</p>
+          {:else}
+            <p class="text selectable">
+              {#each pieces(t.a) as p, i (i)}
+                {#if p.t === 'bold'}<b>{p.v}</b>
+                {:else if p.t === 'ref'}
+                  {@const s = t.sources.find((x) => x.n === p.n)}
+                  {#if s}<button class="ref" onclick={() => open(s)} title="{sourceLabel(s).doc}, {sourceLabel(s).num}">{sourceLabel(s).num}</button>{/if}
+                {:else}{p.v}{/if}
+              {/each}
+            </p>
+            {#if !t.pending && cited(t).length}
+              <div class="sources">
+                {#each cited(t) as s (s.n)}
+                  <button class="src" onclick={() => open(s)}>
+                    <span class="num">{sourceLabel(s).num}</span><span class="doc">{sourceLabel(s).doc}</span><Icon name="chevron" size={13} />
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          {/if}
+        </div>
+      {/each}
+    </div>
+
+    <footer>
+      <div class="input">
+        <textarea bind:this={field} bind:value={input} onkeydown={onKey} rows="1" placeholder="Ваш вопрос…" maxlength="600" disabled={ai.busy}></textarea>
+        <button class="send" onclick={() => send()} disabled={ai.busy || !input.trim()} aria-label="Спросить"><Icon name="chevron" size={18} /></button>
+      </div>
+      <p class="note">Это подсказка по правилам. Окончательно решает администрация проекта.</p>
+    </footer>
+  {/if}
 </aside>
 
 <style>
-  .ai { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); background: var(--surface); }
-  header { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 10px 0 16px; border-bottom: 1px solid var(--border); }
+  .ai { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); background: var(--surface); min-height: 0; }
+  header { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .title { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: var(--fs-md); }
   .title :global(svg) { color: var(--accent); }
-  .close { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-dim); }
-  .close:hover { background: var(--surface-2); color: var(--text); }
-  .body { padding: 18px 16px; overflow-y: auto; }
-  .lead { margin: 0 0 8px; font-size: var(--fs-sm); color: var(--text); }
-  p { margin: 0 0 12px; font-size: var(--fs-sm); }
-  .examples { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
-  .examples span { padding: 10px 12px; border-radius: 12px 12px 12px 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: var(--fs-sm); color: var(--text-dim); }
+  .tools { display: flex; gap: 2px; }
+  .tool { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-dim); }
+  .tool:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+  .body { flex: 1; min-height: 0; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .lead { margin: 0 0 4px; font-size: var(--fs-sm); color: var(--text-dim); }
+  .examples { display: flex; flex-direction: column; gap: 6px; }
+  .examples button { text-align: left; padding: 10px 12px; border-radius: 12px 12px 12px 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: var(--fs-sm); color: var(--text-dim); }
+  .examples button:hover { border-color: var(--accent-line); color: var(--text); }
+
+  .setup-card { display: flex; flex-direction: column; align-items: flex-start; padding: 18px; border-radius: var(--radius-lg); background: var(--accent-glow), var(--surface-2); border: 1px solid var(--accent-line); }
+  .setup-card .ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: var(--on-accent); margin-bottom: 12px; }
+  .setup-card h2 { margin: 0 0 8px; font-size: var(--fs-lg); font-weight: 800; }
+  .setup-card p { margin: 0 0 14px; font-size: var(--fs-sm); color: var(--text-dim); }
+
+  .q { align-self: flex-end; max-width: 88%; padding: 9px 12px; border-radius: 14px 14px 4px 14px; background: var(--accent); color: var(--on-accent); font-size: var(--fs-sm); font-weight: 600; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .a { align-self: stretch; padding: 12px 14px; border-radius: 14px 14px 14px 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: var(--fs-sm); line-height: 1.6; }
+  .text { margin: 0; color: var(--text); white-space: pre-wrap; }
+  .text b { color: var(--accent-soft); }
+  .ref { display: inline-flex; align-items: center; height: 20px; margin: 0 2px; padding: 0 6px; vertical-align: 1px; border: 0; border-radius: 5px; background: var(--accent-tint); color: var(--accent); font-size: 11.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .ref:hover { background: var(--accent); color: var(--on-accent); }
+  .sources { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .src { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin: 0 -8px; border: 0; border-radius: var(--radius-sm); background: none; text-align: left; color: var(--text-dim); font-size: var(--fs-xs); }
+  .src:hover { background: var(--surface-3); color: var(--text); }
+  .src .num { flex-shrink: 0; padding: 2px 6px; border-radius: 5px; background: var(--accent-tint); color: var(--accent); font-weight: 800; }
+  .src .doc { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .thinking { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text-muted); }
+  .dots { display: inline-flex; gap: 4px; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s ease-in-out infinite; }
+  .dots i:nth-child(2) { animation-delay: 0.15s; }
+  .dots i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+  .error { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 10px; color: var(--danger); }
+  .error :global(svg) { flex-shrink: 0; margin-top: 3px; }
+
+  footer { padding: 10px 12px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .input { display: flex; align-items: flex-end; gap: 6px; padding: 5px 5px 5px 12px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
+  .input:focus-within { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-tint); }
+  textarea { flex: 1; min-width: 0; min-height: 32px; max-height: 120px; padding: 6px 0; resize: none; field-sizing: content; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); line-height: 1.45; }
+  .send { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); }
+  .send:disabled { background: var(--surface-3); color: var(--text-muted); }
+  .note { margin: 8px 2px 0; font-size: 11px; color: var(--text-muted); }
+
   @media (max-width: 899px) {
-    .ai { position: absolute; top: 0; right: 0; bottom: 0; z-index: 30; width: min(340px, 100%); box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5); }
+    .ai { position: absolute; top: 0; right: 0; bottom: 0; z-index: 30; width: min(380px, 100%); box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5); }
   }
 </style>

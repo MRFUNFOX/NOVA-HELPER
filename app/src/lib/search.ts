@@ -253,3 +253,64 @@ export function snippet(text: string, query: string, max = 160): { text: string;
   const marks = found.filter(([a, b]) => a >= start && b <= end).map(([a, b]) => [a - start + (start ? 1 : 0), b - start + (start ? 1 : 0)] as [number, number]);
   return { text: (start ? '…' : '') + cut + (end < flat.length ? '…' : ''), marks };
 }
+
+/** Служебные слова вопроса — по ним искать бесполезно */
+const STOP = new Set(
+  ('и в во не что он на я с со как а то все она так его но да ты к у же вы за бы по только ее мне было вот от меня еще нет о из ему теперь когда даже ну вдруг ли если уже или ни быть был него до вас нибудь опять уж вам ведь там потом себя ничего ей может они тут где есть надо ней для мы тебя их чем была сам чтоб без будто чего раз тоже себе под будет ж тогда кто этот того потому этого какой совсем ним здесь этом один почти мой тем чтобы нее сейчас были куда зачем всех никогда можно при наконец два об другой хоть после над больше тот через эти нас про всего них какая много разве три эту моя впрочем хорошо свою этой перед иногда лучше чуть том нельзя такой им более всегда конечно всю между ' +
+    'можно ли если ли меня мне могу можно ли будет будут что-то кто-то почему зачем сколько какое какие который которая которое которые это эта')
+    .split(/\s+/).filter(Boolean).map((w) => stem(w)),
+);
+
+/**
+ * Подбор пунктов для ИИ-помощника. В отличие от поиска, здесь вопрос своими словами
+ * («можно ли убить копа, если он первый достал оружие»), поэтому пункту не обязательно
+ * содержать все слова: чем больше редких слов вопроса в пункте — тем он выше (как BM25).
+ */
+export function rank(index: Index, text: string, k = 12, only?: (d: RuleDocument) => boolean): Entry[] {
+  if (!index.vocab) return [];
+  const n = index.entries.length;
+  const score = new Float32Array(n);
+  const words = [...new Set(terms(text).filter((t) => (t.length >= 3 || /\d/.test(t) || SLANG[t]) && !STOP.has(t)))];
+  for (const w of words) {
+    const variants = [w, ...(SLANG[w] ?? [])];
+    const hitHead = new Map<number, number>();
+    const hitBody = new Map<number, number>();
+    for (const v of variants) {
+      // По началу слова — только для достаточно длинных основ, иначе «до» найдёт всё подряд
+      const forms = v.length >= 4 ? withPrefix(index.vocab, v) : index.body!.has(v) || index.head!.has(v) ? [v] : [];
+      for (const t of forms) {
+        for (const i of index.head!.get(t) ?? []) hitHead.set(i, 1);
+        for (const i of index.body!.get(t) ?? []) hitBody.set(i, 1);
+      }
+    }
+    const df = new Set([...hitHead.keys(), ...hitBody.keys()]).size;
+    if (!df) continue;
+    const idf = Math.log(1 + n / df);
+    for (const i of hitBody.keys()) score[i]! += idf;
+    for (const i of hitHead.keys()) score[i]! += idf * 0.8;
+  }
+  // Номера пунктов прямо в вопросе («по 4.1 можно…») — такие пункты берём обязательно
+  for (const m of text.matchAll(/(?<![\d.])(\d+(?:\.\d+)+)(?![\d.])/g)) {
+    index.entries.forEach((e, i) => { if (e.node.number === m[1]) score[i]! += 50; });
+  }
+  const out: { e: Entry; s: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const e = index.entries[i]!;
+    if (!score[i] || (only && !only(e.doc))) continue;
+    // Заголовки разделов сами по себе ответа не содержат
+    if (e.node.kind === 'heading' || e.node.kind === 'section' || e.node.kind === 'chapter') continue;
+    // Короткие пункты с совпадением весят больше длинных простыней с тем же словом
+    const len = e.plain.length;
+    out.push({ e, s: score[i]! * (1 + (e.node.punishments.length ? 0.15 : 0)) / Math.pow(Math.max(len, 120) / 300, 0.25) });
+  }
+  out.sort((a, b) => b.s - a.s);
+  // Вопрос часто касается и правил проекта, и законов штата: берём лучшее из обоих,
+  // чтобы длинный Уголовный кодекс не вытеснил короткое правило проекта (и наоборот)
+  const project = out.filter((x) => x.e.doc.scope !== 'server');
+  const laws = out.filter((x) => x.e.doc.scope === 'server');
+  if (!project.length || !laws.length) return out.slice(0, k).map((x) => x.e);
+  const half = Math.ceil(k / 2);
+  const a = project.slice(0, Math.max(half, k - laws.length));
+  const b = laws.slice(0, k - a.length);
+  return [...a, ...b].sort((x, y) => y.s - x.s).map((x) => x.e);
+}

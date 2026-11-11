@@ -3,6 +3,7 @@
   import HotkeyField from './HotkeyField.svelte';
   import { app, formatDate } from '../state.svelte';
   import { backend, checkAppUpdate, type HintMode } from '../backend';
+  import { ai } from '../ai.svelte';
 
   let autostart = $state<boolean | null>(null);
   let appCheck = $state<'idle' | 'checking' | 'latest' | 'error'>('idle');
@@ -66,6 +67,20 @@
   </section>
 
   <section>
+    <h2>ИИ-помощник</h2>
+    <div class="row">
+      <div>
+        <p class="value">{ai.ready ? `Настроен — ключ Groq ${ai.status?.keyHint}` : 'Не настроен'}</p>
+        <p class="hint">{ai.ready ? 'Ключ хранится только на этом компьютере.' : 'Нужен бесплатный ключ Groq — программа проведёт по шагам.'}</p>
+      </div>
+      <div class="btns">
+        <button class="btn" onclick={() => (ai.setupOpen = true)}><Icon name="spark" size={16} />{ai.ready ? 'Сменить ключ' : 'Настроить'}</button>
+        {#if ai.ready}<button class="btn ghost" onclick={() => ai.clearKey()}>Удалить</button>{/if}
+      </div>
+    </div>
+  </section>
+
+  <section>
     <h2>Правила</h2>
     <div class="row">
       <div>
@@ -122,6 +137,7 @@
   .game { display: flex; gap: 12px; align-items: flex-start; color: var(--text-dim); font-size: var(--fs-sm); background: var(--accent-glow), var(--surface); border-color: var(--accent-line); }
   .game p { margin: 0; }
   .game :global(svg) { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .quit { align-self: flex-start; margin-top: 4px; color: var(--danger); }
   .quit:hover { background: var(--danger-tint); color: var(--danger); }
   @media (max-width: 639px) { .settings { padding: 16px 14px 48px; } section { padding: 16px; } }

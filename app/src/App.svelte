@@ -13,6 +13,9 @@
   import AiPanel from './lib/components/AiPanel.svelte';
   import Icon from './lib/components/Icon.svelte';
   import { app, focusSearch } from './lib/state.svelte';
+  import { ai } from './lib/ai.svelte';
+  import AiSetup from './lib/components/AiSetup.svelte';
+  import { scale } from 'svelte/transition';
   import { backend } from './lib/backend';
   import { ms } from './lib/motion';
 
@@ -21,7 +24,15 @@
   let main: HTMLElement | undefined = $state();
 
   $effect(() => {
-    app.start().then(() => (started = true)).catch((e) => { started = true; app.loaded = true; app.notify(String(e), 'error'); });
+    app.start()
+      .then(async () => {
+        started = true;
+        await ai.init();
+        // Программа стояла до появления помощника: один раз предлагаем его настроить
+        if (app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;
+        else if (ai.ready) app.markAiSetupDone();
+      })
+      .catch((e) => { started = true; app.loaded = true; app.notify(String(e), 'error'); });
   });
 
   // При смене экрана — наверх (если не переходим к конкретному пункту)
@@ -45,7 +56,7 @@
       e.preventDefault();
       focusSearch();
     }
-    if (e.key === 'Escape' && !app.updateDialog && !firstRun) {
+    if (e.key === 'Escape' && !app.updateDialog && !firstRun && !ai.setupOpen) {
       if (app.query) app.query = '';
       else if (app.aiOpen) app.aiOpen = false;
       else if (app.sidebarOpen) app.sidebarOpen = false;
@@ -105,6 +116,13 @@
     </div>
   {/if}
   <UpdateDialog />
+  {#if ai.setupOpen && !firstRun}
+    <div class="backdrop" transition:fade={{ duration: ms(160) }}>
+      <div class="dialog" role="dialog" aria-modal="true" aria-label="Настройка ИИ-помощника" transition:scale={{ start: 0.96, duration: ms(220) }}>
+        <AiSetup compact onDone={(ok) => { ai.setupOpen = false; app.markAiSetupDone(); if (ok) app.aiOpen = true; }} />
+      </div>
+    </div>
+  {/if}
   {#if app.toast}
     {#key app.toast}
       <div class="toast" class:error={app.toast.tone === 'error'} role="status" in:fly={{ y: 12, duration: ms(220) }} out:fade={{ duration: ms(150) }}>
@@ -126,6 +144,8 @@
   .empty h1 { font-size: var(--fs-xl); margin: 0 0 8px; }
   .empty p { color: var(--text-dim); margin: 0 0 18px; }
   .error { color: var(--danger); font-size: var(--fs-sm); margin-top: 12px !important; }
+  .backdrop { position: absolute; inset: 0; z-index: 55; display: grid; place-items: center; padding: 16px; background: rgba(10, 10, 12, 0.66); overflow-y: auto; }
+  .dialog { width: 100%; max-width: 480px; padding: 24px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border-strong); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
   .toast {
     position: absolute;
     left: 50%;
