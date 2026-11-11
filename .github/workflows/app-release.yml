@@ -11,6 +11,10 @@ on:
         description: Что нового (это увидят игроки в окне обновления)
         required: false
         default: ''
+      draft:
+        description: 'Тестовая сборка: черновик релиза — виден только владельцу, игрокам не приходит'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -62,6 +66,6 @@ jobs:
             Скачайте файл NOVA.HELPER_…_x64-setup.exe ниже и запустите его.
             Если Windows покажет «Система Windows защитила ваш компьютер» — нажмите «Подробнее» → «Выполнить в любом случае».
             Уже установленная программа обновится сама.
-          releaseDraft: false
-          prerelease: false
+          releaseDraft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.draft }}
           includeUpdaterJson: true
