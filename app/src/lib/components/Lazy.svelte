@@ -43,13 +43,23 @@
   let shown = $state(false);
 
 
+  /**
+   * Два наблюдателя: за 3 экрана до блока ставим его в очередь «когда будет свободно» —
+   * обычно он успевает построиться раньше, чем до него докрутят; если всё же докрутили
+   * (осталось меньше экрана) — строим немедленно.
+   */
   function watch(el: HTMLElement) {
     const root = el.closest('main');
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) { io.disconnect(); enqueue(() => { shown = true; }, true); }
-    }, { root, rootMargin: '1500px 0px' });
-    io.observe(el);
-    return { destroy: () => io.disconnect() };
+    const show = () => { shown = true; };
+    const far = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { far.disconnect(); enqueue(show); }
+    }, { root, rootMargin: '2400px 0px' });
+    const near = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { near.disconnect(); far.disconnect(); enqueue(show, true); }
+    }, { root, rootMargin: '500px 0px' });
+    far.observe(el);
+    near.observe(el);
+    return { destroy: () => { far.disconnect(); near.disconnect(); } };
   }
 </script>
 

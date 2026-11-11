@@ -31,11 +31,17 @@ describe('поиск по правилам', () => {
       expect(r.every((h) => /Уголовный/.test(h.entry.doc.title)), q).toBe(true);
     }
   });
-  it('номер без кодекса: сначала документы открытого раздела', () => {
+  it('поиск только в выбранном разделе', () => {
     const laws = search(index, '1.2', 60, (d) => d.scope === 'server');
-    expect(laws[0]!.entry.doc.scope).toBe('server');
-    const rules = search(index, '1.2', 60, (d) => d.scope === 'project');
-    expect(rules[0]!.entry.doc.scope).toBe('project');
+    expect(laws.length).toBeGreaterThan(0);
+    expect(laws.every((h) => h.entry.doc.scope === 'server')).toBe(true);
+    const rules = search(index, 'дм', 60, (d) => d.scope === 'project');
+    expect(rules.every((h) => h.entry.doc.scope === 'project')).toBe(true);
+    expect(search(index, 'лишение свободы', 60, (d) => d.scope === 'project').every((h) => h.entry.doc.scope === 'project')).toBe(true);
+  });
+  it('«ук 1.2» ищет в законах, даже если открыты правила', () => {
+    const r = search(index, 'ук 1.2', 60, (d) => d.scope === 'project');
+    expect(r[0]!.entry.doc.title).toMatch(/Уголовный/);
   });
   it('законы ищутся по тексту: «лишение свободы»', () => {
     expect(search(index, 'лишение свободы').some((h) => h.entry.doc.scope === 'server')).toBe(true);

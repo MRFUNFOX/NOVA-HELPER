@@ -8,6 +8,9 @@
   import { ms } from '../motion';
 
   let active = $state(0);
+  const here = $derived(app.section === 'laws' ? 'законах' : 'правилах');
+  const there = $derived(app.section === 'laws' ? 'правилах' : 'законах');
+  function switchSection() { app.setSection(app.section === 'laws' ? 'project' : 'laws'); }
   $effect(() => { app.query; active = 0; });
 
   function pick(i: number) {
@@ -52,11 +55,16 @@
   {#if !app.hits.length}
     <div class="empty card">
       <span class="empty-ico"><Icon name="search" size={22} /></span>
-      <p><b>По запросу «{app.query.trim()}» ничего не нашлось</b></p>
-      <p class="muted">Попробуйте другое слово или номер пункта, например «4.1». Сокращения тоже работают: «дм», «пг», «рк».</p>
+      <p><b>В {here} по запросу «{app.query.trim()}» ничего нет</b></p>
+      {#if app.otherHits}
+        <p class="muted">Зато в {there} нашлось: {app.otherHits}{app.otherHits >= 60 ? '+' : ''}.</p>
+        <button class="btn primary sm" onclick={switchSection}>Искать в {there}</button>
+      {:else}
+        <p class="muted">Попробуйте другое слово или номер, например {app.section === 'laws' ? '«ук 12.1»' : '«4.1»'}. Сокращения тоже работают: {app.section === 'laws' ? '«ук», «ак», «пк»' : '«дм», «пг», «рк»'}.</p>
+      {/if}
     </div>
   {:else}
-    <p class="count"><span>Найдено: <b>{app.hits.length}{app.hits.length >= 60 ? '+' : ''}</b></span><span class="keys"><kbd>↑</kbd><kbd>↓</kbd> выбрать <kbd>Enter</kbd> открыть</span></p>
+    <p class="count"><span>Найдено в {here}: <b>{app.hits.length}{app.hits.length >= 60 ? '+' : ''}</b>{#if app.otherHits}<button class="other" onclick={switchSection}>ещё {app.otherHits}{app.otherHits >= 60 ? '+' : ''} в {there}</button>{/if}</span><span class="keys"><kbd>↑</kbd><kbd>↓</kbd> выбрать <kbd>Enter</kbd> открыть</span></p>
     {#each app.hits as h, i (h.entry.node.id)}
       {@const e = h.entry}
       {@const s = snip(e, app.query)}
@@ -83,6 +91,9 @@
 <style>
   .results { max-width: 860px; padding: 18px 24px 48px; display: flex; flex-direction: column; gap: 10px; }
   .count { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: var(--fs-sm); color: var(--text-dim); margin: 0 2px 2px; }
+  .other { margin-left: 10px; padding: 2px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: none; color: var(--text-dim); font-size: var(--fs-xs); }
+  .other:hover { color: var(--accent-soft); border-color: var(--accent-line); }
+  .empty .btn { margin-top: 8px; }
   .keys { display: flex; align-items: center; gap: 4px; font-size: var(--fs-xs); color: var(--text-muted); }
   .keys kbd + kbd { margin-left: 0; }
   .keys kbd:nth-of-type(3) { margin-left: 8px; }

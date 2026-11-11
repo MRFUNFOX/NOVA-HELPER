@@ -172,8 +172,11 @@ const CODE_QUERY = new RegExp(
   'iu',
 );
 
-/** `prefer` — документы открытого раздела (правила или законы): при равенстве они выше */
-export function search(index: Index, query: string, limit = 60, prefer?: (d: RuleDocument) => boolean): Hit[] {
+/**
+ * `only` — искать только в этих документах (в открытом разделе: правила или законы).
+ * Запрос со сокращением кодекса («ук 12.1») всегда ищет в законах — там понятно, что нужно.
+ */
+export function search(index: Index, query: string, limit = 60, only?: (d: RuleDocument) => boolean): Hit[] {
   const q = query.trim();
   if (!q) return [];
 
@@ -185,10 +188,10 @@ export function search(index: Index, query: string, limit = 60, prefer?: (d: Rul
     const n = code ? (code[2] ?? code[3])! : num![1]!;
     const docRe = code ? CODES[(code[1] ?? code[4])!]! : null;
     return index.entries
-      .filter((e) => !docRe || docRe.test(e.doc.title))
+      .filter((e) => (docRe ? docRe.test(e.doc.title) : !only || only(e.doc)))
       .filter((e) => e.node.kind !== 'part' || !code)
       .filter((e) => e.node.number === n || e.node.number?.startsWith(`${n}.`))
-      .map((e) => ({ entry: e, score: (e.node.number === n ? 100 : 50 - (e.node.number!.split('.').length)) + (prefer?.(e.doc) ? 20 : 0) }))
+      .map((e) => ({ entry: e, score: e.node.number === n ? 100 : 50 - (e.node.number!.split('.').length) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
   }
@@ -219,13 +222,13 @@ export function search(index: Index, query: string, limit = 60, prefer?: (d: Rul
   for (let i = 0; i < n; i++) {
     if (!alive[i]) continue;
     const e = index.entries[i]!;
+    if (only && !only(e.doc)) continue;
     let score = total[i]!;
     // Пункт с наказанием игроку нужнее, чем общее положение; заголовки — ниже пунктов
     if (e.node.punishments.length) score += 1;
     // Общие правила проекта — главный документ: при равенстве они выше правил отдельных мероприятий
     if (e.doc.category === 'Общие правила') score += 1;
     if (e.node.kind === 'heading' || e.node.kind === 'section' || e.node.kind === 'chapter') score -= 2;
-    if (prefer?.(e.doc)) score += 1.5;
     hits.push({ entry: e, score });
   }
   return hits.sort((a, b) => b.score - a.score).slice(0, limit);

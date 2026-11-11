@@ -54,6 +54,7 @@
   const visible = $derived(node.amendments.filter((a) => a.status !== 'applied' || isRecent(a)));
   let showOld = $state(false);
   let copied = $state(false);
+  let hover = $state(false);
 
   function isRecent(a: Amendment) {
     return !!a.effectiveAt && Date.now() - new Date(a.effectiveAt).getTime() < 14 * 864e5;
@@ -153,7 +154,9 @@
     </div>
   {:else}
     <!-- Пункт или подпункт -->
-    <article class="pt" class:sub class:focused class:loose={depth === 0} id={node.id} use:scrollTo={focused}>
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <article class="pt" class:sub class:focused class:loose={depth === 0} id={node.id} use:scrollTo={focused}
+      onmouseenter={() => (hover = true)} onmouseleave={() => (hover = false)}>
       <span class="num" class:empty={!node.number}>{badge || '•'}</span>
       <div class="body">
         {#each visible as a, i (i)}
@@ -203,9 +206,12 @@
           </div>
         {/if}
       </div>
-      <button class="copy" onclick={copy} title="Скопировать пункт с наказанием — например, для жалобы" aria-label="Скопировать пункт">
-        <Icon name={copied ? 'check' : 'copy'} size={15} />
-      </button>
+      <!-- Кнопка появляется только под мышью: тысячи невидимых кнопок замедляют прокрутку -->
+      {#if hover || copied}
+        <button class="copy" onclick={copy} title="Скопировать пункт с наказанием — например, для жалобы" aria-label="Скопировать пункт">
+          <Icon name={copied ? 'check' : 'copy'} size={15} />
+        </button>
+      {/if}
     </article>
   {/if}
 {/if}
@@ -404,6 +410,8 @@
   .pt.loose > .copy { top: 12px; right: 8px; }
   .pt.sub > .copy { top: 4px; }
   .pt:hover > .copy, .copy:focus-visible { opacity: 1; }
+  .copy { animation: copy-in 0.12s var(--ease); }
+  @keyframes copy-in { from { opacity: 0; } }
   .copy:hover { background: var(--surface-2); color: var(--text); }
 
   @media (max-width: 479px) {

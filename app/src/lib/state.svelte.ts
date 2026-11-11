@@ -112,7 +112,14 @@ class AppState {
   toast = $state<{ text: string; tone: 'ok' | 'error' } | null>(null);
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
 
+  /** Поиск — только в открытом разделе: в правилах или в законах */
   hits = $derived.by<Hit[]>(() => (this.query.trim() ? search(this.index, this.query, 60, (d) => sectionOf(d) === this.section) : []));
+  /** Сколько нашлось бы в другом разделе — чтобы подсказать переключиться, если здесь пусто или мало */
+  otherHits = $derived.by(() => {
+    if (!this.query.trim() || !this.hasLaws) return 0;
+    const other: Section = this.section === 'laws' ? 'project' : 'laws';
+    return search(this.index, this.query, 60, (d) => sectionOf(d) === other).filter((h) => sectionOf(h.entry.doc) === other).length;
+  });
 
   /** Есть ли в базе законы (у старой базы их нет — тогда переключатель разделов не нужен) */
   hasLaws = $derived(this.db.docs.some((d) => d.scope === 'server'));
@@ -193,6 +200,8 @@ class AppState {
   setSection(section: Section) {
     if (section === this.section && this.view.kind === 'doc') return;
     this.section = section;
+    // Во время поиска только меняем, где искать, — результаты сразу пересчитаются
+    if (this.query.trim()) return;
     const last = this.lastDoc[section];
     this.open(last && this.doc(last) ? last : this.mainDocId(section));
   }
