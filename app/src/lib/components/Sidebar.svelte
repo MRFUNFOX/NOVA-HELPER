@@ -1,33 +1,19 @@
 <script lang="ts">
-  import { slide } from 'svelte/transition';
   import Icon from './Icon.svelte';
-  import { app, docCategory, formatDate, shortTitle, type Section } from '../state.svelte';
-  import { fold } from '../motion';
+  import { app, docCategory, formatDate, type Section } from '../state.svelte';
 
-  // Раскрыт раздел с открытым документом; остальные — по клику
-  let expanded = $state<Record<string, boolean>>({});
   const currentDoc = $derived(app.view.kind === 'doc' ? app.view.docId : '');
-  const currentCategory = $derived.by(() => { const d = app.db.docs.find((x) => x.id === currentDoc); return d && docCategory(d); });
+  /** Подсвеченный раздел меню: открытый раздел или раздел открытого документа */
+  const currentCategory = $derived.by(() => {
+    if (app.view.kind === 'category') return app.view.category;
+    const d = app.db.docs.find((x) => x.id === currentDoc);
+    return d && docCategory(d);
+  });
   const sections: { id: Section; label: string; icon: 'book' | 'gavel' }[] = [
     { id: 'project', label: 'Правила', icon: 'book' },
     { id: 'laws', label: 'Законы', icon: 'gavel' },
   ];
   const rail = $derived(app.sidebarCollapsed && !app.sidebarOpen);
-
-  function isOpen(category: string) {
-    return expanded[category] ?? category === currentCategory;
-  }
-
-  function onGroup(category: string, docs: { id: string }[]) {
-    if (docs.length === 1) { app.open(docs[0]!.id); return; }
-    if (rail) {
-      // В свёрнутом меню клик по иконке разворачивает меню и открывает раздел
-      app.toggleSidebar();
-      expanded[category] = true;
-      return;
-    }
-    expanded[category] = !isOpen(category);
-  }
 
   function go(view: 'changes' | 'settings') {
     app.view = { kind: view };
@@ -67,24 +53,14 @@
     {/if}
 
     {#each app.categories as group (group.category)}
-      {@const single = group.docs.length === 1}
-      {@const open = !single && !rail && isOpen(group.category)}
-      {@const active = group.category === currentCategory}
-      <button class="item" class:active={active && (single || rail)} class:parent={active && !single && !rail}
-        onclick={() => onGroup(group.category, group.docs)} title={rail ? group.label : undefined} aria-expanded={single ? undefined : open}>
+      <button class="item" class:active={group.category === currentCategory} onclick={() => app.openCategory(group.category)}
+        title={rail ? group.label : undefined}>
         <span class="ico"><Icon name={group.icon} size={19} /></span>
         {#if !rail}
           <span class="label">{group.label}</span>
-          {#if !single}<span class="chev" class:down={open}><Icon name="chevron" size={14} /></span>{/if}
+          {#if group.docs.length > 1}<span class="count">{group.docs.length}</span>{/if}
         {/if}
       </button>
-      {#if open}
-        <div class="docs" transition:slide={fold}>
-          {#each group.docs as d (d.id)}
-            <button class="doc" class:current={currentDoc === d.id} onclick={() => app.open(d.id)} title={d.title}>{shortTitle(d.title)}</button>
-          {/each}
-        </div>
-      {/if}
     {/each}
 
     {#if !rail}<p class="caption gap">Обновления</p>{:else}<div class="divider"></div>{/if}
@@ -187,22 +163,12 @@
   .rail .item { width: 44px; justify-content: center; padding: 0; }
   .item:hover { background: var(--surface); color: var(--text); }
   .item.active { background: var(--surface-2); color: var(--accent); }
-  .item.parent { color: var(--text); }
-  .item.parent .ico { color: var(--accent); }
   .ico { position: relative; display: grid; place-items: center; flex-shrink: 0; }
   .label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chev { display: grid; color: var(--text-muted); transition: transform 0.2s var(--ease); }
-  .chev.down { transform: rotate(90deg); }
 
-  .docs { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 6px 19px; padding-left: 12px; border-left: 1px solid var(--border-strong); }
-  .doc {
-    width: 100%; padding: 7px 10px; border-radius: var(--radius-sm);
-    font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.35;
-    /* подсветка при наведении — мгновенно, без анимации */
-  }
-  .doc:hover { background: var(--surface); color: var(--text); }
-  .doc.current { background: var(--accent-tint); color: var(--accent); font-weight: 600; }
 
+  .count { font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .item.active .count { color: var(--accent); }
   .badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--danger-line); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; }
   .dot-badge { position: absolute; top: -2px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger-line); border: 2px solid var(--bg); }
 

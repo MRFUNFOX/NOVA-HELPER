@@ -6,6 +6,7 @@
   import DocSkeleton from './lib/components/DocSkeleton.svelte';
   import SearchResults from './lib/components/SearchResults.svelte';
   import Changes from './lib/components/Changes.svelte';
+  import CategoryView from './lib/components/CategoryView.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
   import Wizard from './lib/components/Wizard.svelte';
   import UpdateDialog from './lib/components/UpdateDialog.svelte';
@@ -32,7 +33,11 @@
   const currentDoc = $derived(app.view.kind === 'doc' ? app.doc(app.view.docId) : undefined);
   const firstRun = $derived(started && app.settings && !app.settings.firstRunDone);
   // Ключ экрана — для плавной смены содержимого
-  const screen = $derived(app.query.trim() ? 'search' : app.view.kind === 'doc' ? `doc:${app.view.docId}` : app.view.kind);
+  const screen = $derived(
+    app.query.trim() ? 'search'
+      : app.view.kind === 'doc' ? `doc:${app.view.docId}`
+      : app.view.kind === 'category' ? `cat:${app.view.category}` : app.view.kind,
+  );
 
   function onKeydown(e: KeyboardEvent) {
     const typing = document.activeElement?.tagName === 'INPUT';
@@ -74,6 +79,8 @@
                   <SettingsView />
                 {:else if app.view.kind === 'changes'}
                   <Changes />
+                {:else if app.view.kind === 'category'}
+                  <CategoryView category={app.view.category} />
                 {:else if currentDoc}
                   <DocView doc={currentDoc} />
                 {:else}

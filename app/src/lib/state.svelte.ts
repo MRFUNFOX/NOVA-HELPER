@@ -6,6 +6,8 @@ import type { IconName } from './components/Icon.svelte';
 export type View =
   | { kind: 'home' }
   | { kind: 'doc'; docId: string; focus?: string }
+  /** Раздел меню: карточки его документов */
+  | { kind: 'category'; section: Section; category: string }
   | { kind: 'changes' }
   | { kind: 'settings' };
 
@@ -92,8 +94,8 @@ class AppState {
   loaded = $state(false);
   /** Какой раздел открыт в меню: правила проекта или законы сервера */
   section = $state<Section>('project');
-  /** Последний открытый документ в каждом разделе — чтобы при переключении вернуться туда же */
-  private lastDoc: Partial<Record<Section, string>> = {};
+  /** Последний открытый экран в каждом разделе — чтобы при переключении вернуться туда же */
+  private lastView: Partial<Record<Section, View>> = {};
   version = $state('');
 
   /** Обновление базы правил */
@@ -202,8 +204,20 @@ class AppState {
     this.section = section;
     // Во время поиска только меняем, где искать, — результаты сразу пересчитаются
     if (this.query.trim()) return;
-    const last = this.lastDoc[section];
-    this.open(last && this.doc(last) ? last : this.mainDocId(section));
+    const last = this.lastView[section];
+    if (last?.kind === 'category' && this.categories.some((c) => c.category === last.category)) this.openCategory(last.category);
+    else if (last?.kind === 'doc' && this.doc(last.docId)) this.open(last.docId);
+    else this.open(this.mainDocId(section));
+  }
+
+  /** Открыть раздел меню: справа карточки его документов (если документ один — сразу его) */
+  openCategory(category: string) {
+    const group = this.categories.find((c) => c.category === category);
+    if (!group) return;
+    if (group.docs.length === 1) { this.open(group.docs[0]!.id); return; }
+    this.view = { kind: 'category', section: this.section, category };
+    this.lastView[this.section] = this.view;
+    this.sidebarOpen = false;
   }
 
   /**
@@ -265,7 +279,7 @@ class AppState {
   open(docId: string, focus?: string) {
     if (this.view.kind !== 'doc' || this.view.docId !== docId) this.filter = 'all';
     const d = this.doc(docId);
-    if (d) { this.section = sectionOf(d); this.lastDoc[this.section] = docId; }
+    if (d) { this.section = sectionOf(d); this.lastView[this.section] = { kind: 'doc', docId }; }
     if (focus) this.revealNode(docId, focus);
     this.view = { kind: 'doc', docId, focus };
     this.sidebarOpen = false;

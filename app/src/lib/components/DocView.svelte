@@ -25,6 +25,8 @@
   // Короткий заголовок вроде «Общая часть» вступлением не показываем — это просто подпись
   const preamble = $derived.by(() => { const t = wrapper?.text.trim() ?? ''; return t.includes('\n') || t.length > 60 ? t : ''; });
   const group = $derived(categoryLabel(docCategory(doc)));
+  /** Сколько документов в том же разделе меню — если больше одного, «хлебная крошка» ведёт к ним */
+  const siblings = $derived(app.categories.find((c) => c.category === docCategory(doc))?.docs.length ?? 0);
   const s = $derived(stats(roots, law));
   const warnings = $derived.by(() => {
     let n = 0;
@@ -71,7 +73,10 @@
     <nav class="crumbs" aria-label="Где вы">
       <span>{law ? `Законы ${app.serverName}` : 'Правила проекта'}</span>
       <Icon name="chevron" size={13} />
-      {#if group !== shortTitle(doc.title)}<span>{group}</span><Icon name="chevron" size={13} />{/if}
+      {#if group !== shortTitle(doc.title)}
+        {#if siblings > 1}<button class="crumb" onclick={() => app.openCategory(docCategory(doc))}>{group}</button>{:else}<span>{group}</span>{/if}
+        <Icon name="chevron" size={13} />
+      {/if}
       <span class="here">{shortTitle(doc.title)}</span>
     </nav>
     <div class="title-row">
@@ -139,6 +144,8 @@
   .crumbs { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); margin-bottom: 8px; min-width: 0; }
   .crumbs span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .crumbs .here { color: var(--text-dim); }
+  .crumb { border: 0; background: none; padding: 2px 4px; margin: -2px -4px; border-radius: 5px; font: inherit; color: var(--accent-soft); white-space: nowrap; }
+  .crumb:hover { background: var(--accent-tint); color: var(--accent); }
   .title-row { display: flex; align-items: flex-start; gap: 16px; }
   h1 { flex: 1; margin: 0; font-size: var(--fs-2xl); font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; }
   .title-row .btn { flex-shrink: 0; margin-top: 2px; }
