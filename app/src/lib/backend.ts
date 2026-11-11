@@ -15,6 +15,8 @@ export interface Settings {
   firstRunDone: boolean;
   /** Игрок уже видел настройку ИИ-помощника (настроил или пропустил) */
   aiSetupDone?: boolean;
+  /** Режим разработчика: видны функции, которые игрокам ещё не показываем */
+  devMode?: boolean;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -169,6 +171,8 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       if (params.has('ready')) mockState.settings.firstRunDone = true;
       // ?ready&aisetup — программа стояла до появления помощника: покажется разовая настройка
       if (params.has('ready') && !params.has('aisetup') && mockState.settings.aiSetupDone === undefined) mockState.settings.aiSetupDone = true;
+      // ?dev — режим разработчика уже включён
+      if (params.has('dev') && mockState.settings.devMode === undefined) mockState.settings.devMode = true;
       return { ...mockState.settings };
     case 'save_settings':
       mockState.settings = { ...(args!.new as Settings), hotkey: mockState.settings.hotkey };
@@ -210,7 +214,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.4.0-beta.1';
+      return '0.4.0';
     default:
       return;
   }

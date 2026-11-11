@@ -29,7 +29,7 @@
         started = true;
         await ai.init();
         // Программа стояла до появления помощника: один раз предлагаем его настроить
-        if (app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;
+        if (app.aiEnabled && app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;
         else if (ai.ready) app.markAiSetupDone();
       })
       .catch((e) => { started = true; app.loaded = true; app.notify(String(e), 'error'); });
@@ -111,12 +111,12 @@
             {/key}
           {/if}
         </main>
-        {#if app.aiOpen}<AiPanel />{/if}
+        {#if app.aiOpen && app.aiEnabled}<AiPanel />{/if}
       </div>
     </div>
   {/if}
   <UpdateDialog />
-  {#if ai.setupOpen && !firstRun}
+  {#if ai.setupOpen && !firstRun && app.aiEnabled}
     <div class="backdrop" transition:fade={{ duration: ms(160) }}>
       <div class="dialog" role="dialog" aria-modal="true" aria-label="Настройка ИИ-помощника" transition:scale={{ start: 0.96, duration: ms(220) }}>
         <AiSetup compact onDone={(ok) => { ai.setupOpen = false; app.markAiSetupDone(); if (ok) app.aiOpen = true; }} />

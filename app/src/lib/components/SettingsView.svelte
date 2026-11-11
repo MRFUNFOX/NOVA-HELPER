@@ -4,6 +4,7 @@
   import { app, formatDate } from '../state.svelte';
   import { backend, checkAppUpdate, type HintMode } from '../backend';
   import { ai } from '../ai.svelte';
+  import { PUBLIC, checkDevCode } from '../features';
 
   let autostart = $state<boolean | null>(null);
   let appCheck = $state<'idle' | 'checking' | 'latest' | 'error'>('idle');
@@ -22,6 +23,25 @@
 
   async function toggleAutostart() {
     autostart = await backend.autostart(!autostart);
+  }
+
+  // Режим разработчика: 7 нажатий по версии программы → поле для кода
+  let taps = 0;
+  let devAsk = $state(false);
+  let devCode = $state('');
+  let devError = $state('');
+  function tapVersion() {
+    if (app.devMode) return;
+    if (++taps >= 7) devAsk = true;
+  }
+  async function unlock() {
+    devError = '';
+    if (await checkDevCode(devCode)) {
+      await app.setDevMode(true);
+      devAsk = false;
+      devCode = '';
+      app.notify('Режим разработчика включён', 'ok');
+    } else devError = 'Код не подходит';
   }
 
   async function checkProgram() {
@@ -66,6 +86,7 @@
     {/if}
   </section>
 
+  {#if app.aiEnabled}
   <section>
     <h2>ИИ-помощник</h2>
     <div class="row">
@@ -79,6 +100,7 @@
       </div>
     </div>
   </section>
+  {/if}
 
   <section>
     <h2>Правила</h2>
@@ -95,7 +117,9 @@
     <h2>Программа</h2>
     <div class="row">
       <div>
-        <p class="value">NOVA HELPER {app.version}</p>
+        <!-- 7 нажатий по версии — поле для кода разработчика -->
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+        <p class="value" onclick={tapVersion}>NOVA HELPER {app.version}</p>
         <p class="hint">
           {#if appCheck === 'latest'}Установлена последняя версия.
           {:else if appCheck === 'error'}Не удалось проверить — нет связи с сервером обновлений.
@@ -105,6 +129,26 @@
       <button class="btn" onclick={checkProgram} disabled={appCheck === 'checking'}><Icon name="download" size={16} />{appCheck === 'checking' ? 'Проверяю…' : 'Проверить'}</button>
     </div>
   </section>
+
+  {#if app.devMode}
+    <section class="dev">
+      <h2>Режим разработчика</h2>
+      <div class="row">
+        <p class="hint">Включён: видны функции, которые игрокам ещё не показываются{PUBLIC.ai ? '' : ' (ИИ-помощник)'}.</p>
+        <button class="btn" onclick={() => app.setDevMode(false)}>Выключить</button>
+      </div>
+    </section>
+  {:else if devAsk}
+    <section class="dev">
+      <h2>Код разработчика</h2>
+      <div class="row">
+        <input class="code" placeholder="NOVA-…" spellcheck="false" autocomplete="off" bind:value={devCode}
+          onkeydown={(e) => { if (e.key === 'Enter') unlock(); }} />
+        <button class="btn primary" onclick={unlock}>Включить</button>
+      </div>
+      {#if devError}<p class="hint bad">{devError}</p>{/if}
+    </section>
+  {/if}
 
   <section class="game">
     <Icon name="window" size={18} />
@@ -137,6 +181,10 @@
   .game { display: flex; gap: 12px; align-items: flex-start; color: var(--text-dim); font-size: var(--fs-sm); background: var(--accent-glow), var(--surface); border-color: var(--accent-line); }
   .game p { margin: 0; }
   .game :global(svg) { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
+  .dev { border-color: var(--accent-line); }
+  .code { flex: 1; min-width: 0; height: 36px; padding: 0 12px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font-family: ui-monospace, Consolas, monospace; }
+  .code:focus { outline: 0; border-color: var(--accent-line); }
+  .bad { color: var(--danger); margin-top: 8px; }
   .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .quit { align-self: flex-start; margin-top: 4px; color: var(--danger); }
   .quit:hover { background: var(--danger-tint); color: var(--danger); }

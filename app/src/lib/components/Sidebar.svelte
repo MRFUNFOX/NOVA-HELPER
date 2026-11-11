@@ -24,7 +24,7 @@
 <nav class="sidebar" class:rail class:open={app.sidebarOpen} aria-label="Разделы правил">
   <div class="brand" data-tauri-drag-region>
     <span class="mark" aria-hidden="true">§</span>
-    {#if !rail}<span class="name" data-tauri-drag-region>NOVA <span>HELPER</span></span>{/if}
+    {#if !rail}<span class="name" data-tauri-drag-region>NOVA <span>HELPER</span>{#if app.devMode}<em class="devtag" title="Режим разработчика">DEV</em>{/if}</span>{/if}
     <button class="collapse" onclick={() => (app.sidebarOpen ? (app.sidebarOpen = false) : app.toggleSidebar())}
       title={rail ? 'Развернуть меню' : 'Свернуть меню'} aria-label={rail ? 'Развернуть меню' : 'Свернуть меню'}>
       <span class:flip={rail}><Icon name="collapse" size={16} /></span>
@@ -127,6 +127,7 @@
   }
   .name { flex: 1; font-weight: 800; font-size: var(--fs-md); letter-spacing: 0.02em; white-space: nowrap; }
   .name span { color: var(--accent); }
+  .devtag { margin-left: 6px; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--accent-line); color: var(--accent); font-size: 9px; font-style: normal; letter-spacing: 0.06em; vertical-align: 2px; }
   .collapse { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-muted); transition: background 0.15s, color 0.15s; }
   .collapse:hover { background: var(--surface-2); color: var(--text); }
   .rail .collapse { margin-top: 8px; }

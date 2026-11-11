@@ -2,6 +2,7 @@ import type { RuleDocument } from '@shared/types';
 import { backend, checkAppUpdate, type AppUpdate, type CheckResult, type Db, type Settings } from './backend';
 import { buildIndex, search, type Hit, type Index } from './search';
 import type { IconName } from './components/Icon.svelte';
+import { PUBLIC } from './features';
 
 export type View =
   | { kind: 'home' }
@@ -156,6 +157,17 @@ class AppState {
 
   get ready() { return this.db.docs.length > 0; }
 
+  /** Режим разработчика включён кодом в настройках */
+  get devMode() { return !!this.settings?.devMode; }
+  /** ИИ-помощник виден: открыт для всех или включён режим разработчика */
+  get aiEnabled() { return PUBLIC.ai || this.devMode; }
+
+  async setDevMode(on: boolean) {
+    if (!this.settings) return;
+    this.settings = await backend.saveSettings({ ...this.settings, devMode: on });
+    if (!on) this.aiOpen = false;
+  }
+
   doc(id: string) { return this.db.docs.find((d) => d.id === id); }
 
   setDb(db: Db) {
@@ -304,7 +316,8 @@ class AppState {
 
   /** Игрок увидел настройку ИИ-помощника (настроил или пропустил) — больше не показываем */
   async markAiSetupDone() {
-    if (!this.settings || this.settings.aiSetupDone) return;
+    // Пока помощник скрыт, игрок настройку не видел — не отмечаем, иначе потом она ему не покажется
+    if (!this.settings || this.settings.aiSetupDone || !this.aiEnabled) return;
     try { this.settings = await backend.saveSettings({ ...this.settings, aiSetupDone: true }); } catch { /* не страшно: покажем ещё раз */ }
   }
 

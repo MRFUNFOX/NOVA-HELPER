@@ -11,7 +11,10 @@
   let step = $state(0);
   let download = $state<'idle' | 'loading' | 'done' | 'error'>(app.ready ? 'done' : 'idle');
   let error = $state('');
-  const STEPS = ['Знакомство', 'Режим игры', 'Клавиша', 'ИИ-помощник', 'Готово'];
+  // Шаг «ИИ-помощник» — только когда помощник открыт игрокам (или включён режим разработчика)
+  const STEPS = $derived(app.aiEnabled ? ['Знакомство', 'Режим игры', 'Клавиша', 'ИИ-помощник', 'Готово'] : ['Знакомство', 'Режим игры', 'Клавиша', 'Готово']);
+  /** Номер шага в полоске сверху (без ИИ последний шаг — третий, а не четвёртый) */
+  const shown = $derived(app.aiEnabled || step < 4 ? step : 3);
 
   async function fetchRules() {
     if (download === 'loading' || download === 'done') return;
@@ -36,7 +39,7 @@
 <div class="wizard" role="dialog" aria-modal="true" aria-label="Первый запуск NOVA HELPER">
   <ol class="steps" aria-label="Шаги настройки">
     {#each STEPS as s, i (s)}
-      <li class:done={i < step} class:current={i === step}><span class="dot">{i < step ? '✓' : i + 1}</span><span class="sname">{s}</span></li>
+      <li class:done={i < shown} class:current={i === shown}><span class="dot">{i < shown ? '✓' : i + 1}</span><span class="sname">{s}</span></li>
     {/each}
   </ol>
 
@@ -77,7 +80,7 @@
       {/if}
       <div class="nav">
         <button class="btn ghost" onclick={() => (step = 1)}>Назад</button>
-        <button class="btn primary" onclick={() => (step = 3)}>Дальше</button>
+        <button class="btn primary" onclick={() => (step = app.aiEnabled ? 3 : 4)}>Дальше</button>
       </div>
 
     {:else if step === 3}
@@ -103,7 +106,7 @@
       </div>
       <p>Окно открывается на <b>{pretty(app.settings?.hotkey ?? '')}</b>. Справа внизу экрана будет маленькая подсказка с этой клавишей — её можно выключить в настройках.</p>
       <div class="nav">
-        <button class="btn ghost" onclick={() => (step = 3)}>Назад</button>
+        <button class="btn ghost" onclick={() => (step = app.aiEnabled ? 3 : 2)}>Назад</button>
         <button class="btn primary" onclick={finish} disabled={download !== 'done'}>Открыть правила</button>
       </div>
     {/if}

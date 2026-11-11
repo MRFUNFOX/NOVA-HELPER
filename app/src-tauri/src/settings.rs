@@ -40,6 +40,8 @@ pub struct Settings {
     /// Игрок уже видел настройку ИИ-помощника (настроил или пропустил) — больше не показываем.
     /// У тех, кто ставил программу до появления помощника, поля нет → false → покажем один раз.
     pub ai_setup_done: bool,
+    /// Режим разработчика: видны функции, которые игрокам ещё не показываем (включается кодом)
+    pub dev_mode: bool,
     pub window: Option<WindowGeom>,
 }
 
@@ -51,6 +53,7 @@ impl Default for Settings {
             close_to_tray: true,
             first_run_done: false,
             ai_setup_done: false,
+            dev_mode: false,
             window: None,
         }
     }

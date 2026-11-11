@@ -39,7 +39,7 @@
   {/if}
 
   <div class="actions">
-    {#if !wizard}
+    {#if !wizard && app.aiEnabled}
       <button class="ai" class:active={app.aiOpen} onclick={() => (app.aiOpen = !app.aiOpen)} title="Спросить ИИ-помощника о правилах">
         <Icon name="spark" size={17} />
         <span class="ai-label">ИИ-помощник</span>
