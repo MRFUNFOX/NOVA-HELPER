@@ -161,7 +161,7 @@ pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>) -> Result<String, S
     let http = client()?;
     let mut last = String::new();
     for model in pick(HELPER_MODELS, &s.models) {
-        let resp = match http.post(format!("{API}/chat/completions")).bearer_auth(&s.key).json(&body(model, &messages, false, true, 300)).send().await {
+        let resp = match http.post(format!("{API}/chat/completions")).bearer_auth(&s.key).json(&body(model, &messages, false, true, 600)).send().await {
             Ok(r) => r,
             Err(e) => return Err(explain(None, "", Some(&e))),
         };

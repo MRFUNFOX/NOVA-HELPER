@@ -92,6 +92,21 @@
                 {:else}{p.v}{/if}
               {/each}
             </p>
+            {#if app.devMode && !t.pending}
+              <!-- Только в режиме разработчика: что выбрала нейросеть и что нашёл поиск -->
+              <details class="debug">
+                <summary>Поиск: {t.sources.length} пунктов</summary>
+                {#if t.plan}
+                  <p><b>Документы:</b> {t.plan.docs.length ? t.plan.docs.join('; ') : 'не выбраны'}</p>
+                  <p><b>Слова:</b> {t.plan.keywords || '—'}</p>
+                {/if}
+                <ol>
+                  {#each t.sources as s (s.n)}
+                    <li><button onclick={() => open(s)}>S{s.n} · {sourceLabel(s).num} · {sourceLabel(s).doc}</button></li>
+                  {/each}
+                </ol>
+              </details>
+            {/if}
             {#if !t.pending && cited(t).length}
               <div class="sources">
                 {#each cited(t) as s (s.n)}
@@ -146,6 +161,12 @@
   .src:hover { background: var(--surface-3); color: var(--text); }
   .src .num { flex-shrink: 0; padding: 2px 6px; border-radius: 5px; background: var(--accent-tint); color: var(--accent); font-weight: 800; }
   .src .doc { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .debug { margin-top: 10px; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px dashed var(--border-strong); font-size: 11.5px; color: var(--text-muted); }
+  .debug summary { cursor: pointer; color: var(--accent-soft); font-weight: 700; }
+  .debug p { margin: 6px 0 0; }
+  .debug ol { margin: 6px 0 0; padding-left: 18px; }
+  .debug li button { border: 0; background: none; padding: 1px 0; color: var(--text-dim); text-align: left; font-size: 11.5px; }
+  .debug li button:hover { color: var(--accent-soft); }
   .thinking { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text-muted); }
   .dots { display: inline-flex; gap: 4px; }
   .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s ease-in-out infinite; }

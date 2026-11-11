@@ -15,24 +15,30 @@ export interface Turn {
   sources: Source[];
   pending: boolean;
   error?: string;
+  /** Что выбрала нейросеть перед поиском — показываем в режиме разработчика */
+  plan?: { docs: string[]; keywords: string };
 }
 
-const SYSTEM = `Ты — ИИ-помощник программы NOVA HELPER для игроков GTA 5 RP-проекта NOVA RP (сервер Horizon).
-Отвечай на вопрос игрока ТОЛЬКО по фрагментам правил и законов, которые даны в сообщении.
+const SYSTEM = `Ты — ИИ-помощник программы NOVA HELPER для игроков и администраторов GTA 5 RP-проекта NOVA RP (сервер Horizon).
+Ты разбираешь игровые ситуации как опытный администратор проекта, опираясь на фрагменты правил и законов из сообщения.
 
 Как отвечать:
-- По-русски, коротко: 2–5 предложений, без вступлений и без повторения вопроса.
+- По-русски, по делу, без вступлений. Обычно 3–7 предложений.
+- Если вопрос — ситуация, разбери её: кто из участников что нарушил или не нарушил и почему, какое наказание грозит.
+  Применяй правила к ситуации, даже если она описана другими словами: «растулил», «завалил», «положил» = убил; «коп» = сотрудник полиции; «РП» = RolePlay и т. п.
 - После каждого утверждения ставь ссылку на фрагмент в квадратных скобках: [S2]. Ссылайся только на номера из списка фрагментов.
-- Если важно наказание — назови его.
+- Если прямого правила нет, но есть близкие — ответь по ним и прямо скажи, что это толкование.
+- Только если во фрагментах совсем ничего по теме — скажи «В правилах об этом ничего не нашлось» и подскажи, что уточнить. Ничего не выдумывай и не бери правила других проектов.
 - «Правила проекта» — правила NOVA RP, за нарушение которых наказывает администрация (JAIL, WARN, BAN).
   «Законы» — законы штата внутри игры: по ним работают полиция, суд и прокуратура. Если подходит и то и другое — скажи про оба.
-- Если во фрагментах нет ответа — так и скажи: «В правилах об этом ничего не нашлось» — и подскажи, как переспросить. Ничего не придумывай и не опирайся на правила других проектов.
-- Без заголовков, списков и таблиц. Главное можно выделить **жирным**.`;
+- Без заголовков и таблиц. Главное можно выделить **жирным**.`;
 
-const KEYWORDS = `Игрок задаёт вопрос о правилах GTA 5 RP-проекта (NOVA RP). Составь 4–10 слов и сокращений для поиска по тексту правил:
-официальные термины и их сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC),
-синонимы и формы слов, как они пишутся в правилах (например «убить» → «убийство», «коп» → «сотрудник полиции LSPD»),
-номера пунктов и статей, если они есть в вопросе. Ответ строго в JSON: {"keywords": ["…"]}`;
+/** Первый шаг: нейросеть видит список всех документов и выбирает подходящие к вопросу */
+const PLAN = `Игрок GTA 5 RP-проекта NOVA RP задаёт вопрос или описывает игровую ситуацию. Ниже — список документов с правилами проекта и законами штата.
+1. Выбери 1–5 документов, в которых, скорее всего, есть ответ. Общие правила проекта подходят почти всегда, если речь о нарушении (DM, NonRP, PG, MG и т. п.).
+2. Составь 5–12 слов для поиска по тексту правил: официальные термины и сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC, ограбление, похищение, задержание),
+   как это пишется в правилах (например «растулил»/«завалил» → «убийство», «коп» → «сотрудник полиции LSPD»), номера пунктов и статей из вопроса.
+Ответ строго в JSON: {"docs": ["D3", "D12"], "keywords": ["…"]}`;
 
 class Assistant {
   status = $state<AiStatus | null>(null);
@@ -73,17 +79,31 @@ class Assistant {
     const t = this.turns[this.turns.length - 1]!; // реактивная копия
     this.busy = true;
     try {
-      // 1. Слова для поиска: нейросеть переводит разговорный вопрос на язык правил
+      const prev = this.turns.length > 1 ? this.turns[this.turns.length - 2]!.q : '';
+
+      // 1. Нейросеть выбирает подходящие документы и переводит разговорный вопрос на язык правил
+      const docs = app.db.docs;
+      const catalog = docs.map((d, i) => `D${i + 1} [${d.scope === 'server' ? 'Законы' : 'Правила'}] ${shortTitle(d.title)}`).join('\n');
       let extra = '';
+      const boost = new Set<string>();
       try {
-        const raw = await backend.aiComplete([{ role: 'system', content: KEYWORDS }, { role: 'user', content: q }]);
-        const kw = (JSON.parse(raw) as { keywords?: unknown }).keywords;
-        if (Array.isArray(kw)) extra = kw.filter((x) => typeof x === 'string').join(' ');
+        const raw = await backend.aiComplete([
+          { role: 'system', content: PLAN },
+          { role: 'user', content: `Документы:\n${catalog}\n\n${prev ? `Предыдущий вопрос: ${prev}\n` : ''}Вопрос: ${q}` },
+        ]);
+        const plan = JSON.parse(raw) as { docs?: unknown; keywords?: unknown };
+        if (Array.isArray(plan.keywords)) extra = plan.keywords.filter((x) => typeof x === 'string').join(' ');
+        if (Array.isArray(plan.docs)) {
+          for (const id of plan.docs) {
+            const d = docs[Number(String(id).replace(/\D/g, '')) - 1];
+            if (d) boost.add(d.id);
+          }
+        }
       } catch { /* без подсказки ищем по самому вопросу */ }
+      t.plan = { docs: [...boost].map((id) => shortTitle(app.doc(id)?.title ?? id)), keywords: extra };
 
       // 2. Подбор пунктов: по вопросу, словам-подсказкам и прошлому вопросу (для уточнений «а если…»)
-      const prev = this.turns.length > 1 ? this.turns[this.turns.length - 2]!.q : '';
-      const entries = rank(app.index, `${q} ${extra} ${prev}`, 12);
+      const entries = rank(app.index, `${q} ${extra} ${prev}`, 16, undefined, boost);
       t.sources = entries.map((entry, i) => ({ n: i + 1, entry }));
 
       // 3. Ответ: пункты + последние пару вопросов-ответов, чтобы понимать уточнения
@@ -114,7 +134,7 @@ function fragment(s: Source): string {
   const law = e.doc.scope === 'server';
   const where = [law ? 'Законы штата' : 'Правила проекта', shortTitle(e.doc.title), ...e.path.slice(-2)].join(' › ');
   const num = e.article ? `ст. ${e.article}, ч. ${e.node.number}` : nodeBadge(e.node, law) || '';
-  const lines = [`[S${s.n}] ${where}${num ? ` › ${law ? num : `п. ${num}`}` : ''}`, cut(e.node.text, 700)];
+  const lines = [`[S${s.n}] ${where}${num ? ` › ${law ? num : `п. ${num}`}` : ''}`, cut(e.node.text, 550)];
   for (const p of e.node.punishments) lines.push(`Наказание: ${p.raw}`);
   for (const a of e.node.annotations) lines.push(`${a.type === 'exception' ? 'Исключение' : 'Примечание'}: ${cut(a.text, 300)}`);
   return lines.join('\n');

@@ -266,7 +266,7 @@ const STOP = new Set(
  * («можно ли убить копа, если он первый достал оружие»), поэтому пункту не обязательно
  * содержать все слова: чем больше редких слов вопроса в пункте — тем он выше (как BM25).
  */
-export function rank(index: Index, text: string, k = 12, only?: (d: RuleDocument) => boolean): Entry[] {
+export function rank(index: Index, text: string, k = 12, only?: (d: RuleDocument) => boolean, boost?: Set<string>): Entry[] {
   if (!index.vocab) return [];
   const n = index.entries.length;
   const score = new Float32Array(n);
@@ -301,9 +301,17 @@ export function rank(index: Index, text: string, k = 12, only?: (d: RuleDocument
     if (e.node.kind === 'heading' || e.node.kind === 'section' || e.node.kind === 'chapter') continue;
     // Короткие пункты с совпадением весят больше длинных простыней с тем же словом
     const len = e.plain.length;
-    out.push({ e, s: score[i]! * (1 + (e.node.punishments.length ? 0.15 : 0)) / Math.pow(Math.max(len, 120) / 300, 0.25) });
+    // Документы, которые нейросеть сочла подходящими к ситуации, — в приоритете
+    const prefer = boost?.has(e.doc.id) ? 3 : 1;
+    out.push({ e, s: prefer * score[i]! * (1 + (e.node.punishments.length ? 0.15 : 0)) / Math.pow(Math.max(len, 120) / 300, 0.25) });
   }
   out.sort((a, b) => b.s - a.s);
+  if (boost?.size) {
+    // Из выбранных документов берём не меньше половины выборки, остальное — лучшее из прочих
+    const inDocs = out.filter((x) => boost.has(x.e.doc.id)).slice(0, Math.ceil(k * 0.6));
+    const rest = out.filter((x) => !boost.has(x.e.doc.id)).slice(0, k - inDocs.length);
+    return [...inDocs, ...rest].sort((a, b) => b.s - a.s).map((x) => x.e);
+  }
   // Вопрос часто касается и правил проекта, и законов штата: берём лучшее из обоих,
   // чтобы длинный Уголовный кодекс не вытеснил короткое правило проекта (и наоборот)
   const project = out.filter((x) => x.e.doc.scope !== 'server');
