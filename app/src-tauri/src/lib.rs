@@ -1,3 +1,4 @@
+mod ai;
 mod overlay;
 mod settings;
 mod sync;
@@ -160,6 +161,11 @@ pub fn run() {
             finish_first_run,
             quit_app,
             app_version,
+            ai::ai_status,
+            ai::ai_set_key,
+            ai::ai_clear_key,
+            ai::ai_complete,
+            ai::ai_chat,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

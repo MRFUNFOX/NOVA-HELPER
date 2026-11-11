@@ -2,6 +2,7 @@
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import HotkeyField from './HotkeyField.svelte';
+  import AiSetup from './AiSetup.svelte';
   import { app } from '../state.svelte';
   import { backend } from '../backend';
   import { pretty } from '../hotkey';
@@ -10,7 +11,7 @@
   let step = $state(0);
   let download = $state<'idle' | 'loading' | 'done' | 'error'>(app.ready ? 'done' : 'idle');
   let error = $state('');
-  const STEPS = ['Знакомство', 'Режим игры', 'Клавиша', 'Готово'];
+  const STEPS = ['Знакомство', 'Режим игры', 'Клавиша', 'ИИ-помощник', 'Готово'];
 
   async function fetchRules() {
     if (download === 'loading' || download === 'done') return;
@@ -27,6 +28,7 @@
   async function finish() {
     await backend.finishFirstRun();
     if (app.settings) app.settings = { ...app.settings, firstRunDone: true };
+    await app.markAiSetupDone();
     app.view = { kind: 'doc', docId: app.mainDocId() };
   }
 </script>
@@ -78,6 +80,10 @@
         <button class="btn primary" onclick={() => (step = 3)}>Дальше</button>
       </div>
 
+    {:else if step === 3}
+      <AiSetup onDone={() => (step = 4)} />
+      <button class="btn ghost back" onclick={() => (step = 2)}>← К клавише вызова</button>
+
     {:else}
       <h1>{download === 'done' ? 'Всё готово' : 'Почти готово'}</h1>
       <div class="loadstate">
@@ -97,7 +103,7 @@
       </div>
       <p>Окно открывается на <b>{pretty(app.settings?.hotkey ?? '')}</b>. Справа внизу экрана будет маленькая подсказка с этой клавишей — её можно выключить в настройках.</p>
       <div class="nav">
-        <button class="btn ghost" onclick={() => (step = 2)}>Назад</button>
+        <button class="btn ghost" onclick={() => (step = 3)}>Назад</button>
         <button class="btn primary" onclick={finish} disabled={download !== 'done'}>Открыть правила</button>
       </div>
     {/if}
@@ -123,6 +129,7 @@
   .small { font-size: var(--fs-sm); }
   .facts { margin: 0 0 22px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
   .facts li { padding: 10px 12px 10px 14px; border-left: 3px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface-2); font-size: var(--fs-sm); color: var(--text); }
+  .back { margin-top: 14px; align-self: flex-start; padding-left: 0; color: var(--text-muted); font-size: var(--fs-xs); }
   .next { width: 100%; height: 44px; font-size: var(--fs-md); }
   .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 22px; }
   .nav .btn.primary { min-width: 160px; height: 40px; }

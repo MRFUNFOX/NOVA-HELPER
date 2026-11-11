@@ -13,6 +13,8 @@ export interface Settings {
   hint: HintMode;
   closeToTray: boolean;
   firstRunDone: boolean;
+  /** Игрок уже видел настройку ИИ-помощника (настроил или пропустил) */
+  aiSetupDone?: boolean;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -34,6 +36,9 @@ export interface CheckResult {
   removedDocs: number;
   summary: string[];
 }
+
+export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null }
+export interface ChatMsg { role: 'system' | 'user' | 'assistant'; content: string }
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
@@ -64,6 +69,13 @@ export const backend = {
   quit: () => invoke<void>('quit_app'),
   version: () => invoke<string>('app_version'),
 
+  // ── ИИ-помощник (ключ Groq хранится в программе, сюда не передаётся) ──
+  aiStatus: () => invoke<AiStatus>('ai_status'),
+  aiSetKey: (key: string) => invoke<AiStatus>('ai_set_key', { key }),
+  aiClearKey: () => invoke<AiStatus>('ai_clear_key'),
+  aiComplete: (messages: ChatMsg[]) => invoke<string>('ai_complete', { messages }),
+  aiChat: (id: string, messages: ChatMsg[]) => invoke<{ text: string; model: string }>('ai_chat', { id, messages }),
+
   async toggleMaximize() {
     if (!isTauri) return;
     const { getCurrentWindow } = await import('@tauri-apps/api/window');
@@ -87,7 +99,10 @@ export const backend = {
     return a.isEnabled();
   },
   async on(event: string, cb: (payload: unknown) => void): Promise<() => void> {
-    if (!isTauri) return () => {};
+    if (!isTauri) {
+      (mockListeners[event] ??= new Set()).add(cb);
+      return () => mockListeners[event]?.delete(cb);
+    }
     const { listen } = await import('@tauri-apps/api/event');
     return listen(event, (e) => cb(e.payload));
   },
@@ -118,10 +133,13 @@ export async function checkAppUpdate(): Promise<AppUpdate | null> {
 }
 
 // ── Заглушка для браузера ──
+const mockListeners: Record<string, Set<(p: unknown) => void>> = {};
+const mockEmit = (event: string, payload: unknown) => mockListeners[event]?.forEach((cb) => cb(payload));
 const mockState = {
   settings: { hotkey: 'Alt+Q', hint: 'always', closeToTray: true, firstRunDone: false, window: null } as Settings,
   autostart: true,
   dbLoaded: false,
+  aiKey: '',
 };
 
 async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknown> {
@@ -149,6 +167,8 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
     }
     case 'get_settings':
       if (params.has('ready')) mockState.settings.firstRunDone = true;
+      // ?ready&aisetup — программа стояла до появления помощника: покажется разовая настройка
+      if (params.has('ready') && !params.has('aisetup') && mockState.settings.aiSetupDone === undefined) mockState.settings.aiSetupDone = true;
       return { ...mockState.settings };
     case 'save_settings':
       mockState.settings = { ...(args!.new as Settings), hotkey: mockState.settings.hotkey };
@@ -160,8 +180,37 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
     case 'finish_first_run':
       mockState.settings.firstRunDone = true;
       return;
+    case 'ai_status': {
+      // ?aikey — помощник уже настроен
+      if (params.has('aikey') && !mockState.aiKey) mockState.aiKey = 'gsk_mockmockmock1234';
+      const k = mockState.aiKey;
+      return { hasKey: !!k, keyHint: k ? `…${k.slice(-4)}` : '', model: k ? 'openai/gpt-oss-120b' : null };
+    }
+    case 'ai_set_key': {
+      await new Promise((r) => setTimeout(r, 700));
+      const key = String(args!.key).trim();
+      if (!key) throw 'Вставьте ключ в поле — сочетание Ctrl+V.';
+      if (!key.startsWith('gsk_')) throw 'Это не похоже на ключ Groq: он начинается с «gsk_». Скопируйте ключ ещё раз на сайте Groq.';
+      if (key.includes('bad')) throw 'Ключ не подходит. Скопируйте его ещё раз целиком — он начинается с «gsk_».';
+      mockState.aiKey = key;
+      return { hasKey: true, keyHint: `…${key.slice(-4)}`, model: 'openai/gpt-oss-120b' };
+    }
+    case 'ai_clear_key':
+      mockState.aiKey = '';
+      return { hasKey: false, keyHint: '', model: null };
+    case 'ai_complete':
+      return JSON.stringify({ keywords: [] });
+    case 'ai_chat': {
+      // Ответ-образец по кусочкам, со ссылками на первые фрагменты
+      const text = 'Нет, это **DeathMatch** — убийство без весомой IC-причины [S1]. Наказание — JAIL до 120 минут [S1]. На мероприятиях действуют свои правила, их стоит проверить отдельно [S2].';
+      for (const part of text.match(/.{1,12}/gs) ?? []) {
+        mockEmit('ai-chunk', { id: args!.id, delta: part });
+        await new Promise((r) => setTimeout(r, 40));
+      }
+      return { text, model: 'openai/gpt-oss-120b' };
+    }
     case 'app_version':
-      return '0.3.2';
+      return '0.4.0-beta.1';
     default:
       return;
   }

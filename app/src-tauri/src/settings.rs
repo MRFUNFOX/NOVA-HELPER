@@ -37,6 +37,9 @@ pub struct Settings {
     /// Крестик прячет программу в трей (клавиша продолжает работать), а не закрывает её
     pub close_to_tray: bool,
     pub first_run_done: bool,
+    /// Игрок уже видел настройку ИИ-помощника (настроил или пропустил) — больше не показываем.
+    /// У тех, кто ставил программу до появления помощника, поля нет → false → покажем один раз.
+    pub ai_setup_done: bool,
     pub window: Option<WindowGeom>,
 }
 
@@ -47,6 +50,7 @@ impl Default for Settings {
             hint: HintMode::Always,
             close_to_tray: true,
             first_run_done: false,
+            ai_setup_done: false,
             window: None,
         }
     }

@@ -302,6 +302,12 @@ class AppState {
     this.filter = 'all';
   }
 
+  /** Игрок увидел настройку ИИ-помощника (настроил или пропустил) — больше не показываем */
+  async markAiSetupDone() {
+    if (!this.settings || this.settings.aiSetupDone) return;
+    try { this.settings = await backend.saveSettings({ ...this.settings, aiSetupDone: true }); } catch { /* не страшно: покажем ещё раз */ }
+  }
+
   toggleSidebar() {
     this.sidebarCollapsed = !this.sidebarCollapsed;
     writeFlag('sidebarCollapsed', this.sidebarCollapsed);
