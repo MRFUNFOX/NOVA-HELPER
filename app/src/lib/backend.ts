@@ -161,7 +161,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       mockState.settings.firstRunDone = true;
       return;
     case 'app_version':
-      return '0.3.0';
+      return '0.3.1';
     default:
       return;
   }

@@ -3,6 +3,8 @@
   import Icon, { type IconName } from './Icon.svelte';
   import RuleItem from './RuleItem.svelte';
   import RichText from './RichText.svelte';
+  import Lazy from './Lazy.svelte';
+  import { contains, estimate } from '../tree';
   import { app, categoryLabel, docCategory, shortTitle } from '../state.svelte';
   import { backend } from '../backend';
   import { isStructural, matches, stats, type Filter } from '../punish';
@@ -43,6 +45,10 @@
     return out;
   });
   const sections = $derived(roots.filter(isStructural));
+
+  // Блок с пунктом, к которому перешли из поиска, строим сразу — чтобы к нему можно было прокрутить
+  const focus = $derived(app.view.kind === 'doc' ? app.view.focus : undefined);
+
   const allCollapsed = $derived(sections.length > 0 && sections.every((n) => app.collapsed[n.id]));
 
   function toggleAll() {
@@ -112,13 +118,15 @@
   {/if}
 
   {#each blocks as b, i (b.kind === 'sec' ? b.nodes[0]!.id : `g${i}`)}
-    {#if b.kind === 'sec'}
-      <RuleItem node={b.nodes[0]!} {doc} {law} />
-    {:else}
-      <div class="group">
-        {#each b.nodes as n (n.id)}<RuleItem node={n} {doc} depth={1} {law} />{/each}
-      </div>
-    {/if}
+    <Lazy eager={i < 2 || b.nodes.some((n) => contains(n, focus))} estimate={estimate(b.nodes, b.nodes.length === 1 && !!app.collapsed[b.nodes[0]!.id])}>
+      {#if b.kind === 'sec'}
+        <RuleItem node={b.nodes[0]!} {doc} {law} />
+      {:else}
+        <div class="group">
+          {#each b.nodes as n (n.id)}<RuleItem node={n} {doc} depth={1} {law} />{/each}
+        </div>
+      {/if}
+    </Lazy>
   {/each}
 
   {#each doc.looseAmendments as a, i (i)}

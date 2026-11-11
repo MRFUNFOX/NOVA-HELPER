@@ -106,7 +106,6 @@
     background: transparent;
     text-align: left;
     font-size: var(--fs-sm);
-    transition: background 0.15s var(--ease);
   }
   .change:not(:disabled):hover { background: var(--surface-2); }
   .change:disabled { cursor: default; }

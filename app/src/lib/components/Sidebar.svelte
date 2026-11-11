@@ -182,7 +182,7 @@
     width: 100%; height: 42px; padding: 0 10px;
     border-radius: var(--radius);
     font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim);
-    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    /* подсветка при наведении — мгновенно, без анимации */
   }
   .rail .item { width: 44px; justify-content: center; padding: 0; }
   .item:hover { background: var(--surface); color: var(--text); }
@@ -198,7 +198,7 @@
   .doc {
     width: 100%; padding: 7px 10px; border-radius: var(--radius-sm);
     font-size: var(--fs-sm); color: var(--text-muted); line-height: 1.35;
-    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    /* подсветка при наведении — мгновенно, без анимации */
   }
   .doc:hover { background: var(--surface); color: var(--text); }
   .doc.current { background: var(--accent-tint); color: var(--accent); font-weight: 600; }

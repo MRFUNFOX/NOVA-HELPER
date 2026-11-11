@@ -13,7 +13,7 @@
   import Icon from './lib/components/Icon.svelte';
   import { app, focusSearch } from './lib/state.svelte';
   import { backend } from './lib/backend';
-  import { enter, ms } from './lib/motion';
+  import { ms } from './lib/motion';
 
   let results: SearchResults | undefined = $state();
   let started = $state(false);
@@ -67,7 +67,7 @@
             <DocSkeleton />
           {:else}
             {#key screen}
-              <div class="screen" in:fly={enter}>
+              <div class="screen">
                 {#if app.query.trim()}
                   <SearchResults bind:this={results} />
                 {:else if app.view.kind === 'settings'}

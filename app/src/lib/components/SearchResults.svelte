@@ -96,7 +96,6 @@
     border: 1px solid var(--border);
     background: var(--surface);
     text-align: left;
-    transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
   }
   .hit.active { border-color: var(--accent-line); background: var(--accent-glow), var(--surface); }
   .where {

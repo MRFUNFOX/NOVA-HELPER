@@ -18,6 +18,8 @@
   import { backend } from '../backend';
   import { isStructural, matches, stats } from '../punish';
   import { fold } from '../motion';
+  import Lazy from './Lazy.svelte';
+  import { contains, estimate } from '../tree';
 
   let { node, doc, depth = 0, inPoint = false, law = false }: { node: RuleNode; doc: RuleDocument; depth?: number; inPoint?: boolean; law?: boolean } = $props();
 
@@ -36,7 +38,8 @@
   const badge = $derived(nodeBadge(node, law));
   /** Статья с частями: первая строка — это её название */
   const titled = $derived(node.kind === 'article' && node.children.length > 0 && !node.text.includes('\n'));
-  const focused = $derived(app.view.kind === 'doc' && app.view.focus === node.id);
+  const focusId = $derived(app.view.kind === 'doc' ? app.view.focus : undefined);
+  const focused = $derived(focusId === node.id);
   const firstLine = $derived(structural ? tameCaps((node.text.split('\n')[0] ?? '').replace(/\s*:\s*$/, '')) : (node.text.split('\n')[0] ?? ''));
   const restText = $derived(node.text.split('\n').slice(1).join('\n'));
   const sub = $derived(inPoint || node.kind === 'part' || (!law && (node.number?.split('.').length ?? 0) > 2));
@@ -125,8 +128,11 @@
         <div class="sec-body" transition:slide={fold}>
           {#if restText}<div class="intro selectable"><RichText text={restText} /></div>{/if}
           {@render annotations(node.annotations)}
-          {#each children as child (child.id)}
-            <RuleItem node={child} {doc} depth={1} {law} />
+          {#each children as child, i (child.id)}
+            <!-- Большие разделы достраиваются по главам, чтобы не подвешивать окно -->
+            <Lazy eager={i < 3 || contains(child, focusId)} estimate={estimate([child])} bare>
+              <RuleItem node={child} {doc} depth={1} {law} />
+            </Lazy>
           {/each}
         </div>
       {/if}
@@ -179,7 +185,7 @@
         {@render annotations(node.annotations)}
 
         {#each node.images as img (img.src)}
-          <figure class="sk">
+          <figure class="sk still">
             <img src={img.url ?? img.src} alt={img.alt ?? 'Иллюстрация к пункту'} loading="lazy"
               onload={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('ready')}
               onerror={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('broken')} />
@@ -226,7 +232,7 @@
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     background: var(--surface);
     text-align: left;
-    transition: background 0.15s var(--ease);
+
   }
   .sec-head[aria-expanded='false'] { border-radius: var(--radius-lg); }
   .sec-head[aria-expanded='true'] { border-bottom: 1px solid var(--border); }
@@ -378,10 +384,10 @@
   /* ── Картинки: серая плашка, пока грузится ── */
   figure { margin: 12px 0 0; min-height: 140px; border-radius: var(--radius); overflow: hidden; max-width: 100%; }
   figure img { max-width: 100%; display: block; opacity: 0; transition: opacity 0.25s var(--ease); }
-  :global(figure.ready) { min-height: 0; background: none; animation: none; }
+  :global(figure.ready) { min-height: 0; background: none; }
   :global(figure.ready) img { opacity: 1; }
   figcaption { display: none; font-size: var(--fs-xs); padding: 10px; }
-  :global(figure.broken) { min-height: 0; background: var(--surface-2); animation: none; }
+  :global(figure.broken) { min-height: 0; background: var(--surface-2); }
   :global(figure.broken) img { display: none; }
   :global(figure.broken) figcaption { display: block; }
 

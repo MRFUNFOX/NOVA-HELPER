@@ -28,7 +28,7 @@ export interface Variant { text: string; level: Level }
  * и по « или » («3 года лишения свободы или штраф…» — два варианта наказания).
  */
 export function variants(p: Punishment): Variant[] {
-  const raw = p.raw.split(/\s*\|\s*|\s+\/\s+|\/(?=[A-ZА-ЯЁ])|,\s*(?=(?:JAIL|WARN|B[AА]N|MUTE|KICK|DEMORGAN)(?!\p{L}))|\s+или\s+(?=\p{L}{3})/u).map((s) => s.trim().replace(/[.;,]$/, '')).filter(Boolean);
+  const raw = p.raw.split(/\s*\|\s*|\s+\/\s+|\/(?=[A-ZА-ЯЁ])|,\s*(?=(?:JAIL|WARN|B[AА]N|MUTE|KICK|DEMORGAN)(?!\p{L}))|\s+или\s+(?=\p{L}{2})/u).map((s) => s.trim().replace(/[.;,]$/, '')).filter(Boolean);
   // «Устный/Письменный выговор» — это одно наказание: одиночное русское слово склеиваем со следующим
   const parts: string[] = [];
   for (let i = 0; i < raw.length; i++) {

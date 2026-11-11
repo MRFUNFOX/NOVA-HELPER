@@ -131,17 +131,29 @@ kbd {
 
 .muted { color: var(--text-muted); }
 
-/* Скелетная загрузка: серые плашки на месте будущего содержимого с мягким переливом */
+/*
+ * Скелетная загрузка: серые плашки на месте будущего содержимого с мягким переливом.
+ * Перелив — отдельный слой, который только сдвигается (transform): видеокарта двигает готовую
+ * картинку и ничего не перерисовывает. `.sk.still` — без перелива (заглушки, которые висят долго).
+ */
 .sk {
   display: block;
+  position: relative;
+  overflow: hidden;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-2) 35%, #34353b 50%, var(--surface-2) 65%, var(--surface-2) 100%);
-  background-size: 300% 100%;
+  background: var(--surface-2);
+}
+.sk:not(.still)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.045) 50%, transparent 100%);
+  transform: translateX(-100%);
   animation: sk-shimmer 1.4s linear infinite;
+  will-change: transform;
 }
 @keyframes sk-shimmer {
-  from { background-position: 100% 0; }
-  to { background-position: -50% 0; }
+  to { transform: translateX(100%); }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
