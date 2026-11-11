@@ -3,8 +3,8 @@ import { checkDevCode, PUBLIC } from '../src/lib/features';
 import { createHash } from 'node:crypto';
 
 describe('режим разработчика', () => {
-  it('ИИ-помощник пока скрыт от игроков', () => {
-    expect(PUBLIC.ai).toBe(false);
+  it('ИИ-помощник открыт всем игрокам', () => {
+    expect(PUBLIC.ai).toBe(true);
   });
   it('чужой код не подходит', async () => {
     expect(await checkDevCode('NOVA-1111-2222-3333')).toBe(false);
