@@ -3,8 +3,9 @@
  * со ссылками на эти пункты. Нейросеть видит только подобранные пункты и обязана на них
  * ссылаться, поэтому отвечает по нашим правилам, а не «из головы».
  */
+import type { RuleDocument } from '@shared/types';
 import { backend, type AiStatus, type ChatMsg } from './backend';
-import { app, shortTitle } from './state.svelte';
+import { app, sectionOf, shortTitle, type Section } from './state.svelte';
 import { nodeBadge, rank, type Entry } from './search';
 
 export interface Source { n: number; entry: Entry }
@@ -15,30 +16,46 @@ export interface Turn {
   sources: Source[];
   pending: boolean;
   error?: string;
+  /** Где искать ответ; пока не выбрано — игрок видит выбор «Правила / Законы» */
+  scope?: Section;
   /** Что выбрала нейросеть перед поиском — показываем в режиме разработчика */
   plan?: { docs: string[]; keywords: string };
 }
 
-const SYSTEM = `Ты — ИИ-помощник программы NOVA HELPER для игроков и администраторов GTA 5 RP-проекта NOVA RP (сервер Horizon).
-Ты разбираешь игровые ситуации как опытный администратор проекта, опираясь на фрагменты правил и законов из сообщения.
+/** Инструкция для ответа. Отдельная часть — для правил проекта и для законов штата */
+function system(scope: Section) {
+  const where = scope === 'laws'
+    ? `Ты отвечаешь только по законам штата — по ним в игре работают полиция, суд и прокуратура. Называй статью и что грозит персонажу (срок, штраф, лишение лицензии).
+Правила проекта и наказания администрации (JAIL, WARN, BAN) здесь не обсуждай.`
+    : `Ты отвечаешь только по правилам проекта NOVA RP — за их нарушение наказывает администрация (JAIL, WARN, BAN).
+Законы штата (статьи, сроки, штрафы) здесь не обсуждай.`;
+  const nothing = scope === 'laws' ? 'В законах об этом ничего не нашлось' : 'В правилах об этом ничего не нашлось';
+  return `Ты — помощник программы NOVA HELPER для игроков GTA 5 RP-проекта NOVA RP (сервер Horizon).
+${where}
 
 Как отвечать:
-- По-русски, по делу, без вступлений. Обычно 3–7 предложений.
-- Если вопрос — ситуация, разбери её: кто из участников что нарушил или не нарушил и почему, какое наказание грозит.
-  Применяй правила к ситуации, даже если она описана другими словами: «растулил», «завалил», «положил» = убил; «коп» = сотрудник полиции; «РП» = RolePlay и т. п.
-- После каждого утверждения ставь ссылку на фрагмент в квадратных скобках: [S2]. Ссылайся только на номера из списка фрагментов.
-- Если прямого правила нет, но есть близкие — ответь по ним и прямо скажи, что это толкование.
-- Только если во фрагментах совсем ничего по теме — скажи «В правилах об этом ничего не нашлось» и подскажи, что уточнить. Ничего не выдумывай и не бери правила других проектов.
-- «Правила проекта» — правила NOVA RP, за нарушение которых наказывает администрация (JAIL, WARN, BAN).
-  «Законы» — законы штата внутри игры: по ним работают полиция, суд и прокуратура. Если подходит и то и другое — скажи про оба.
-- Без заголовков и таблиц. Главное можно выделить **жирным**.`;
+- Коротко и простыми словами, как опытный игрок другу: 2–4 коротких предложения, не больше 60 слов.
+- Первое предложение — прямой ответ: «Да, можно», «Нет, это нарушение», «Нарушил грабитель, а не охранник» и т. п.
+- Дальше одно-два предложения: какой пункт нарушен и какое наказание. Упоминай только 1–2 самых важных пункта, остальные не пересказывай.
+- Термины поясняй в скобках: DM (убийство без причины), PG (действия, невозможные в реальной жизни).
+- Без списков, нумерации, заголовков и таблиц. Самое главное выдели **жирным** — одно-два места.
+- После утверждения ставь ссылку на фрагмент: [S2]. Только номера из списка фрагментов.
+- Сленг: «растулил», «завалил», «положил» = убил; «коп» = сотрудник полиции; «РП» = RolePlay.
+- Читай пункт внимательно и не приписывай ему то, чего в нём нет. Если прямого пункта нет — ответь по близкому и скажи «скорее всего».
+- Если во фрагментах ничего по теме — скажи «${nothing}» и что стоит уточнить. Ничего не выдумывай.`;
+}
 
-/** Первый шаг: нейросеть видит список всех документов и выбирает подходящие к вопросу */
-const PLAN = `Игрок GTA 5 RP-проекта NOVA RP задаёт вопрос или описывает игровую ситуацию. Ниже — список документов с правилами проекта и законами штата.
-1. Выбери 1–5 документов, в которых, скорее всего, есть ответ. Общие правила проекта подходят почти всегда, если речь о нарушении (DM, NonRP, PG, MG и т. п.).
-2. Составь 5–12 слов для поиска по тексту правил: официальные термины и сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC, ограбление, похищение, задержание),
-   как это пишется в правилах (например «растулил»/«завалил» → «убийство», «коп» → «сотрудник полиции LSPD»), номера пунктов и статей из вопроса.
+/** Первый шаг: нейросеть видит список документов раздела и выбирает подходящие к вопросу */
+const PLAN = `Игрок GTA 5 RP-проекта NOVA RP задаёт вопрос или описывает игровую ситуацию. Ниже — список документов.
+1. Выбери 1–4 документа, в которых, скорее всего, есть ответ. Если речь о нарушении правил проекта (DM, NonRP, PG, MG и т. п.), общие правила проекта подходят почти всегда.
+2. Составь 5–12 слов для поиска по тексту: официальные термины и сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC, ограбление, похищение, задержание),
+   как это пишется в документах (например «растулил»/«завалил» → «убийство», «коп» → «сотрудник полиции LSPD»), номера пунктов и статей из вопроса.
 Ответ строго в JSON: {"docs": ["D3", "D12"], "keywords": ["…"]}`;
+
+export const SCOPES: Record<Section, { label: string; hint: string }> = {
+  project: { label: 'Правила проекта', hint: 'Накажет ли администрация: JAIL, WARN, BAN' },
+  laws: { label: 'Законы штата', hint: 'Что грозит в игре: статья, срок, штраф' },
+};
 
 class Assistant {
   status = $state<AiStatus | null>(null);
@@ -71,25 +88,44 @@ class Assistant {
 
   clear() { this.turns = []; }
 
-  async ask(question: string) {
+  /** Вопрос игрока. Если есть и правила, и законы — сначала спрашиваем, где искать ответ */
+  ask(question: string, scope?: Section) {
     const q = question.trim();
     if (!q || this.busy) return;
-    const turn: Turn = { id: `${Date.now()}`, q, a: '', sources: [], pending: true };
-    this.turns.push(turn);
+    // Вопрос, для которого так и не выбрали раздел, заменяем новым
+    this.turns = this.turns.filter((x) => x.scope || x.error);
+    this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope: scope ?? (app.hasLaws ? undefined : 'project') });
     const t = this.turns[this.turns.length - 1]!; // реактивная копия
+    if (t.scope) void this.answer(t);
+  }
+
+  /** Игрок выбрал раздел — ищем и отвечаем */
+  choose(t: Turn, scope: Section) {
+    if (this.busy || t.scope) return;
+    t.scope = scope;
+    void this.answer(t);
+  }
+
+  private async answer(t: Turn) {
+    const q = t.q;
+    const scope = t.scope!;
     this.busy = true;
     try {
-      const prev = this.turns.length > 1 ? this.turns[this.turns.length - 2]!.q : '';
+      const i = this.turns.indexOf(t);
+      // Прошлый вопрос того же раздела — для уточнений «а если…»
+      const before = this.turns.slice(0, i).filter((x) => x.scope === scope && x.a && !x.error);
+      const prev = before.at(-1)?.q ?? '';
+      const inScope = (d: RuleDocument) => sectionOf(d) === scope;
 
       // 1. Нейросеть выбирает подходящие документы и переводит разговорный вопрос на язык правил
-      const docs = app.db.docs;
-      const catalog = docs.map((d, i) => `D${i + 1} [${d.scope === 'server' ? 'Законы' : 'Правила'}] ${shortTitle(d.title)}`).join('\n');
+      const docs = app.db.docs.filter(inScope);
+      const catalog = docs.map((d, n) => `D${n + 1} ${shortTitle(d.title)}`).join('\n');
       let extra = '';
       const boost = new Set<string>();
       try {
         const raw = await backend.aiComplete([
           { role: 'system', content: PLAN },
-          { role: 'user', content: `Документы:\n${catalog}\n\n${prev ? `Предыдущий вопрос: ${prev}\n` : ''}Вопрос: ${q}` },
+          { role: 'user', content: `Документы (${SCOPES[scope].label.toLowerCase()}):\n${catalog}\n\n${prev ? `Предыдущий вопрос: ${prev}\n` : ''}Вопрос: ${q}` },
         ]);
         const plan = JSON.parse(raw) as { docs?: unknown; keywords?: unknown };
         if (Array.isArray(plan.keywords)) extra = plan.keywords.filter((x) => typeof x === 'string').join(' ');
@@ -102,22 +138,22 @@ class Assistant {
       } catch { /* без подсказки ищем по самому вопросу */ }
       t.plan = { docs: [...boost].map((id) => shortTitle(app.doc(id)?.title ?? id)), keywords: extra };
 
-      // 2. Подбор пунктов: по вопросу, словам-подсказкам и прошлому вопросу (для уточнений «а если…»)
-      const entries = rank(app.index, `${q} ${extra} ${prev}`, 16, undefined, boost);
-      t.sources = entries.map((entry, i) => ({ n: i + 1, entry }));
+      // 2. Подбор пунктов только в выбранном разделе: по вопросу, словам-подсказкам и прошлому вопросу
+      const entries = rank(app.index, `${q} ${extra} ${prev}`, 14, inScope, boost);
+      t.sources = entries.map((entry, n) => ({ n: n + 1, entry }));
 
-      // 3. Ответ: пункты + последние пару вопросов-ответов, чтобы понимать уточнения
-      const history: ChatMsg[] = this.turns.slice(-3, -1).flatMap((x) => (x.a && !x.error ? [
+      // 3. Ответ: пункты + последние пару вопросов-ответов того же раздела
+      const history: ChatMsg[] = before.slice(-2).flatMap((x) => [
         { role: 'user' as const, content: x.q },
         { role: 'assistant' as const, content: x.a.replace(/\s*\[S\d+(?:\s*,\s*S\d+)*\]/g, '') },
-      ] : []));
+      ]);
       const context = t.sources.length
         ? t.sources.map((s) => fragment(s)).join('\n\n')
         : '(подходящих фрагментов не найдено)';
       await backend.aiChat(t.id, [
-        { role: 'system', content: SYSTEM },
+        { role: 'system', content: system(scope) },
         ...history,
-        { role: 'user', content: `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}` },
+        { role: 'user', content: `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.)` },
       ]).then((r) => { if (!t.a) t.a = r.text; });
     } catch (e) {
       t.error = String(e);

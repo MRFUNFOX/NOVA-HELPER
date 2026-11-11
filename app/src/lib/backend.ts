@@ -213,7 +213,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return JSON.stringify({ keywords: [] });
     case 'ai_chat': {
       // Ответ-образец по кусочкам, со ссылками на первые фрагменты
-      const text = 'Нет, это **DeathMatch** — убийство без весомой IC-причины [S1]. Наказание — JAIL до 120 минут [S1]. На мероприятиях действуют свои правила, их стоит проверить отдельно [S2].';
+      const text = 'Нет, это **DM** (убийство без причины) [S1]. Администрация даст **JAIL до 120 минут** [S1].';
       for (const part of text.match(/.{1,12}/gs) ?? []) {
         mockEmit('ai-chunk', { id: args!.id, delta: part });
         await new Promise((r) => setTimeout(r, 40));
@@ -221,7 +221,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.4.2';
+      return '0.4.3';
     default:
       return;
   }

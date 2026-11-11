@@ -2,7 +2,8 @@
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import { app } from '../state.svelte';
-  import { ai, pieces, sourceLabel, type Source, type Turn } from '../ai.svelte';
+  import { ai, pieces, sourceLabel, SCOPES, type Source, type Turn } from '../ai.svelte';
+  import type { Section } from '../state.svelte';
   import { ease, ms } from '../motion';
 
   let input = $state('');
@@ -22,6 +23,8 @@
     if (list) requestAnimationFrame(() => list!.scrollTo({ top: list!.scrollHeight }));
   });
   $effect(() => { if (ai.ready) field?.focus(); });
+
+  const other = (s: Section): Section => (s === 'laws' ? 'project' : 'laws');
 
   function send(text = input) {
     if (!text.trim() || ai.busy) return;
@@ -79,9 +82,19 @@
         <div class="a" aria-live="polite">
           {#if t.error}
             <p class="error"><Icon name="alert" size={15} />{t.error}</p>
-            <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); send(t.q); }} disabled={ai.busy}>Спросить снова</button>
+            <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); ai.ask(t.q, t.scope); }} disabled={ai.busy}>Спросить снова</button>
+          {:else if !t.scope}
+            <p class="choose-lead">Где искать ответ?</p>
+            <div class="choices" role="group" aria-label="Где искать ответ">
+              {#each ['project', 'laws'] as const as id (id)}
+                <button class="choice" onclick={() => ai.choose(t, id)} disabled={ai.busy}>
+                  <span class="choice-ico"><Icon name={id === 'laws' ? 'gavel' : 'book'} size={17} /></span>
+                  <span class="choice-text"><b>{SCOPES[id].label}</b><small>{SCOPES[id].hint}</small></span>
+                </button>
+              {/each}
+            </div>
           {:else if !t.a}
-            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : 'Ищу подходящие пункты…'}</p>
+            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope].label}»…`}</p>
           {:else}
             <p class="text selectable">
               {#each pieces(t.a) as p, i (i)}
@@ -92,6 +105,21 @@
                 {:else}{p.v}{/if}
               {/each}
             </p>
+            {#if !t.pending && cited(t).length}
+              <div class="sources">
+                {#each cited(t) as s (s.n)}
+                  <button class="src" onclick={() => open(s)}>
+                    <span class="num">{sourceLabel(s).num}</span><span class="doc">{sourceLabel(s).doc}</span><Icon name="chevron" size={13} />
+                  </button>
+                {/each}
+              </div>
+            {/if}
+            {#if !t.pending && app.hasLaws}
+              <p class="scope">
+                <Icon name={t.scope === 'laws' ? 'gavel' : 'book'} size={13} />{SCOPES[t.scope].label}
+                <button onclick={() => ai.ask(t.q, other(t.scope!))} disabled={ai.busy}>{other(t.scope) === 'laws' ? 'Спросить по законам' : 'Спросить по правилам'}</button>
+              </p>
+            {/if}
             {#if app.devMode && !t.pending}
               <!-- Только в режиме разработчика: что выбрала нейросеть и что нашёл поиск -->
               <details class="debug">
@@ -106,15 +134,6 @@
                   {/each}
                 </ol>
               </details>
-            {/if}
-            {#if !t.pending && cited(t).length}
-              <div class="sources">
-                {#each cited(t) as s (s.n)}
-                  <button class="src" onclick={() => open(s)}>
-                    <span class="num">{sourceLabel(s).num}</span><span class="doc">{sourceLabel(s).doc}</span><Icon name="chevron" size={13} />
-                  </button>
-                {/each}
-              </div>
             {/if}
           {/if}
         </div>
@@ -167,6 +186,18 @@
   .debug ol { margin: 6px 0 0; padding-left: 18px; }
   .debug li button { border: 0; background: none; padding: 1px 0; color: var(--text-dim); text-align: left; font-size: 11.5px; }
   .debug li button:hover { color: var(--accent-soft); }
+  .choose-lead { margin: 0 0 8px; font-weight: 700; color: var(--text); }
+  .choices { display: flex; flex-direction: column; gap: 6px; }
+  .choice { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface); text-align: left; transition: border-color 0.15s var(--ease), background 0.15s var(--ease); }
+  .choice:hover:not(:disabled) { border-color: var(--accent-line); background: var(--accent-tint); }
+  .choice:disabled { opacity: 0.5; }
+  .choice-ico { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--accent); }
+  .choice-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .choice-text b { font-size: var(--fs-sm); color: var(--text); }
+  .choice-text small { font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.35; }
+  .scope { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 10px 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
+  .scope button { border: 0; background: none; padding: 0; margin-left: auto; color: var(--accent-soft); font-size: inherit; font-weight: 600; }
+  .scope button:hover:not(:disabled) { text-decoration: underline; }
   .thinking { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text-muted); }
   .dots { display: inline-flex; gap: 4px; }
   .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s ease-in-out infinite; }
