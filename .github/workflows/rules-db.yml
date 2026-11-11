@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
       dry_run:
-        description: 'Только проверка: собрать, но не публиковать (результат — в архиве запуска)'
+        description: 'Только проверка: собрать, но не публиковать (результат — в ветке data-preview)'
         type: boolean
         default: false
 
@@ -74,17 +74,13 @@ jobs:
           NOVA_SIGNING_KEY: ${{ secrets.NOVA_SIGNING_KEY }}
         run: npx tsx src/cli.ts scrape --out ../out --via ${{ inputs.via || 'auto' }} ${{ inputs.accept_shrink && '--accept-shrink' || '' }}
 
-      - name: Результат проверки (без публикации)
+      - name: Результат проверки — в ветку data-preview (основная база не трогается)
         if: ${{ inputs.dry_run }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: rules-db-dry-run
-          path: |
-            out/docs/
-            out/manifest.json
-            out/status.json
-            out/changelog/
-          retention-days: 3
+        working-directory: out
+        run: |
+          git add -A
+          git commit -q -m "Проверка $(date -u +%FT%TZ)" || true
+          git push -q -f origin HEAD:data-preview
 
       - name: Публикация в ветку data
         if: ${{ !inputs.dry_run }}
