@@ -19,20 +19,56 @@ const CATEGORY_ORDER: [string, string, IconName][] = [
   ['Правила проекта', 'Правила форума', 'chat'],
 ];
 
+/** Два раздела программы: правила проекта и законы сервера */
+export type Section = 'project' | 'laws';
+
+/**
+ * Законы на форуме лежат одной кучей — в меню раскладываем их по смыслу.
+ * Порядок здесь — порядок в меню.
+ */
+const LAW_GROUPS: [string, IconName, RegExp][] = [
+  ['Конституция', 'shield', /конституц/i],
+  ['Кодексы', 'gavel', /кодекс/i],
+  ['Госструктуры', 'building', /о\s+статусе|national guard|сенат|правительств|прокурор|госслужащ|юрисдикц/i],
+  ['Законы', 'layers', /./],
+];
+
+export function lawGroup(title: string): string {
+  return LAW_GROUPS.find(([, , re]) => re.test(title))![0];
+}
+
+export const sectionOf = (d: RuleDocument): Section => (d.scope === 'server' ? 'laws' : 'project');
+
 export function categoryIcon(c: string): IconName {
-  return CATEGORY_ORDER.find(([k]) => k === c)?.[2] ?? 'book';
+  return CATEGORY_ORDER.find(([k]) => k === c)?.[2] ?? LAW_GROUPS.find(([k]) => k === c)?.[1] ?? 'book';
 }
 
 export function categoryLabel(c: string): string {
+  if (LAW_GROUPS.some(([k]) => k === c)) return c;
   return CATEGORY_ORDER.find(([k]) => k === c)?.[1] ?? c.replace(/^Правила\s+(для\s+)?/i, '').replace(/^./, (x) => x.toUpperCase());
 }
 
-/** «Правила мероприятия "Cбора общих кладов"» → «Сбор общих кладов» в меню */
+/** Раздел меню, в котором лежит документ */
+export function docCategory(d: RuleDocument): string {
+  return d.scope === 'server' ? lawGroup(d.title) : d.category;
+}
+
+/**
+ * «Правила мероприятия "Cбора общих кладов"» → «Сбор общих кладов»,
+ * «Уголовный Кодекс Штата San-Andreas» → «Уголовный кодекс»
+ */
 export function shortTitle(t: string): string {
   const s = t
+    .replace(/\s*штата\s+San[\s-]*Andreas\b/gi, '')
+    // «О ЗАКРЫТЫХ, ОХРАНЯЕМЫХ…» → «о закрытых, охраняемых…» (аббревиатуры латиницей не трогаем)
+    .replace(/(?<!\p{L})[А-ЯЁ]{4,}(?!\p{L})/gu, (w) => w.toLowerCase())
+    .replace(/(?<=\s)(О|И|В|ОБ)(?=\s+[а-яё])/gu, (m) => m.toLowerCase())
+    .replace(/^Закон\s+штата\s+San[\s-]*Andreas\s+/i, 'Закон ')
+    .replace(/^(Уголовный|Административный|Процессуальный|Дорожный|Гражданский|Трудовой|Этический)\s+Кодекс$/i, (_, a: string) => `${a} кодекс`)
+    .replace(/^Закон\s+["«“„](.+?)["»”“]*$/i, '$1')
     .replace(/^(?:ВАЖНО\s*[-–]\s*)?/i, '')
     .replace(/^(?:Правила\s+(?:мероприяти[ея]|события|проведения)\s*[:–-]?\s*)/i, '')
-    .replace(/^["«“„]|["»”“]$/g, '')
+    .replace(/^["«“„](.*?)["»”“]*$/, '$1')
     .replace(/C(?=[а-яё])/g, 'С') // латинская C в кириллическом слове встречается на форуме
     .trim();
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -54,6 +90,10 @@ class AppState {
   filter = $state<'all' | 'punished' | 'severe'>('all');
   /** База ещё ни разу не загружалась в этом запуске — показываем скелет */
   loaded = $state(false);
+  /** Какой раздел открыт в меню: правила проекта или законы сервера */
+  section = $state<Section>('project');
+  /** Последний открытый документ в каждом разделе — чтобы при переключении вернуться туда же */
+  private lastDoc: Partial<Record<Section, string>> = {};
   version = $state('');
 
   /** Обновление базы правил */
@@ -72,16 +112,29 @@ class AppState {
   toast = $state<{ text: string; tone: 'ok' | 'error' } | null>(null);
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
 
-  hits = $derived.by<Hit[]>(() => (this.query.trim() ? search(this.index, this.query) : []));
+  hits = $derived.by<Hit[]>(() => (this.query.trim() ? search(this.index, this.query, 60, (d) => sectionOf(d) === this.section) : []));
+
+  /** Есть ли в базе законы (у старой базы их нет — тогда переключатель разделов не нужен) */
+  hasLaws = $derived(this.db.docs.some((d) => d.scope === 'server'));
+  /** Название сервера для подписи раздела законов */
+  serverName = $derived(this.db.manifest?.servers?.find((s) => !s.archived)?.name ?? 'сервера');
 
   categories = $derived.by(() => {
     const groups = new Map<string, RuleDocument[]>();
     for (const d of this.db.docs) {
-      const list = groups.get(d.category) ?? [];
+      if (sectionOf(d) !== this.section) continue;
+      const c = docCategory(d);
+      const list = groups.get(c) ?? [];
       list.push(d);
-      groups.set(d.category, list);
+      groups.set(c, list);
     }
-    const order = (c: string) => { const i = CATEGORY_ORDER.findIndex(([k]) => k === c); return i < 0 ? 99 : i; };
+    const order = (c: string) => {
+      const i = CATEGORY_ORDER.findIndex(([k]) => k === c);
+      const j = LAW_GROUPS.findIndex(([k]) => k === c);
+      return i >= 0 ? i : j >= 0 ? j : 99;
+    };
+    // Внутри групп законов — по алфавиту короткого названия
+    if (this.section === 'laws') for (const list of groups.values()) list.sort((a, b) => shortTitle(a.title).localeCompare(shortTitle(b.title), 'ru'));
     return [...groups.entries()]
       .sort((a, b) => order(a[0]) - order(b[0]))
       .map(([category, docs]) => ({ category, label: categoryLabel(category), icon: categoryIcon(category), docs }));
@@ -89,7 +142,7 @@ class AppState {
 
   /** Сколько пунктов изменилось в последнем обновлении — бейдж «Что изменилось» */
   recentChanges = $derived(
-    this.db.changelogs[0]?.documents.filter((d) => d.docId.startsWith('project/')).reduce((a, d) => a + d.nodes.length, 0) ?? 0,
+    this.db.changelogs[0]?.documents.reduce((a, d) => a + (d.kind === 'modified' ? d.nodes.length : 1), 0) ?? 0,
   );
 
   get ready() { return this.db.docs.length > 0; }
@@ -107,7 +160,7 @@ class AppState {
     this.settings = settings;
     this.version = version;
     this.setDb(db);
-    if (this.ready && this.view.kind === 'home') this.view = { kind: 'doc', docId: this.mainDocId() };
+    if (this.ready && this.view.kind === 'home') this.open(this.mainDocId());
     backend.on('overlay-shown', () => focusSearch());
     backend.on('check-updates', () => this.analyze(true));
     backend.on('settings-changed', (s) => { this.settings = s as Settings; });
@@ -121,15 +174,27 @@ class AppState {
       const p = new URLSearchParams(location.search);
       if (p.get('q')) this.query = p.get('q')!;
       if (p.get('view') === 'changes' || p.get('view') === 'settings') this.view = { kind: p.get('view') as 'changes' };
-      if (p.get('doc')) { const d = this.db.docs.find((x) => x.title.includes(p.get('doc')!)); if (d) this.view = { kind: 'doc', docId: d.id, focus: p.get('focus') ? `${d.id}#p${p.get('focus')}` : undefined }; }
+      if (p.get('doc')) { const d = this.db.docs.find((x) => x.title.includes(p.get('doc')!)); if (d) this.open(d.id, this.index.entries.find((e) => e.doc.id === d.id && e.node.number === p.get('focus'))?.node.id); }
+      if (p.has('laws')) this.setSection('laws');
       if (p.has('ai')) this.aiOpen = true;
       if (p.has('menu')) this.sidebarOpen = true;
     }
   }
 
-  mainDocId(): string {
-    const general = this.db.docs.find((d) => /общие правила проекта/i.test(d.title)) ?? this.db.docs[0];
-    return general?.id ?? '';
+  mainDocId(section: Section = 'project'): string {
+    const docs = this.db.docs.filter((d) => sectionOf(d) === section);
+    const main = section === 'laws'
+      ? docs.find((d) => /уголовный\s+кодекс/i.test(d.title))
+      : docs.find((d) => /общие правила проекта/i.test(d.title));
+    return (main ?? docs[0] ?? this.db.docs[0])?.id ?? '';
+  }
+
+  /** Переключить раздел меню и открыть последний документ в нём */
+  setSection(section: Section) {
+    if (section === this.section && this.view.kind === 'doc') return;
+    this.section = section;
+    const last = this.lastDoc[section];
+    this.open(last && this.doc(last) ? last : this.mainDocId(section));
   }
 
   /**
@@ -165,7 +230,7 @@ class AppState {
       this.updateDialog = false;
       this.check = { ...this.check, status: 'upToDate' };
       if (this.view.kind === 'home' || (this.view.kind === 'doc' && !this.doc(this.view.docId))) {
-        this.view = { kind: 'doc', docId: this.mainDocId() };
+        this.open(this.mainDocId(this.section));
       }
       this.notify('Правила обновлены', 'ok');
       return true;
@@ -190,6 +255,8 @@ class AppState {
 
   open(docId: string, focus?: string) {
     if (this.view.kind !== 'doc' || this.view.docId !== docId) this.filter = 'all';
+    const d = this.doc(docId);
+    if (d) { this.section = sectionOf(d); this.lastDoc[this.section] = docId; }
     if (focus) this.revealNode(docId, focus);
     this.view = { kind: 'doc', docId, focus };
     this.sidebarOpen = false;

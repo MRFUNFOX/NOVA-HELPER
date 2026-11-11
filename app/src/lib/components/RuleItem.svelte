@@ -14,12 +14,12 @@
   import RuleItem from './RuleItem.svelte';
   import Punishments from './Punishments.svelte';
   import { app, formatDate } from '../state.svelte';
-  import { nodeLabel } from '../search';
+  import { nodeBadge, nodeLabel, tameCaps } from '../search';
   import { backend } from '../backend';
   import { isStructural, matches, stats } from '../punish';
   import { fold } from '../motion';
 
-  let { node, doc, depth = 0, inPoint = false }: { node: RuleNode; doc: RuleDocument; depth?: number; inPoint?: boolean } = $props();
+  let { node, doc, depth = 0, inPoint = false, law = false }: { node: RuleNode; doc: RuleDocument; depth?: number; inPoint?: boolean; law?: boolean } = $props();
 
   const ANNOTATION: Record<string, { label: string; icon: IconName; tone: string }> = {
     note: { label: 'Примечание', icon: 'info', tone: 'info' },
@@ -29,15 +29,20 @@
   };
 
   const structural = $derived(isStructural(node));
-  const shown = $derived(matches(node, app.filter));
-  const children = $derived(app.filter === 'all' ? node.children : node.children.filter((c) => matches(c, app.filter)));
+  const shown = $derived(matches(node, app.filter, law));
+  // В законах части статьи показываем все, если сама статья подходит под фильтр
+  const children = $derived(app.filter === 'all' || (law && node.kind === 'article') ? node.children : node.children.filter((c) => matches(c, app.filter, law)));
+  /** Подпись на плашке: «4.1» в правилах, «ст. 12.1» и «ч. 2» в законах */
+  const badge = $derived(nodeBadge(node, law));
+  /** Статья с частями: первая строка — это её название */
+  const titled = $derived(node.kind === 'article' && node.children.length > 0 && !node.text.includes('\n'));
   const focused = $derived(app.view.kind === 'doc' && app.view.focus === node.id);
-  const firstLine = $derived((node.text.split('\n')[0] ?? '').replace(structural ? /\s*:\s*$/ : /$^/, ''));
+  const firstLine = $derived(structural ? tameCaps((node.text.split('\n')[0] ?? '').replace(/\s*:\s*$/, '')) : (node.text.split('\n')[0] ?? ''));
   const restText = $derived(node.text.split('\n').slice(1).join('\n'));
-  const sub = $derived(inPoint || node.kind === 'part' || (node.number?.split('.').length ?? 0) > 2);
+  const sub = $derived(inPoint || node.kind === 'part' || (!law && (node.number?.split('.').length ?? 0) > 2));
   const count = $derived.by(() => {
     if (!structural || depth !== 0) return 0;
-    const st = stats(node.children);
+    const st = stats(node.children, law);
     return app.filter === 'all' ? st.points : app.filter === 'severe' ? st.severe : st.punished;
   });
   const collapsed = $derived(!!app.collapsed[node.id] && app.filter === 'all');
@@ -61,13 +66,15 @@
     else app.collapsed[node.id] = true;
   }
 
-  function plural(n: number) {
+  function plural(n: number, articles: boolean) {
     const m10 = n % 10, m100 = n % 100;
-    return m10 === 1 && m100 !== 11 ? 'пункт' : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? 'пункта' : 'пунктов';
+    const one = m10 === 1 && m100 !== 11, few = m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20);
+    if (articles) return one ? 'статья' : few ? 'статьи' : 'статей';
+    return one ? 'пункт' : few ? 'пункта' : 'пунктов';
   }
 
   async function copy() {
-    const where = node.number ? `п. ${node.number} «${doc.title}»` : `«${doc.title}»`;
+    const where = node.number ? `${node.kind === 'article' ? 'ст.' : node.kind === 'part' && law ? 'ч.' : 'п.'} ${node.number} «${doc.title}»` : `«${doc.title}»`;
     const pun = node.punishments.map((p) => `Наказание: ${p.raw}`).join('\n');
     await navigator.clipboard.writeText([`${where}:`, node.text, pun].filter(Boolean).join('\n'));
     copied = true;
@@ -111,7 +118,7 @@
           {#if node.kind !== 'heading'}<span class="kicker">{node.kind === 'chapter' ? 'Глава' : node.label ?? 'Раздел'}</span>{/if}
           <span class="t">{firstLine || nodeLabel(node)}</span>
         </span>
-        {#if count}<span class="sec-count">{count} {plural(count)}</span>{/if}
+        {#if count}<span class="sec-count">{count} {plural(count, law)}</span>{/if}
         <span class="chev" class:up={!collapsed}><Icon name="chevron" size={16} /></span>
       </button>
       {#if !collapsed}
@@ -119,7 +126,7 @@
           {#if restText}<div class="intro selectable"><RichText text={restText} /></div>{/if}
           {@render annotations(node.annotations)}
           {#each children as child (child.id)}
-            <RuleItem node={child} {doc} depth={1} />
+            <RuleItem node={child} {doc} depth={1} {law} />
           {/each}
         </div>
       {/if}
@@ -135,13 +142,13 @@
       {#if restText}<div class="intro selectable"><RichText text={restText} /></div>{/if}
       {@render annotations(node.annotations)}
       {#each children as child (child.id)}
-        <RuleItem node={child} {doc} depth={depth + 1} />
+        <RuleItem node={child} {doc} depth={depth + 1} {law} />
       {/each}
     </div>
   {:else}
     <!-- Пункт или подпункт -->
     <article class="pt" class:sub class:focused class:loose={depth === 0} id={node.id} use:scrollTo={focused}>
-      <span class="num" class:empty={!node.number}>{node.number ?? '•'}</span>
+      <span class="num" class:empty={!node.number}>{badge || '•'}</span>
       <div class="body">
         {#each visible as a, i (i)}
           <div class="amend" class:warn={a.status !== 'applied' && a.status !== 'notice'}>
@@ -167,7 +174,7 @@
           </div>
         {/each}
 
-        <div class="text selectable"><RichText text={node.text} /></div>
+        <div class="text selectable" class:titled><RichText text={node.text} /></div>
 
         {@render annotations(node.annotations)}
 
@@ -185,7 +192,7 @@
         {#if children.length}
           <div class="subs">
             {#each children as child (child.id)}
-              <RuleItem node={child} {doc} depth={depth + 1} inPoint />
+              <RuleItem node={child} {doc} depth={depth + 1} inPoint {law} />
             {/each}
           </div>
         {/if}
@@ -295,6 +302,7 @@
   .num.empty { min-width: 28px; }
   .body { min-width: 0; }
   .text { line-height: 1.6; padding-top: 2px; }
+  .text.titled { font-weight: 700; color: var(--text); }
 
   /* Подпункты: ветка от пункта */
   .subs { margin-top: 10px; display: flex; flex-direction: column; }

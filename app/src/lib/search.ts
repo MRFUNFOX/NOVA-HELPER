@@ -64,11 +64,18 @@ export interface Entry {
   body: Set<string>;
   /** Весь текст пункта одной строкой (для подсветки фрагмента) */
   plain: string;
+  /** Для части статьи закона — номер самой статьи */
+  article?: string;
 }
 
 export interface Index {
   entries: Entry[];
   byId: Map<string, Entry>;
+  /** Обратный индекс: основа слова → номера пунктов (в первой строке и во всём тексте) */
+  head?: Map<string, number[]>;
+  body?: Map<string, number[]>;
+  /** Все основы слов по алфавиту — для быстрого поиска по началу слова */
+  vocab?: string[];
 }
 
 export function nodeLabel(n: RuleNode): string {
@@ -77,11 +84,26 @@ export function nodeLabel(n: RuleNode): string {
   return [word, n.number].filter(Boolean).join(' ');
 }
 
+/** «ПРАВОНАРУШЕНИЯ, ПОСЯГАЮЩИЕ НА…» → «Правонарушения, посягающие на…» — заголовки капсом трудно читать */
+export function tameCaps(t: string): string {
+  if (t.length < 12 || /[а-яё]/.test(t) || !/[А-ЯЁ]{3}/.test(t)) return t;
+  const low = t.replace(/[А-ЯЁ]+/g, (w) => w.toLowerCase());
+  return low.charAt(0).toUpperCase() + low.slice(1);
+}
+
+/** Подпись на плашке номера: «4.1» в правилах, «ст. 12.1» и «ч. 2» в законах */
+export function nodeBadge(n: RuleNode, law: boolean): string {
+  if (!n.number) return '';
+  if (n.kind === 'article') return `ст. ${n.number}`;
+  if (n.kind === 'part' && law) return `ч. ${n.number}`;
+  return n.number;
+}
+
 export function buildIndex(docs: RuleDocument[]): Index {
   const entries: Entry[] = [];
   const byId = new Map<string, Entry>();
   for (const doc of docs) {
-    const walk = (nodes: RuleNode[], path: string[]) => {
+    const walk = (nodes: RuleNode[], path: string[], parent?: RuleNode) => {
       for (const node of nodes) {
         const firstLine = node.text.split('\n')[0] ?? '';
         const extra = [
@@ -94,16 +116,34 @@ export function buildIndex(docs: RuleDocument[]): Index {
           head: new Set(terms(`${node.number ?? ''} ${firstLine}`)),
           body: new Set(terms(`${node.text} ${extra}`)),
           plain: [node.text, extra].filter(Boolean).join('\n'),
+          article: node.kind === 'part' && parent?.kind === 'article' ? parent.number : undefined,
         };
         entries.push(entry);
         byId.set(node.id, entry);
-        const label = node.kind === 'point' || node.kind === 'part' ? path : [...path, node.kind === 'heading' ? firstLine : `${nodeLabel(node)}. ${firstLine}`.trim()];
-        walk(node.children, label);
+        const title = tameCaps(firstLine);
+        const label = node.kind === 'point' || node.kind === 'part' ? path : [...path, node.kind === 'heading' ? title : `${nodeLabel(node)}. ${title}`.trim()];
+        walk(node.children, label, node);
       }
     };
     walk(doc.children, []);
   }
-  return { entries, byId };
+  const head = new Map<string, number[]>();
+  const body = new Map<string, number[]>();
+  entries.forEach((e, i) => {
+    for (const t of e.head) (head.get(t) ?? head.set(t, []).get(t)!).push(i);
+    for (const t of e.body) (body.get(t) ?? body.set(t, []).get(t)!).push(i);
+  });
+  const vocab = [...new Set([...head.keys(), ...body.keys()])].sort();
+  return { entries, byId, head, body, vocab };
+}
+
+/** Основы слов словаря, начинающиеся с `v` (словарь отсортирован — ищем границу делением пополам) */
+function withPrefix(vocab: string[], v: string): string[] {
+  let lo = 0, hi = vocab.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (vocab[mid]! < v) lo = mid + 1; else hi = mid; }
+  const out: string[] = [];
+  for (let i = lo; i < vocab.length && vocab[i]!.startsWith(v); i++) out.push(vocab[i]!);
+  return out;
 }
 
 export interface Hit {
@@ -113,17 +153,42 @@ export interface Hit {
 
 const NUMBER_QUERY = /^(?:п\.?|пункт|статья|ст\.?)?\s*(\d+(?:\.\d+)*)\.?$/i;
 
-export function search(index: Index, query: string, limit = 60): Hit[] {
+/** Сокращения кодексов: «ук 12.1», «ст. 5 ак», «12.1 УК» — статья конкретного кодекса */
+const CODES: Record<string, RegExp> = {
+  ук: /уголовн\p{L}*\s+кодекс/iu,
+  ак: /административн\p{L}*\s+кодекс/iu,
+  коап: /административн\p{L}*\s+кодекс/iu,
+  пк: /процессуальн\p{L}*\s+кодекс/iu,
+  упк: /процессуальн\p{L}*\s+кодекс/iu,
+  дк: /дорожн\p{L}*\s+кодекс/iu,
+  гк: /гражданск\p{L}*\s+кодекс/iu,
+  тк: /трудов\p{L}*\s+кодекс/iu,
+  эк: /этическ\p{L}*\s+кодекс/iu,
+  конституция: /конституц/iu,
+};
+const CODE_WORDS = Object.keys(CODES).join('|');
+const CODE_QUERY = new RegExp(
+  `^(?:(${CODE_WORDS})\\s*(?:ст\\.?|статья)?\\s*(\\d+(?:\\.\\d+)*)|(?:ст\\.?|статья)?\\s*(\\d+(?:\\.\\d+)*)\\s*(${CODE_WORDS}))\\.?$`,
+  'iu',
+);
+
+/** `prefer` — документы открытого раздела (правила или законы): при равенстве они выше */
+export function search(index: Index, query: string, limit = 60, prefer?: (d: RuleDocument) => boolean): Hit[] {
   const q = query.trim();
   if (!q) return [];
 
+  // «ук 12.1», «ст. 5 ак» — статья конкретного кодекса
+  const code = CODE_QUERY.exec(normalize(q));
   // «4.5», «п. 4.5», «статья 6» — переход к пункту по номеру
-  const num = NUMBER_QUERY.exec(q);
-  if (num) {
-    const n = num[1]!;
+  const num = code ? null : NUMBER_QUERY.exec(q);
+  if (code || num) {
+    const n = code ? (code[2] ?? code[3])! : num![1]!;
+    const docRe = code ? CODES[(code[1] ?? code[4])!]! : null;
     return index.entries
+      .filter((e) => !docRe || docRe.test(e.doc.title))
+      .filter((e) => e.node.kind !== 'part' || !code)
       .filter((e) => e.node.number === n || e.node.number?.startsWith(`${n}.`))
-      .map((e) => ({ entry: e, score: e.node.number === n ? 100 : 50 - (e.node.number!.split('.').length) }))
+      .map((e) => ({ entry: e, score: (e.node.number === n ? 100 : 50 - (e.node.number!.split('.').length)) + (prefer?.(e.doc) ? 20 : 0) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, limit);
   }
@@ -133,32 +198,34 @@ export function search(index: Index, query: string, limit = 60): Hit[] {
   // Каждое слово запроса — набор вариантов (само слово + сленг)
   const groups = words.map((w) => [w, ...(SLANG[w] ?? [])]);
 
-  const hits: Hit[] = [];
-  for (const e of index.entries) {
-    let score = 0;
-    let all = true;
-    for (const variants of groups) {
-      let best = 0;
-      for (const v of variants) {
-        for (const t of e.head) {
-          if (t === v) best = Math.max(best, 6);
-          else if (t.startsWith(v)) best = Math.max(best, 4);
-        }
-        if (best >= 6) break;
-        for (const t of e.body) {
-          if (t === v) best = Math.max(best, 3);
-          else if (v.length >= 3 && t.startsWith(v)) best = Math.max(best, 2);
-        }
+  const n = index.entries.length;
+  if (!index.vocab) return [];
+  const total = new Float32Array(n);
+  const alive = new Uint8Array(n).fill(1);
+  for (const variants of groups) {
+    // Лучшее совпадение слова в каждом пункте: первая строка точно 6 / по началу 4, текст точно 3 / по началу 2
+    const best = new Uint8Array(n);
+    for (const v of variants) {
+      for (const t of withPrefix(index.vocab!, v)) {
+        const exact = t === v;
+        for (const i of index.head!.get(t) ?? []) best[i] = Math.max(best[i]!, exact ? 6 : 4);
+        if (exact || v.length >= 3) for (const i of index.body!.get(t) ?? []) best[i] = Math.max(best[i]!, exact ? 3 : 2);
       }
-      if (!best) { all = false; break; }
-      score += best;
     }
-    if (!all) continue;
+    for (let i = 0; i < n; i++) { if (!best[i]) alive[i] = 0; else total[i]! += best[i]!; }
+  }
+
+  const hits: Hit[] = [];
+  for (let i = 0; i < n; i++) {
+    if (!alive[i]) continue;
+    const e = index.entries[i]!;
+    let score = total[i]!;
     // Пункт с наказанием игроку нужнее, чем общее положение; заголовки — ниже пунктов
     if (e.node.punishments.length) score += 1;
     // Общие правила проекта — главный документ: при равенстве они выше правил отдельных мероприятий
     if (e.doc.category === 'Общие правила') score += 1;
     if (e.node.kind === 'heading' || e.node.kind === 'section' || e.node.kind === 'chapter') score -= 2;
+    if (prefer?.(e.doc)) score += 1.5;
     hits.push({ entry: e, score });
   }
   return hits.sort((a, b) => b.score - a.score).slice(0, limit);

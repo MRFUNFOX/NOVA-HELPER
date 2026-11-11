@@ -1,13 +1,17 @@
 <script lang="ts">
   import { slide } from 'svelte/transition';
   import Icon from './Icon.svelte';
-  import { app, formatDate, shortTitle } from '../state.svelte';
+  import { app, docCategory, formatDate, shortTitle, type Section } from '../state.svelte';
   import { fold } from '../motion';
 
   // Раскрыт раздел с открытым документом; остальные — по клику
   let expanded = $state<Record<string, boolean>>({});
   const currentDoc = $derived(app.view.kind === 'doc' ? app.view.docId : '');
-  const currentCategory = $derived(app.db.docs.find((d) => d.id === currentDoc)?.category);
+  const currentCategory = $derived.by(() => { const d = app.db.docs.find((x) => x.id === currentDoc); return d && docCategory(d); });
+  const sections: { id: Section; label: string; icon: 'book' | 'gavel' }[] = [
+    { id: 'project', label: 'Правила', icon: 'book' },
+    { id: 'laws', label: 'Законы', icon: 'gavel' },
+  ];
   const rail = $derived(app.sidebarCollapsed && !app.sidebarOpen);
 
   function isOpen(category: string) {
@@ -41,8 +45,20 @@
     </button>
   </div>
 
+  {#if app.hasLaws}
+    <div class="switch" class:rail role="tablist" aria-label="Раздел">
+      {#each sections as sec (sec.id)}
+        <button role="tab" class:on={app.section === sec.id} aria-selected={app.section === sec.id}
+          onclick={() => app.setSection(sec.id)} title={rail ? (sec.id === 'laws' ? `Законы ${app.serverName}` : 'Правила проекта') : undefined}>
+          <Icon name={sec.icon} size={rail ? 19 : 16} />{#if !rail}<span>{sec.label}</span>{/if}
+        </button>
+      {/each}
+      {#if !rail}<span class="thumb" class:right={app.section === 'laws'} aria-hidden="true"></span>{/if}
+    </div>
+  {/if}
+
   <div class="scroll">
-    {#if !rail}<p class="caption">Правила проекта</p>{/if}
+    {#if !rail}<p class="caption">{app.section === 'laws' ? `Законы сервера ${app.serverName}` : 'Правила проекта'}</p>{/if}
 
     {#if !app.loaded}
       {#each [70, 55, 82, 60, 74] as w, i (i)}
@@ -141,8 +157,20 @@
   .collapse span { display: grid; transition: transform 0.22s var(--ease); }
   .collapse .flip { transform: rotate(180deg); }
 
+  /* Переключатель «Правила / Законы»: жёлтая плашка переезжает под выбранный раздел */
+  .switch { position: relative; display: grid; grid-template-columns: 1fr 1fr; margin: 2px 12px 6px; padding: 3px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); flex-shrink: 0; }
+  .switch button { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 34px; border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 700; color: var(--text-dim); transition: color 0.2s var(--ease); }
+  .switch button:hover { color: var(--text); }
+  .switch button.on { color: var(--on-accent); }
+  .thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: var(--radius-sm); background: var(--accent); transition: transform 0.24s var(--ease); }
+  .thumb.right { transform: translateX(100%); }
+  .switch.rail { grid-template-columns: 1fr; gap: 4px; margin: 10px auto 0; padding: 4px; width: 52px; }
+  .switch.rail button { width: 42px; height: 38px; padding: 0; justify-content: center; }
+  .switch.rail button.on { background: var(--accent); }
   .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 6px 12px 10px; display: flex; flex-direction: column; gap: 2px; }
   .rail .scroll { padding: 10px 10px; align-items: center; }
+  /* В длинном списке пункты меню не сжимаются, а список прокручивается */
+  .scroll > :global(*) { flex-shrink: 0; }
   .caption { margin: 10px 10px 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); }
   .caption.gap { margin-top: 18px; }
   .divider { width: 28px; height: 1px; background: var(--border); margin: 10px 0; }

@@ -24,7 +24,7 @@
       <input
         id="search"
         type="search"
-        placeholder="Поиск по правилам: «дм», «4.1»…"
+        placeholder={app.section === 'laws' ? 'Поиск по законам: «ук 12.1», «арест»…' : 'Поиск по правилам: «дм», «4.1»…'}
         autocomplete="off"
         spellcheck="false"
         bind:value={app.query}

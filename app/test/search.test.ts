@@ -23,6 +23,23 @@ describe('поиск по правилам', () => {
   it('находит и по тексту наказания: «перманентная блокировка»', () => {
     expect(search(index, 'навсегда бан').length).toBeGreaterThan(3);
   });
+  it('сокращение кодекса: «ук 1.2» и «ст. 1.2 УК» — статья Уголовного кодекса', () => {
+    for (const q of ['ук 1.2', 'ст. 1.2 УК', 'УК ст 1.2']) {
+      const r = search(index, q);
+      expect(r[0]!.entry.node.number, q).toBe('1.2');
+      expect(r[0]!.entry.doc.title, q).toMatch(/Уголовный/);
+      expect(r.every((h) => /Уголовный/.test(h.entry.doc.title)), q).toBe(true);
+    }
+  });
+  it('номер без кодекса: сначала документы открытого раздела', () => {
+    const laws = search(index, '1.2', 60, (d) => d.scope === 'server');
+    expect(laws[0]!.entry.doc.scope).toBe('server');
+    const rules = search(index, '1.2', 60, (d) => d.scope === 'project');
+    expect(rules[0]!.entry.doc.scope).toBe('project');
+  });
+  it('законы ищутся по тексту: «лишение свободы»', () => {
+    expect(search(index, 'лишение свободы').some((h) => h.entry.doc.scope === 'server')).toBe(true);
+  });
   it('пустой и бессмысленный запрос — пустой результат', () => {
     expect(search(index, '   ')).toEqual([]);
     expect(search(index, 'зюзюкабра')).toEqual([]);

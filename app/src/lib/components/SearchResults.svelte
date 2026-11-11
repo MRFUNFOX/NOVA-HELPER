@@ -2,8 +2,8 @@
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import Punishments from './Punishments.svelte';
-  import { app, categoryIcon, shortTitle } from '../state.svelte';
-  import { snippet, type Entry } from '../search';
+  import { app, categoryIcon, docCategory, shortTitle } from '../state.svelte';
+  import { nodeBadge, snippet, type Entry } from '../search';
   import { isStructural } from '../punish';
   import { ms } from '../motion';
 
@@ -30,7 +30,7 @@
   // Фрагмент из текста пункта; если слово нашлось только в примечании или наказании — оттуда
   function snip(e: Entry, q: string) {
     // Поиск по номеру: номер уже на плашке, показываем начало текста пункта
-    if (/^(?:п\.?|пункт)?\s*\d+(?:\.\d+)*\.?$/i.test(q.trim())) return snippet(e.node.text, '');
+    if (/^[\p{L}.\s]{0,14}\d+(?:\.\d+)*\.?(?:\s*\p{L}{1,12})?$/u.test(q.trim())) return snippet(e.node.text, '');
     const s = snippet(e.node.text, q);
     return s.marks.length || e.plain === e.node.text ? s : snippet(e.plain, q);
   }
@@ -64,12 +64,12 @@
       <button class="hit" class:active={i === active} class:sec={isStructural(e.node)} role="option" aria-selected={i === active}
         onclick={() => pick(i)} onmouseenter={() => (active = i)} in:fly={{ y: 6, duration: ms(180), delay: ms(Math.min(i, 8) * 18) }}>
         <span class="where">
-          <span class="doc-ico"><Icon name={categoryIcon(e.doc.category)} size={15} /></span>
+          <span class="doc-ico"><Icon name={categoryIcon(docCategory(e.doc))} size={15} /></span>
           <span class="doc-name">{shortTitle(e.doc.title)}</span>
           {#each where as w, k (k)}<Icon name="chevron" size={13} /><span class="sec-name" class:last={k === where.length - 1}>{w}</span>{/each}
         </span>
         <span class="row">
-          <span class="num" class:none={!e.node.number}>{e.node.number ?? '§'}</span>
+          <span class="num" class:none={!e.node.number}>{e.article ? `ст. ${e.article}, ч. ${e.node.number}` : nodeBadge(e.node, e.doc.scope === 'server') || '§'}</span>
           <span class="snip selectable">{#each parts(s.text, s.marks) as p, k (k)}{#if p.m}<mark>{p.s}</mark>{:else}{p.s}{/if}{/each}</span>
         </span>
         {#if e.node.punishments.length}

@@ -5,12 +5,15 @@
 
   const KIND: Record<NodeChange['kind'], string> = { added: 'Новый пункт', removed: 'Пункт удалён', modified: 'Изменён' };
 
-  // Последние обновления базы с изменениями правил проекта. Записи о документах серверов
-  // (законы собирались раньше и выключены) игроку сейчас не нужны.
+  // Последние обновления базы: правки пунктов и статей, новые и удалённые документы.
+  // Новые документы (например, все законы сервера сразу) показываем одним списком, а не по одному.
   const releases = $derived(
     app.db.changelogs
-      .map((c) => ({ ...c, documents: c.documents.filter((d) => d.docId.startsWith('project/') && (d.kind !== 'modified' || d.nodes.length)) }))
-      .filter((c) => c.documents.length),
+      .map((c) => {
+        const docs = c.documents.filter((d) => d.kind !== 'modified' || d.nodes.length);
+        return { ...c, added: docs.filter((d) => d.kind === 'added'), documents: docs.filter((d) => d.kind !== 'added') };
+      })
+      .filter((c) => c.documents.length || c.added.length),
   );
 
   // Номер пункта уже стоит на плашке — убираем его из начала текста
@@ -34,13 +37,22 @@
   {#each releases as rel (rel.dbVersion)}
     <section class="release">
       <h2>{formatDate(rel.generatedAt)}</h2>
+      {#if rel.added.length}
+        <div class="doc">
+          <h3><span class="tag">{rel.added.length === 1 ? 'новый документ' : `новых документов: ${rel.added.length}`}</span></h3>
+          <div class="added">
+            {#each rel.added as d (d.docId)}
+              <button class="pill" onclick={() => app.open(d.docId)} disabled={!app.doc(d.docId)}>{shortTitle(d.title)}</button>
+            {/each}
+          </div>
+        </div>
+      {/if}
       {#each rel.documents as d (d.docId)}
         <div class="doc">
           <h3>
             {#if app.doc(d.docId)}
               <button class="doclink" onclick={() => app.open(d.docId)}>{shortTitle(d.title)}</button>
             {:else}{shortTitle(d.title)}{/if}
-            {#if d.kind === 'added'}<span class="tag">новый документ</span>{/if}
             {#if d.kind === 'removed'}<span class="tag gone">документ удалён с форума</span>{/if}
           </h3>
           {#each d.nodes as n (n.nodeId + n.kind)}
@@ -76,6 +88,9 @@
   h3 { font-size: var(--fs-sm); font-weight: 700; margin: 0 0 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .doclink { border: 0; background: none; padding: 0; color: var(--text); font-weight: 800; text-align: left; font-size: var(--fs-md); }
   .doclink:hover { color: var(--accent-soft); }
+  .added { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 6px; }
+  .pill { padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text); font-size: var(--fs-sm); transition: border-color 0.15s var(--ease), color 0.15s var(--ease); }
+  .pill:hover:not(:disabled) { border-color: var(--accent-line); color: var(--accent-soft); }
   .tag { padding: 2px 8px; border-radius: var(--radius-sm); font-size: var(--fs-xs); font-weight: 700; color: var(--success); background: var(--success-tint); }
   .tag.gone { color: var(--danger); background: var(--danger-tint); }
   .change {
