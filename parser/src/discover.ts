@@ -54,9 +54,10 @@ export function titleMatches(actual: string, wanted: string): boolean {
 export async function discover(
   fetcher: Fetcher,
   log: (s: string) => void = () => {},
-  opts: { collectLaws?: boolean } = {},
+  opts: { collectLaws?: boolean; lawServers?: RegExp[] } = {},
 ): Promise<Discovery> {
   const collectLaws = opts.collectLaws ?? CONFIG.collectLaws;
+  const lawServers = opts.lawServers ?? CONFIG.lawServers;
   const out: Discovery = { servers: [], docs: [], warnings: [], pagesFetched: 0 };
   const get = async (url: string) => { out.pagesFetched++; return fetcher.get(url); };
 
@@ -90,8 +91,8 @@ export async function discover(
   log('Серверы…');
   const serverNodes = parseNodeList(await get(CONFIG.serversPage), CONFIG.serversScope)
     .filter((n) => CONFIG.serverTitle.test(n.title))
-    .filter((n) => !CONFIG.lawServers.length || CONFIG.lawServers.some((re) => re.test(n.title)));
-  if (!serverNodes.length) out.warnings.push(`Не найдено разделов серверов${CONFIG.lawServers.length ? ` (${CONFIG.lawServers.join(', ')})` : ''} — структура форума изменилась?`);
+    .filter((n) => !lawServers.length || lawServers.some((re) => re.test(n.title)));
+  if (!serverNodes.length) out.warnings.push(`Не найдено разделов серверов${lawServers.length ? ` (${lawServers.join(', ')})` : ''} — структура форума изменилась?`);
 
   for (const node of serverNodes) {
     const name = CONFIG.serverTitle.exec(node.title)![1]!.trim();
