@@ -178,7 +178,7 @@
               {:else}
                 Пункт изменён {formatDate(a.effectiveAt, false)}.
               {/if}
-              <button class="link" onclick={() => backend.openUrl(a.postUrl)}>Поправка на форуме</button>
+              <button class="link" onclick={() => app.openLink(a.postUrl)}>Поправка на форуме</button>
             </div>
           </div>
         {/each}
@@ -192,7 +192,7 @@
             <img src={img.url ?? img.src} alt={img.alt ?? 'Иллюстрация к пункту'} loading="lazy"
               onload={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('ready')}
               onerror={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('broken')} />
-            <figcaption><button class="link" onclick={() => backend.openUrl(img.src)}>Картинка не загрузилась — открыть на форуме</button></figcaption>
+            <figcaption><button class="link" onclick={() => app.openLink(img.src)}>Картинка не загрузилась — открыть на форуме</button></figcaption>
           </figure>
         {/each}
 

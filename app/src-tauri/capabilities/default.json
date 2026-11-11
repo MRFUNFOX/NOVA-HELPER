@@ -2,7 +2,10 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Права окон NOVA HELPER: только то, что реально нужно интерфейсу",
-  "windows": ["main", "hint"],
+  "windows": [
+    "main",
+    "hint"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-minimize",
@@ -10,7 +13,14 @@
     "core:window:allow-is-maximized",
     "core:window:allow-start-dragging",
     "core:window:allow-hide",
-    "opener:allow-open-url",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://*"
+        }
+      ]
+    },
     "updater:default",
     "process:allow-restart",
     "autostart:allow-enable",

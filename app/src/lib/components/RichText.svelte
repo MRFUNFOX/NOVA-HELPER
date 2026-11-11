@@ -1,6 +1,6 @@
 <script lang="ts">
   // Лёгкая разметка из парсера: строки, списки «- », ссылки [текст](url). Без HTML из сети.
-  import { backend } from '../backend';
+  import { app } from '../state.svelte';
   let { text }: { text: string } = $props();
 
   type Part = { t: 'text'; v: string } | { t: 'link'; v: string; href: string };
@@ -29,7 +29,7 @@
   <p class:li={b.list}>
     {#each b.parts as p, j (j)}
       {#if p.t === 'link'}
-        <a href={p.href} onclick={(e) => { e.preventDefault(); backend.openUrl(p.href); }}>{p.v}</a>
+        <a href={p.href} onclick={(e) => { e.preventDefault(); app.openLink(p.href); }}>{p.v}</a>
       {:else}{p.v}{/if}
     {/each}
   </p>

@@ -88,10 +88,17 @@ export const backend = {
     const { getCurrentWindow } = await import('@tauri-apps/api/window');
     await getCurrentWindow().startDragging();
   },
-  async openUrl(url: string) {
-    if (!isTauri) { window.open(url, '_blank', 'noopener'); return; }
-    const { openUrl } = await import('@tauri-apps/plugin-opener');
-    await openUrl(url);
+  /** Открыть ссылку в браузере. Не вышло — копируем её, чтобы игрок вставил сам. Возвращает, открылась ли. */
+  async openUrl(url: string): Promise<boolean> {
+    if (!isTauri) { window.open(url, '_blank', 'noopener'); return true; }
+    try {
+      const { openUrl } = await import('@tauri-apps/plugin-opener');
+      await openUrl(url);
+      return true;
+    } catch {
+      try { await navigator.clipboard.writeText(url); } catch { /* буфер недоступен */ }
+      return false;
+    }
   },
   async autostart(enable?: boolean): Promise<boolean> {
     if (!isTauri) return mockState.autostart = enable ?? mockState.autostart;
@@ -214,7 +221,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.4.0';
+      return '0.4.1';
     default:
       return;
   }

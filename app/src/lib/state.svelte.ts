@@ -321,6 +321,11 @@ class AppState {
     try { this.settings = await backend.saveSettings({ ...this.settings, aiSetupDone: true }); } catch { /* не страшно: покажем ещё раз */ }
   }
 
+  /** Открыть ссылку (форум, поправка, картинка); не открылась — она уже в буфере обмена */
+  async openLink(url: string) {
+    if (!(await backend.openUrl(url))) this.notify('Браузер не открылся — ссылка скопирована, вставьте её в браузер (Ctrl+V)', 'error');
+  }
+
   toggleSidebar() {
     this.sidebarCollapsed = !this.sidebarCollapsed;
     writeFlag('sidebarCollapsed', this.sidebarCollapsed);

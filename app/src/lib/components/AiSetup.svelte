@@ -47,9 +47,14 @@
     }
   }
 
-  function openGroq() {
-    backend.openUrl(KEYS_URL);
+  let openFailed = $state(false);
+  let copiedLink = $state(false);
+  async function openGroq() {
+    openFailed = !(await backend.openUrl(KEYS_URL));
     opened = true;
+  }
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(KEYS_URL); copiedLink = true; setTimeout(() => (copiedLink = false), 1800); } catch { /* ничего */ }
   }
 </script>
 
@@ -91,6 +96,15 @@
             <li><span>4</span><div>Нажмите <b>«Copy»</b> рядом с ключом. Он начинается с <code>gsk_</code>.<br /><small>Ключ показывается один раз. Если закрыли окно — просто создайте новый.</small></div></li>
           </ol>
           <button class="btn wide open" class:primary={!opened} onclick={openGroq}><Icon name="external" size={16} />Открыть сайт Groq</button>
+          <p class="link">
+            Или вставьте в браузер адрес <code>console.groq.com/keys</code>
+            <button class="copy" onclick={copyLink}>{copiedLink ? 'Скопировано' : 'Копировать'}</button>
+          </p>
+          {#if openFailed}
+            <p class="error" role="alert"><Icon name="alert" size={15} />Браузер не открылся. Адрес скопирован — откройте браузер и вставьте его в адресную строку (Ctrl+V).</p>
+          {:else if opened}
+            <p class="muted small">Сайт открылся в браузере. Если его не видно за окном программы — спрячьте программу клавишей вызова, а потом вернитесь.</p>
+          {/if}
           <div class="nav">
             <button class="btn ghost" onclick={() => (step = 0)}>Назад</button>
             <button class="btn" class:primary={opened} onclick={() => (step = 2)}>Я скопировал ключ</button>
@@ -154,6 +168,9 @@
   .howto small { color: var(--text-muted); }
   code { padding: 1px 5px; border-radius: 4px; background: var(--surface-3); color: var(--accent-soft); font-size: 0.92em; }
   .open { height: 42px; }
+  .link { margin: 10px 0 0; font-size: var(--fs-xs); color: var(--text-muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .copy { border: 1px solid var(--border-strong); background: none; color: var(--text-dim); border-radius: var(--radius-sm); padding: 2px 8px; font-size: var(--fs-xs); }
+  .copy:hover { color: var(--accent-soft); border-color: var(--accent-line); }
   .field { display: flex; gap: 8px; padding: 4px 4px 4px 12px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); transition: border-color 0.15s, box-shadow 0.15s; }
   .field:focus-within { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-tint); }
   .field.bad { border-color: color-mix(in srgb, var(--danger-line) 60%, transparent); }

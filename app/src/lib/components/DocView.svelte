@@ -81,7 +81,7 @@
     </nav>
     <div class="title-row">
       <h1 class="selectable">{doc.title}</h1>
-      <button class="btn sm" onclick={() => backend.openUrl(doc.sourceUrl)} title="Открыть тему на форуме NOVA RP">
+      <button class="btn sm" onclick={() => app.openLink(doc.sourceUrl)} title="Открыть тему на форуме NOVA RP">
         <Icon name="external" size={15} />Тема на форуме
       </button>
     </div>
@@ -135,7 +135,7 @@
   {/each}
 
   {#each doc.looseAmendments as a, i (i)}
-    <p class="note"><Icon name="alert" size={15} /> {a.message} <button class="link" onclick={() => backend.openUrl(a.postUrl)}>Поправка на форуме</button></p>
+    <p class="note"><Icon name="alert" size={15} /> {a.message} <button class="link" onclick={() => app.openLink(a.postUrl)}>Поправка на форуме</button></p>
   {/each}
 </article>
 
