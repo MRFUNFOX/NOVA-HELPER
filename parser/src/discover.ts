@@ -5,12 +5,13 @@ import type { DocMeta } from './document.js';
 import type { ServerInfo } from './types.js';
 
 export const CONFIG = {
+  /** Собирать ли законодательство серверов (выключить — останутся только правила проекта) */
+  collectLaws: true,
   /**
-   * Собирать ли законодательство серверов. Сейчас выключено: в программе только правила проекта.
-   * Весь код для законов (автопоиск серверов, форматы кодексов Mirage/New Era/Horizon) рабочий и
-   * покрыт тестами — чтобы вернуть законы, достаточно поставить true.
+   * С каких серверов берём законы. Пока только Horizon; чтобы добавить сервер — дописать его
+   * название сюда (например /mirage/i), а чтобы брать со всех — оставить пустой список.
    */
-  collectLaws: false,
+  lawServers: [/horizon/i] as RegExp[],
   base: 'https://forum.nova-rp.com',
   /** Страница со списком серверов: блок категории 21 «Раздел игровых серверов» */
   serversPage: 'https://forum.nova-rp.com/categories/21/',
@@ -88,8 +89,9 @@ export async function discover(
   if (!collectLaws) return out;
   log('Серверы…');
   const serverNodes = parseNodeList(await get(CONFIG.serversPage), CONFIG.serversScope)
-    .filter((n) => CONFIG.serverTitle.test(n.title));
-  if (!serverNodes.length) out.warnings.push('Не найдено ни одного раздела «Сервер | …» — структура форума изменилась?');
+    .filter((n) => CONFIG.serverTitle.test(n.title))
+    .filter((n) => !CONFIG.lawServers.length || CONFIG.lawServers.some((re) => re.test(n.title)));
+  if (!serverNodes.length) out.warnings.push(`Не найдено разделов серверов${CONFIG.lawServers.length ? ` (${CONFIG.lawServers.join(', ')})` : ''} — структура форума изменилась?`);
 
   for (const node of serverNodes) {
     const name = CONFIG.serverTitle.exec(node.title)![1]!.trim();

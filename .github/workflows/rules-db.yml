@@ -1,6 +1,6 @@
 name: База правил NOVA RP
 
-# Каждые 3 часа собирает правила проекта и законы всех серверов с forum.nova-rp.com
+# Каждые 3 часа собирает правила проекта и законы сервера Horizon с forum.nova-rp.com
 # и публикует базу в ветку `data`. Программа NOVA HELPER скачивает её оттуда.
 on:
   schedule:
@@ -14,6 +14,10 @@ on:
         options: [auto, browser, firecrawl]
       accept_shrink:
         description: 'Принять сильное уменьшение базы (только если разделы убраны намеренно)'
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Только проверка: собрать, но не публиковать (результат — в архиве запуска)'
         type: boolean
         default: false
 
@@ -70,7 +74,20 @@ jobs:
           NOVA_SIGNING_KEY: ${{ secrets.NOVA_SIGNING_KEY }}
         run: npx tsx src/cli.ts scrape --out ../out --via ${{ inputs.via || 'auto' }} ${{ inputs.accept_shrink && '--accept-shrink' || '' }}
 
+      - name: Результат проверки (без публикации)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: rules-db-dry-run
+          path: |
+            out/docs/
+            out/manifest.json
+            out/status.json
+            out/changelog/
+          retention-days: 3
+
       - name: Публикация в ветку data
+        if: ${{ !inputs.dry_run }}
         working-directory: out
         run: |
           git add -A
@@ -82,14 +99,14 @@ jobs:
           fi
 
       - name: Сброс кэша CDN для манифеста
-        if: steps.scrape.outputs.changed == 'true'
+        if: ${{ !inputs.dry_run && steps.scrape.outputs.changed == 'true' }}
         run: |
           for f in manifest.signed.json manifest.json manifest.sig status.json changelog/index.json; do
             curl -fsS "https://purge.jsdelivr.net/gh/${{ github.repository }}@data/$f" >/dev/null || true
           done
 
       - name: Уведомление о расхождениях на форуме
-        if: steps.scrape.outputs.warnings != '0'
+        if: ${{ !inputs.dry_run && steps.scrape.outputs.warnings != '0' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
