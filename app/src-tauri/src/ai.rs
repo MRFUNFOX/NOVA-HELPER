@@ -111,7 +111,7 @@ fn client() -> Result<reqwest::Client, String> {
 fn explain(p: Provider, status: Option<reqwest::StatusCode>, body: &str, net: Option<&reqwest::Error>) -> String {
     let n = p.name();
     // Groq закрыт для России — сразу подсказываем, что делать
-    let other = if p == Provider::Groq { " Если вы в России — подключите Z.ai: он бесплатный и работает там (ИИ-помощник → «Сменить ключ» в настройках)." } else { "" };
+    let other = if p == Provider::Groq { " Если вы в России или СНГ — подключите Z.ai: он бесплатный и работает там (Настройки → ИИ-помощник → «Сменить нейросеть»)." } else { "" };
     if let Some(e) = net {
         if e.is_timeout() {
             return format!("{n} долго не отвечает. Попробуйте ещё раз через минуту.");
@@ -145,7 +145,7 @@ pub async fn ai_set_key(app: AppHandle, key: String) -> Result<AiStatus, String>
     }
     // Вместо ключа скопировали ответ сайта: «{"error":{"message":"Forbidden"}}» — это блокировка Groq по стране
     if key.contains("error") || key.contains("Forbidden") || key.contains('{') {
-        return Err("Это не ключ, а сообщение сайта об ошибке. «Forbidden» значит, что сайт недоступен из вашей страны: Groq не работает в России — для неё есть Z.ai.".into());
+        return Err("Это не ключ, а сообщение сайта об ошибке. «Forbidden» значит, что сайт недоступен из вашей страны: Groq не работает в России и СНГ — для них есть Z.ai.".into());
     }
     let p = Provider::of(&key);
     // Ключ Z.ai — длинный набор букв и цифр (обычно две части через точку)

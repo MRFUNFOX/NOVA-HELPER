@@ -93,7 +93,7 @@
           <h2>ИИ-помощник</h2>
           <p>Спросите своими словами — например, «можно ли убить копа, если он первый достал оружие» — помощник ответит по правилам проекта или законам штата и покажет, на какие пункты опирается.</p>
           <ul class="facts">
-            <li>Бесплатно: нужен личный ключ нейросети <b>Groq</b> или <b>Z.ai</b> — это сервисы, которые пишут ответы.</li>
+            <li>Бесплатно: нужен личный ключ нейросети — <b>Groq</b> для Европы или <b>Z.ai</b> для России и СНГ.</li>
             <li>Займёт 2 минуты. Ключ хранится только на вашем компьютере.</li>
           </ul>
           <div class="nav">
@@ -103,20 +103,21 @@
 
         {:else if step === 1}
           <p class="stepno">Шаг 1 из 3</p>
-          <h2>Где вы находитесь?</h2>
-          <p>От этого зависит, какой сервис подойдёт: Groq не работает в России.</p>
+          <h2>Выберите нейросеть</h2>
+          <p>Обе бесплатные. Groq не работает в России и части стран СНГ — для них есть Z.ai. Сменить можно в любой момент в настройках.</p>
           <div class="services">
-            <button class="service" class:on={ai.ready && service === 'zai'} onclick={() => pickService('zai')}>
-              <b>В России</b>
-              <small>Подключим <b>Z.ai</b> — бесплатно, работает без VPN</small>
+            <button class="service" class:on={ai.ready && service === 'groq'} onclick={() => pickService('groq')}>
+              <b>Groq — для Европы</b>
+              <small>И других стран, кроме России и СНГ. Отвечает быстрее и точнее.</small>
               <Icon name="chevron" size={16} />
             </button>
-            <button class="service" class:on={ai.ready && service === 'groq'} onclick={() => pickService('groq')}>
-              <b>В другой стране</b>
-              <small>Подключим <b>Groq</b> — бесплатно, отвечает быстрее</small>
+            <button class="service" class:on={ai.ready && service === 'zai'} onclick={() => pickService('zai')}>
+              <b>Z.ai — для России и СНГ</b>
+              <small>Работает без VPN.</small>
               <Icon name="chevron" size={16} />
             </button>
           </div>
+          {#if ai.ready}<p class="muted small">Сейчас подключена: <b>{ai.status?.provider}</b>.</p>{/if}
           <div class="nav">
             <button class="btn ghost" onclick={() => (step = 0)}>Назад</button>
           </div>
@@ -236,7 +237,6 @@
   .service:hover, .service.on { border-color: var(--accent-line); background: var(--accent-tint); }
   .service > b { grid-area: title; font-size: var(--fs-md); color: var(--text); }
   .service small { grid-area: hint; font-size: var(--fs-sm); color: var(--text-dim); }
-  .service small b { color: var(--accent-soft); }
   .service :global(svg) { grid-area: arrow; color: var(--text-muted); }
   .inline { border: 0; background: none; padding: 0; color: var(--accent-soft); text-decoration: underline; font-size: inherit; }
   .switch { margin-top: 8px; align-self: flex-start; }

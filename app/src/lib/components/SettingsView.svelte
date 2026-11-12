@@ -91,11 +91,11 @@
     <h2>ИИ-помощник</h2>
     <div class="row">
       <div>
-        <p class="value">{ai.ready ? `Настроен — ключ ${ai.status?.provider ?? 'Groq'} ${ai.status?.keyHint}` : 'Не настроен'}</p>
-        <p class="hint">{ai.ready ? 'Ключ хранится только на этом компьютере.' : 'Нужен бесплатный ключ Groq или Z.ai — программа проведёт по шагам.'}</p>
+        <p class="value">{ai.ready ? `Нейросеть ${ai.status?.provider ?? 'Groq'} ${ai.status?.provider === 'Z.ai' ? '(Россия и СНГ)' : '(Европа)'}, ключ ${ai.status?.keyHint}` : 'Не настроен'}</p>
+        <p class="hint">{ai.ready ? 'Ключ хранится только на этом компьютере.' : 'Нужен бесплатный ключ: Groq для Европы или Z.ai для России и СНГ. Программа проведёт по шагам.'}</p>
       </div>
       <div class="btns">
-        <button class="btn" onclick={() => (ai.setupOpen = true)}><Icon name="spark" size={16} />{ai.ready ? 'Сменить ключ' : 'Настроить'}</button>
+        <button class="btn" onclick={() => (ai.setupOpen = true)}><Icon name="spark" size={16} />{ai.ready ? 'Сменить нейросеть' : 'Настроить'}</button>
         {#if ai.ready}<button class="btn ghost" onclick={() => ai.clearKey()}>Удалить</button>{/if}
       </div>
     </div>

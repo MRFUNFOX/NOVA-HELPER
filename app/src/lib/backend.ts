@@ -201,7 +201,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       await new Promise((r) => setTimeout(r, 700));
       const key = String(args!.key).trim();
       if (!key) throw 'Вставьте ключ в поле — сочетание Ctrl+V.';
-      if (/error|Forbidden|\{/.test(key)) throw 'Это не ключ, а сообщение сайта об ошибке. «Forbidden» значит, что сайт недоступен из вашей страны: Groq не работает в России — для неё есть Z.ai.';
+      if (/error|Forbidden|\{/.test(key)) throw 'Это не ключ, а сообщение сайта об ошибке. «Forbidden» значит, что сайт недоступен из вашей страны: Groq не работает в России и СНГ — для них есть Z.ai.';
       const groq = key.startsWith('gsk_');
       if (!groq && key.length < 20) throw 'Это не похоже на ключ. У Groq он начинается с «gsk_», у Z.ai — длинный набор букв и цифр. Скопируйте ключ ещё раз.';
       if (key.includes('bad')) throw 'Ключ не подходит. Скопируйте его ещё раз целиком.';
@@ -223,7 +223,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.5.2';
+      return '0.5.3';
     default:
       return;
   }
