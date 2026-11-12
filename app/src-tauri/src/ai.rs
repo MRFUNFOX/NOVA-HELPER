@@ -124,7 +124,7 @@ fn status_of(s: &Stored) -> AiStatus {
 fn client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(90))
+        .timeout(Duration::from_secs(150))
         .user_agent(concat!("NOVA-HELPER/", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| e.to_string())

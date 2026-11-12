@@ -11,7 +11,7 @@
 
   const ITEMS: { id: AiProvider; name: string; hint: string }[] = [
     { id: 'groq', name: 'Groq', hint: 'Для Европы · быстрее и точнее' },
-    { id: 'zai', name: 'Z.ai', hint: 'Для России и СНГ · без VPN' },
+    { id: 'zai', name: 'Z.ai', hint: 'Для России и СНГ · ответ до минуты' },
   ];
 
   let open = $state(false);

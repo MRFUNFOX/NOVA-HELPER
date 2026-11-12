@@ -116,7 +116,7 @@
             </button>
             <button class="service" class:on={ai.ready && service === 'zai'} onclick={() => pickService('zai')}>
               <b>Z.ai — для России и СНГ</b>
-              <small>Работает без VPN.</small>
+              <small>Работает без VPN. Бесплатные серверы Z.ai загружены — ответ может идти до минуты.</small>
               <Icon name="chevron" size={16} />
             </button>
           </div>

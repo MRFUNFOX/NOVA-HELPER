@@ -25,6 +25,16 @@
   });
   $effect(() => { if (ai.ready) field?.focus(); });
 
+  // Z.ai подолгу держит вопрос в очереди — показываем, сколько уже ждём
+  const slow = $derived(ai.provider === 'zai');
+  let waited = $state(0);
+  $effect(() => {
+    if (!ai.busy) { waited = 0; return; }
+    const started = Date.now();
+    const timer = setInterval(() => (waited = Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  });
+
   const other = (s: Section): Section => (s === 'laws' ? 'project' : 'laws');
 
   function send(text = input) {
@@ -98,7 +108,10 @@
               {/each}
             </div>
           {:else if !t.a}
-            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope].label}»…`}</p>
+            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
+            {#if slow && waited >= 3}
+              <p class="wait-note">Бесплатные серверы Z.ai загружены — ответ может занять до минуты. Быстрее отвечает Groq, но он не работает в России и СНГ.</p>
+            {/if}
           {:else}
             <p class="text selectable">
               {#each pieces(t.a) as p, i (i)}
@@ -209,6 +222,8 @@
   .scope button { border: 0; background: none; padding: 0; margin-left: auto; color: var(--accent-soft); font-size: inherit; font-weight: 600; }
   .scope button:hover:not(:disabled) { text-decoration: underline; }
   .thinking { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text-muted); }
+  .secs { margin-left: auto; font-size: var(--fs-xs); font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  .wait-note { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-tint); color: var(--accent-soft); font-size: var(--fs-xs); line-height: 1.45; }
   .dots { display: inline-flex; gap: 4px; }
   .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s ease-in-out infinite; }
   .dots i:nth-child(2) { animation-delay: 0.15s; }

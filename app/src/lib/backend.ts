@@ -226,6 +226,8 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
     case 'ai_complete':
       return JSON.stringify({ keywords: [] });
     case 'ai_chat': {
+      // Z.ai в жизни подолгу держит очередь — в тестовой версии изображаем ожидание
+      if (!mockState.aiKey.startsWith('gsk_')) await new Promise((r) => setTimeout(r, 8000));
       // Ответ-образец по кусочкам, со ссылками на первые фрагменты
       const text = 'Нет, это **DM** (убийство без причины) [S1]. Администрация даст **JAIL до 120 минут** [S1].';
       for (const part of text.match(/.{1,12}/gs) ?? []) {
@@ -235,7 +237,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.5.6';
+      return '0.5.7';
     default:
       return;
   }
