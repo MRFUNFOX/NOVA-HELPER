@@ -39,7 +39,7 @@ export interface CheckResult {
   summary: string[];
 }
 
-export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null }
+export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null; provider?: string | null }
 export interface ChatMsg { role: 'system' | 'user' | 'assistant'; content: string }
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -71,7 +71,7 @@ export const backend = {
   quit: () => invoke<void>('quit_app'),
   version: () => invoke<string>('app_version'),
 
-  // ── ИИ-помощник (ключ Groq хранится в программе, сюда не передаётся) ──
+  // ── ИИ-помощник (ключ Groq или Z.ai хранится в программе, сюда не передаётся) ──
   aiStatus: () => invoke<AiStatus>('ai_status'),
   aiSetKey: (key: string) => invoke<AiStatus>('ai_set_key', { key }),
   aiClearKey: () => invoke<AiStatus>('ai_clear_key'),
@@ -195,16 +195,18 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       // ?aikey — помощник уже настроен
       if (params.has('aikey') && !mockState.aiKey) mockState.aiKey = 'gsk_mockmockmock1234';
       const k = mockState.aiKey;
-      return { hasKey: !!k, keyHint: k ? `…${k.slice(-4)}` : '', model: k ? 'openai/gpt-oss-120b' : null };
+      return { hasKey: !!k, keyHint: k ? `…${k.slice(-4)}` : '', model: k ? 'openai/gpt-oss-120b' : null, provider: k ? (k.startsWith('gsk_') ? 'Groq' : 'Z.ai') : null };
     }
     case 'ai_set_key': {
       await new Promise((r) => setTimeout(r, 700));
       const key = String(args!.key).trim();
       if (!key) throw 'Вставьте ключ в поле — сочетание Ctrl+V.';
-      if (!key.startsWith('gsk_')) throw 'Это не похоже на ключ Groq: он начинается с «gsk_». Скопируйте ключ ещё раз на сайте Groq.';
-      if (key.includes('bad')) throw 'Ключ не подходит. Скопируйте его ещё раз целиком — он начинается с «gsk_».';
+      if (/error|Forbidden|\{/.test(key)) throw 'Это не ключ, а сообщение сайта об ошибке. «Forbidden» значит, что сайт недоступен из вашей страны: Groq не работает в России — для неё есть Z.ai.';
+      const groq = key.startsWith('gsk_');
+      if (!groq && key.length < 20) throw 'Это не похоже на ключ. У Groq он начинается с «gsk_», у Z.ai — длинный набор букв и цифр. Скопируйте ключ ещё раз.';
+      if (key.includes('bad')) throw 'Ключ не подходит. Скопируйте его ещё раз целиком.';
       mockState.aiKey = key;
-      return { hasKey: true, keyHint: `…${key.slice(-4)}`, model: 'openai/gpt-oss-120b' };
+      return { hasKey: true, keyHint: `…${key.slice(-4)}`, model: groq ? 'openai/gpt-oss-120b' : 'glm-4.7-flash', provider: groq ? 'Groq' : 'Z.ai' };
     }
     case 'ai_clear_key':
       mockState.aiKey = '';
@@ -221,7 +223,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.5.0';
+      return '0.5.1';
     default:
       return;
   }

@@ -1,6 +1,7 @@
 <script lang="ts">
   /**
-   * Пошаговая настройка ИИ-помощника: получить бесплатный ключ Groq и вставить его.
+   * Пошаговая настройка ИИ-помощника: выбрать сервис (Groq, а в России — Z.ai),
+   * получить бесплатный ключ и вставить его.
    * Показывается в мастере первого запуска, один раз после обновления у тех, кто ставил
    * программу раньше, и по кнопке «Настроить» в окне помощника.
    */
@@ -13,9 +14,23 @@
   /** `onDone(true)` — ключ настроен, `onDone(false)` — пропустили */
   let { onDone, compact = false }: { onDone: (configured: boolean) => void; compact?: boolean } = $props();
 
-  const KEYS_URL = 'https://console.groq.com/keys';
-  // Ключ уже есть (смена ключа) — сразу к шагу «получите ключ»
+  type Service = 'groq' | 'zai';
+  const SERVICES = {
+    groq: { name: 'Groq', url: 'https://console.groq.com/keys', address: 'console.groq.com/keys', placeholder: 'gsk_…' },
+    zai: { name: 'Z.ai', url: 'https://z.ai/manage-apikey/apikey-list', address: 'z.ai/manage-apikey/apikey-list', placeholder: 'Вставьте ключ Z.ai' },
+  } as const;
+  let service = $state<Service>(ai.status?.provider === 'Z.ai' ? 'zai' : 'groq');
+  const sv = $derived(SERVICES[service]);
+  // Ключ уже есть (смена ключа) — сразу к выбору сервиса
   let step = $state(ai.ready ? 1 : 0);
+
+  function pickService(s: Service) {
+    service = s;
+    opened = false;
+    openFailed = false;
+    error = '';
+    step = 2;
+  }
   let key = $state('');
   let checking = $state(false);
   let error = $state('');
@@ -30,7 +45,7 @@
     key = key.replace(/[\s"'«»“”]/g, '');
     try {
       await ai.setKey(key);
-      step = 3;
+      step = 4;
     } catch (e) {
       error = String(e);
     } finally {
@@ -49,12 +64,12 @@
 
   let openFailed = $state(false);
   let copiedLink = $state(false);
-  async function openGroq() {
-    openFailed = !(await backend.openUrl(KEYS_URL));
+  async function openSite() {
+    openFailed = !(await backend.openUrl(sv.url));
     opened = true;
   }
   async function copyLink() {
-    try { await navigator.clipboard.writeText(KEYS_URL); copiedLink = true; setTimeout(() => (copiedLink = false), 1800); } catch { /* ничего */ }
+    try { await navigator.clipboard.writeText(sv.url); copiedLink = true; setTimeout(() => (copiedLink = false), 1800); } catch { /* ничего */ }
   }
 </script>
 
@@ -76,9 +91,9 @@
         {#if step === 0}
           <span class="ico"><Icon name="spark" size={24} /></span>
           <h2>ИИ-помощник</h2>
-          <p>Спросите своими словами — например, «можно ли убить копа, если он первый достал оружие» — помощник ответит по правилам проекта и законам штата и покажет, на какие пункты опирается.</p>
+          <p>Спросите своими словами — например, «можно ли убить копа, если он первый достал оружие» — помощник ответит по правилам проекта или законам штата и покажет, на какие пункты опирается.</p>
           <ul class="facts">
-            <li>Бесплатно: нужен личный ключ сервиса <b>Groq</b> — это нейросеть, которая пишет ответы.</li>
+            <li>Бесплатно: нужен личный ключ нейросети <b>Groq</b> или <b>Z.ai</b> — это сервисы, которые пишут ответы.</li>
             <li>Займёт 2 минуты. Ключ хранится только на вашем компьютере.</li>
           </ul>
           <div class="nav">
@@ -87,17 +102,44 @@
           </div>
 
         {:else if step === 1}
-          <p class="stepno">Шаг 1 из 2</p>
-          <h2>Получите ключ на сайте Groq</h2>
+          <p class="stepno">Шаг 1 из 3</p>
+          <h2>Где вы находитесь?</h2>
+          <p>От этого зависит, какой сервис подойдёт: Groq не работает в России.</p>
+          <div class="services">
+            <button class="service" class:on={ai.ready && service === 'zai'} onclick={() => pickService('zai')}>
+              <b>В России</b>
+              <small>Подключим <b>Z.ai</b> — бесплатно, работает без VPN</small>
+              <Icon name="chevron" size={16} />
+            </button>
+            <button class="service" class:on={ai.ready && service === 'groq'} onclick={() => pickService('groq')}>
+              <b>В другой стране</b>
+              <small>Подключим <b>Groq</b> — бесплатно, отвечает быстрее</small>
+              <Icon name="chevron" size={16} />
+            </button>
+          </div>
+          <div class="nav">
+            <button class="btn ghost" onclick={() => (step = 0)}>Назад</button>
+          </div>
+
+        {:else if step === 2}
+          <p class="stepno">Шаг 2 из 3</p>
+          <h2>Получите ключ на сайте {sv.name}</h2>
           <ol class="howto">
-            <li><span>1</span><div>Нажмите кнопку ниже — сайт Groq откроется в браузере.</div></li>
-            <li><span>2</span><div>Войдите: <b>«Continue with Google»</b> или по почте. Регистрация бесплатная.</div></li>
-            <li><span>3</span><div>Нажмите <b>«Create API Key»</b>. В поле названия напишите что угодно, например <b>NOVA</b>, и нажмите <b>«Submit»</b>.</div></li>
-            <li><span>4</span><div>Нажмите <b>«Copy»</b> рядом с ключом. Он начинается с <code>gsk_</code>.<br /><small>Ключ показывается один раз. Если закрыли окно — просто создайте новый.</small></div></li>
+            {#if service === 'groq'}
+              <li><span>1</span><div>Нажмите кнопку ниже — сайт Groq откроется в браузере.</div></li>
+              <li><span>2</span><div>Войдите: <b>«Continue with Google»</b> или по почте. Регистрация бесплатная.</div></li>
+              <li><span>3</span><div>Нажмите <b>«Create API Key»</b>. В поле названия напишите что угодно, например <b>NOVA</b>, и нажмите <b>«Submit»</b>.</div></li>
+              <li><span>4</span><div>Нажмите <b>«Copy»</b> рядом с ключом. Он начинается с <code>gsk_</code>.<br /><small>Ключ показывается один раз. Если закрыли окно — просто создайте новый.</small></div></li>
+            {:else}
+              <li><span>1</span><div>Нажмите кнопку ниже — сайт Z.ai откроется в браузере.</div></li>
+              <li><span>2</span><div>Войдите: <b>«Continue with Google»</b> или зарегистрируйтесь по почте. Это бесплатно.</div></li>
+              <li><span>3</span><div>На странице <b>«API Keys»</b> нажмите кнопку создания ключа (<b>«Create a new API key»</b>). Название — любое, например <b>NOVA</b>.</div></li>
+              <li><span>4</span><div>Скопируйте ключ значком копирования. Это длинный набор букв и цифр.<br /><small>Пополнять баланс не нужно: помощник использует только бесплатные модели.</small></div></li>
+            {/if}
           </ol>
-          <button class="btn wide open" class:primary={!opened} onclick={openGroq}><Icon name="external" size={16} />Открыть сайт Groq</button>
+          <button class="btn wide open" class:primary={!opened} onclick={openSite}><Icon name="external" size={16} />Открыть сайт {sv.name}</button>
           <p class="link">
-            Или вставьте в браузер адрес <code>console.groq.com/keys</code>
+            Или вставьте в браузер адрес <code>{sv.address}</code>
             <button class="copy" onclick={copyLink}>{copiedLink ? 'Скопировано' : 'Копировать'}</button>
           </p>
           {#if openFailed}
@@ -105,19 +147,22 @@
           {:else if opened}
             <p class="muted small">Сайт открылся в браузере. Если его не видно за окном программы — спрячьте программу клавишей вызова, а потом вернитесь.</p>
           {/if}
+          {#if service === 'groq'}
+            <p class="muted small">Сайт показал <code>Forbidden</code>? Значит, Groq недоступен в вашей стране — <button class="inline" onclick={() => pickService('zai')}>подключите Z.ai</button>.</p>
+          {/if}
           <div class="nav">
-            <button class="btn ghost" onclick={() => (step = 0)}>Назад</button>
-            <button class="btn" class:primary={opened} onclick={() => (step = 2)}>Я скопировал ключ</button>
+            <button class="btn ghost" onclick={() => (step = 1)}>Назад</button>
+            <button class="btn" class:primary={opened} onclick={() => (step = 3)}>Я скопировал ключ</button>
           </div>
 
-        {:else if step === 2}
-          <p class="stepno">Шаг 2 из 2</p>
+        {:else if step === 3}
+          <p class="stepno">Шаг 3 из 3</p>
           <h2>Вставьте ключ</h2>
           <p>Нажмите в поле и <b>Ctrl+V</b> — или кнопку «Вставить».</p>
           <div class="field" class:bad={!!error}>
             <input
               type="text"
-              placeholder="gsk_…"
+              placeholder={sv.placeholder}
               spellcheck="false"
               autocomplete="off"
               bind:value={key}
@@ -126,14 +171,19 @@
             />
             <button class="btn sm" onclick={paste}>Вставить</button>
           </div>
-          {#if error}<p class="error" role="alert"><Icon name="alert" size={15} />{error}</p>{/if}
+          {#if error}
+            <p class="error" role="alert"><Icon name="alert" size={15} />{error}</p>
+            {#if error.includes('Z.ai') && service === 'groq'}
+              <button class="btn sm primary switch" onclick={() => { key = ''; pickService('zai'); }}>Подключить Z.ai</button>
+            {/if}
+          {/if}
           <div class="nav">
-            <button class="btn ghost" onclick={() => (step = 1)}>Назад</button>
+            <button class="btn ghost" onclick={() => (step = 2)}>Назад</button>
             <button class="btn primary" onclick={check} disabled={checking || !key.trim()}>
               {#if checking}<span class="spinner" aria-hidden="true"></span>Проверяю…{:else}Проверить ключ{/if}
             </button>
           </div>
-          <p class="muted small">Не получается? Проверьте, что скопировали ключ целиком, или создайте новый на сайте Groq.</p>
+          <p class="muted small">Не получается? Проверьте, что скопировали ключ целиком, или создайте новый на сайте {sv.name}.</p>
 
         {:else}
           <span class="ico ok"><Icon name="check" size={24} /></span>
@@ -181,6 +231,15 @@
   .nav.end { justify-content: flex-end; }
   .nav .btn.primary { min-width: 150px; height: 40px; }
   .skip { color: var(--text-muted); }
+  .services { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .service { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'title arrow' 'hint arrow'; align-items: center; gap: 2px 12px; padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface-2); text-align: left; transition: border-color 0.15s var(--ease), background 0.15s var(--ease); }
+  .service:hover, .service.on { border-color: var(--accent-line); background: var(--accent-tint); }
+  .service > b { grid-area: title; font-size: var(--fs-md); color: var(--text); }
+  .service small { grid-area: hint; font-size: var(--fs-sm); color: var(--text-dim); }
+  .service small b { color: var(--accent-soft); }
+  .service :global(svg) { grid-area: arrow; color: var(--text-muted); }
+  .inline { border: 0; background: none; padding: 0; color: var(--accent-soft); text-decoration: underline; font-size: inherit; }
+  .switch { margin-top: 8px; align-self: flex-start; }
   .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.25); border-top-color: var(--on-accent); animation: spin 0.8s linear infinite; }
   .compact h2 { font-size: var(--fs-lg); }
   .compact .nav { flex-wrap: wrap; }

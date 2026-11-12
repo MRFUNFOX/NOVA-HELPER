@@ -1,4 +1,7 @@
-//! ИИ-помощник: запросы к Groq с ключом самого игрока.
+//! ИИ-помощник: запросы к Groq или Z.ai с ключом самого игрока.
+//!
+//! Groq закрыт для России, поэтому для игроков оттуда есть Z.ai (бесплатные модели GLM Flash).
+//! Сервис определяется по самому ключу: у Groq он начинается с «gsk_».
 //!
 //! Ключ хранится только на компьютере игрока (файл ai.json рядом с настройками) и уходит
 //! только в Groq. В интерфейс он не передаётся — интерфейс знает лишь, есть ли ключ, и его
@@ -9,12 +12,38 @@ use serde_json::{json, Value};
 use std::{fs, path::PathBuf, time::Duration};
 use tauri::{AppHandle, Emitter, Manager};
 
-const API: &str = "https://api.groq.com/openai/v1";
-/// Модели по порядку предпочтения. У каждой модели в Groq свой бесплатный лимит, поэтому
-/// при «лимит исчерпан» пробуем следующую.
-const ANSWER_MODELS: &[&str] = &["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"];
-/// Для подбора ключевых слов хватает модели попроще — и лимит у неё отдельный
-const HELPER_MODELS: &[&str] = &["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"];
+#[derive(Clone, Copy, PartialEq)]
+enum Provider {
+    Groq,
+    Zai,
+}
+
+impl Provider {
+    fn of(key: &str) -> Self {
+        if key.starts_with("gsk_") { Provider::Groq } else { Provider::Zai }
+    }
+    fn name(self) -> &'static str {
+        match self { Provider::Groq => "Groq", Provider::Zai => "Z.ai" }
+    }
+    fn api(self) -> &'static str {
+        match self { Provider::Groq => "https://api.groq.com/openai/v1", Provider::Zai => "https://api.z.ai/api/paas/v4" }
+    }
+    /// Модели по порядку предпочтения. У каждой модели свой бесплатный лимит, поэтому
+    /// при «лимит исчерпан» пробуем следующую.
+    fn answer_models(self) -> &'static [&'static str] {
+        match self {
+            Provider::Groq => &["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"],
+            Provider::Zai => &["glm-4.7-flash", "glm-4.5-flash"],
+        }
+    }
+    /// Для подбора ключевых слов хватает модели попроще — и лимит у неё отдельный
+    fn helper_models(self) -> &'static [&'static str] {
+        match self {
+            Provider::Groq => &["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"],
+            Provider::Zai => &["glm-4.5-flash", "glm-4.7-flash"],
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 #[serde(default, rename_all = "camelCase")]
@@ -31,6 +60,8 @@ pub struct AiStatus {
     /// «…a1B2» — чтобы игрок видел, какой ключ стоит
     key_hint: String,
     model: Option<String>,
+    /// «Groq» или «Z.ai»
+    provider: Option<String>,
 }
 
 fn path(app: &AppHandle) -> Option<PathBuf> {
@@ -58,10 +89,12 @@ fn pick<'a>(prefs: &[&'a str], available: &[String]) -> Vec<&'a str> {
 
 fn status_of(s: &Stored) -> AiStatus {
     let has_key = !s.key.is_empty();
+    let p = Provider::of(&s.key);
     AiStatus {
         has_key,
         key_hint: if has_key { format!("…{}", &s.key[s.key.len().saturating_sub(4)..]) } else { String::new() },
-        model: has_key.then(|| pick(ANSWER_MODELS, &s.models)[0].to_string()),
+        model: has_key.then(|| pick(p.answer_models(), &s.models)[0].to_string()),
+        provider: has_key.then(|| p.name().to_string()),
     }
 }
 
@@ -75,20 +108,24 @@ fn client() -> Result<reqwest::Client, String> {
 }
 
 /// Ошибка сети или ответа Groq — понятными словами
-fn explain(status: Option<reqwest::StatusCode>, body: &str, net: Option<&reqwest::Error>) -> String {
+fn explain(p: Provider, status: Option<reqwest::StatusCode>, body: &str, net: Option<&reqwest::Error>) -> String {
+    let n = p.name();
+    // Groq закрыт для России — сразу подсказываем, что делать
+    let other = if p == Provider::Groq { " Если вы в России — подключите Z.ai: он бесплатный и работает там (ИИ-помощник → «Сменить ключ» в настройках)." } else { "" };
     if let Some(e) = net {
         if e.is_timeout() {
-            return "Groq долго не отвечает. Попробуйте ещё раз через минуту.".into();
+            return format!("{n} долго не отвечает. Попробуйте ещё раз через минуту.");
         }
-        return "Не удалось связаться с Groq. Проверьте интернет. Если интернет есть — сервис может быть недоступен из вашей страны.".into();
+        return format!("Не удалось связаться с {n}. Проверьте интернет.{other}");
     }
     let msg = serde_json::from_str::<Value>(body).ok().and_then(|v| v["error"]["message"].as_str().map(String::from)).unwrap_or_default();
     match status.map(|s| s.as_u16()) {
-        Some(401) => "Ключ не подходит. Скопируйте его ещё раз целиком — он начинается с «gsk_».".into(),
-        Some(403) => format!("Groq отказал в доступе{}. Возможно, сервис недоступен из вашей страны.", if msg.is_empty() { String::new() } else { format!(": {msg}") }),
-        Some(429) => "Бесплатный лимит Groq на сейчас исчерпан. Подождите минуту и спросите снова.".into(),
-        Some(code) if code >= 500 => "У Groq временные неполадки. Попробуйте чуть позже.".into(),
-        Some(code) => format!("Groq вернул ошибку {code}{}", if msg.is_empty() { String::new() } else { format!(": {msg}") }),
+        Some(401) => "Ключ не подходит. Скопируйте его ещё раз целиком.".into(),
+        Some(403) if p == Provider::Groq => format!("Groq недоступен из вашей страны.{other}"),
+        Some(403) => format!("{n} отказал в доступе{}", if msg.is_empty() { ".".into() } else { format!(": {msg}") }),
+        Some(429) => format!("Бесплатный лимит {n} на сейчас исчерпан. Подождите минуту и спросите снова."),
+        Some(code) if code >= 500 => format!("У {n} временные неполадки. Попробуйте чуть позже."),
+        Some(code) => format!("{n} вернул ошибку {code}{}", if msg.is_empty() { String::new() } else { format!(": {msg}") }),
         None => "Неизвестная ошибка".into(),
     }
 }
@@ -106,19 +143,41 @@ pub async fn ai_set_key(app: AppHandle, key: String) -> Result<AiStatus, String>
     if key.is_empty() {
         return Err("Вставьте ключ в поле — сочетание Ctrl+V.".into());
     }
-    if !key.starts_with("gsk_") {
-        return Err("Это не похоже на ключ Groq: он начинается с «gsk_». Скопируйте ключ ещё раз на сайте Groq.".into());
+    // Вместо ключа скопировали ответ сайта: «{"error":{"message":"Forbidden"}}» — это блокировка Groq по стране
+    if key.contains("error") || key.contains("Forbidden") || key.contains('{') {
+        return Err("Это не ключ, а сообщение сайта об ошибке. «Forbidden» значит, что сайт недоступен из вашей страны: Groq не работает в России — для неё есть Z.ai.".into());
     }
-    let resp = client()?.get(format!("{API}/models")).bearer_auth(&key).send().await.map_err(|e| explain(None, "", Some(&e)))?;
-    let code = resp.status();
-    let body = resp.text().await.unwrap_or_default();
-    if !code.is_success() {
-        return Err(explain(Some(code), &body, None));
+    let p = Provider::of(&key);
+    // Ключ Z.ai — длинный набор букв и цифр (обычно две части через точку)
+    if p == Provider::Zai && key.len() < 20 {
+        return Err("Это не похоже на ключ. У Groq он начинается с «gsk_», у Z.ai — длинный набор букв и цифр. Скопируйте ключ ещё раз.".into());
     }
-    let models = serde_json::from_str::<Value>(&body)
-        .ok()
-        .and_then(|v| v["data"].as_array().map(|a| a.iter().filter_map(|m| m["id"].as_str().map(String::from)).collect()))
-        .unwrap_or_default();
+    let http = client()?;
+    let models: Vec<String> = match p {
+        Provider::Groq => {
+            let resp = http.get(format!("{}/models", p.api())).bearer_auth(&key).send().await.map_err(|e| explain(p, None, "", Some(&e)))?;
+            let code = resp.status();
+            let body = resp.text().await.unwrap_or_default();
+            if !code.is_success() {
+                return Err(explain(p, Some(code), &body, None));
+            }
+            serde_json::from_str::<Value>(&body)
+                .ok()
+                .and_then(|v| v["data"].as_array().map(|a| a.iter().filter_map(|m| m["id"].as_str().map(String::from)).collect()))
+                .unwrap_or_default()
+        }
+        Provider::Zai => {
+            // Списка моделей у Z.ai нет — проверяем ключ крошечным запросом
+            let msgs = [Msg { role: "user".into(), content: "Ответь одним словом: ок".into() }];
+            let resp = http.post(format!("{}/chat/completions", p.api())).bearer_auth(&key).json(&body(p, p.helper_models()[0], &msgs, false, false, 8)).send().await.map_err(|e| explain(p, None, "", Some(&e)))?;
+            let code = resp.status();
+            let text = resp.text().await.unwrap_or_default();
+            if !code.is_success() {
+                return Err(explain(p, Some(code), &text, None));
+            }
+            Vec::new()
+        }
+    };
     let s = Stored { key, models };
     store(&app, &s)?;
     Ok(status_of(&s))
@@ -137,10 +196,13 @@ pub struct Msg {
     content: String,
 }
 
-fn body(model: &str, messages: &[Msg], stream: bool, json_mode: bool, max_tokens: u32) -> Value {
+fn body(p: Provider, model: &str, messages: &[Msg], stream: bool, json_mode: bool, max_tokens: u32) -> Value {
     let msgs: Vec<Value> = messages.iter().map(|m| json!({ "role": m.role, "content": m.content })).collect();
     let mut b = json!({ "model": model, "messages": msgs, "stream": stream, "temperature": 0.2, "max_tokens": max_tokens });
-    if model.starts_with("openai/gpt-oss") {
+    if p == Provider::Zai {
+        // Без «размышлений»: иначе модель тратит лимит токенов на них и может вернуть пустой ответ
+        b["thinking"] = json!({ "type": "disabled" });
+    } else if model.starts_with("openai/gpt-oss") {
         // Рассуждения модели игроку не нужны, а «низкие» — быстрее и экономят лимит
         b["reasoning_effort"] = json!("low");
         b["include_reasoning"] = json!(false);
@@ -158,12 +220,13 @@ pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>) -> Result<String, S
     if s.key.is_empty() {
         return Err("Помощник не настроен".into());
     }
+    let p = Provider::of(&s.key);
     let http = client()?;
     let mut last = String::new();
-    for model in pick(HELPER_MODELS, &s.models) {
-        let resp = match http.post(format!("{API}/chat/completions")).bearer_auth(&s.key).json(&body(model, &messages, false, true, 600)).send().await {
+    for model in pick(p.helper_models(), &s.models) {
+        let resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, false, true, 600)).send().await {
             Ok(r) => r,
-            Err(e) => return Err(explain(None, "", Some(&e))),
+            Err(e) => return Err(explain(p, None, "", Some(&e))),
         };
         let code = resp.status();
         let text = resp.text().await.unwrap_or_default();
@@ -171,9 +234,9 @@ pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>) -> Result<String, S
             return serde_json::from_str::<Value>(&text)
                 .ok()
                 .and_then(|v| v["choices"][0]["message"]["content"].as_str().map(String::from))
-                .ok_or_else(|| "Пустой ответ Groq".to_string());
+                .ok_or_else(|| format!("Пустой ответ {}", p.name()));
         }
-        last = explain(Some(code), &text, None);
+        last = explain(p, Some(code), &text, None);
         // Лимит этой модели исчерпан или модель недоступна — пробуем следующую
         if !matches!(code.as_u16(), 429 | 404 | 400 | 503) {
             break;
@@ -196,17 +259,18 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<V
     if s.key.is_empty() {
         return Err("Помощник не настроен".into());
     }
+    let p = Provider::of(&s.key);
     let http = client()?;
     let mut last = String::new();
-    for model in pick(ANSWER_MODELS, &s.models) {
-        let mut resp = match http.post(format!("{API}/chat/completions")).bearer_auth(&s.key).json(&body(model, &messages, true, false, 900)).send().await {
+    for model in pick(p.answer_models(), &s.models) {
+        let mut resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, true, false, 900)).send().await {
             Ok(r) => r,
-            Err(e) => return Err(explain(None, "", Some(&e))),
+            Err(e) => return Err(explain(p, None, "", Some(&e))),
         };
         let code = resp.status();
         if !code.is_success() {
             let text = resp.text().await.unwrap_or_default();
-            last = explain(Some(code), &text, None);
+            last = explain(p, Some(code), &text, None);
             if matches!(code.as_u16(), 429 | 404 | 400 | 503) {
                 continue;
             }
@@ -219,7 +283,7 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<V
             let chunk = match resp.chunk().await {
                 Ok(Some(c)) => c,
                 Ok(None) => break,
-                Err(e) => return Err(explain(None, "", Some(&e))),
+                Err(e) => return Err(explain(p, None, "", Some(&e))),
             };
             buf.push_str(&String::from_utf8_lossy(&chunk));
             while let Some(nl) = buf.find('\n') {

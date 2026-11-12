@@ -64,7 +64,7 @@
       <div class="setup-card">
         <span class="ico"><Icon name="spark" size={22} /></span>
         <h2>Помощник не настроен</h2>
-        <p>Чтобы задавать вопросы своими словами, подключите бесплатный ключ Groq. Это займёт 2 минуты — программа проведёт по шагам.</p>
+        <p>Чтобы задавать вопросы своими словами, подключите бесплатный ключ нейросети. Это займёт 2 минуты — программа проведёт по шагам.</p>
         <button class="btn primary wide" onclick={() => (ai.setupOpen = true)}>Настроить</button>
       </div>
     </div>
@@ -82,7 +82,10 @@
         <div class="a" aria-live="polite">
           {#if t.error}
             <p class="error"><Icon name="alert" size={15} />{t.error}</p>
-            <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); ai.ask(t.q, t.scope); }} disabled={ai.busy}>Спросить снова</button>
+            <div class="err-actions">
+              <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); ai.ask(t.q, t.scope); }} disabled={ai.busy}>Спросить снова</button>
+              {#if t.error.includes('Z.ai') && ai.status?.provider !== 'Z.ai'}<button class="btn sm primary" onclick={() => (ai.setupOpen = true)}>Подключить Z.ai</button>{/if}
+            </div>
           {:else if !t.scope}
             <p class="choose-lead">Где искать ответ?</p>
             <div class="choices" role="group" aria-label="Где искать ответ">
@@ -204,6 +207,7 @@
   .dots i:nth-child(2) { animation-delay: 0.15s; }
   .dots i:nth-child(3) { animation-delay: 0.3s; }
   @keyframes blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+  .err-actions { display: flex; flex-wrap: wrap; gap: 6px; }
   .error { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 10px; color: var(--danger); }
   .error :global(svg) { flex-shrink: 0; margin-top: 3px; }
 
