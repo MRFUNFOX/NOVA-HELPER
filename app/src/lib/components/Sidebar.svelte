@@ -24,7 +24,7 @@
 <nav class="sidebar" class:rail class:open={app.sidebarOpen} aria-label="Разделы правил">
   <div class="brand" data-tauri-drag-region>
     <span class="mark" aria-hidden="true">§</span>
-    {#if !rail}<span class="name" data-tauri-drag-region>NOVA <span>HELPER</span>{#if app.devMode}<em class="devtag" title="Режим разработчика">DEV</em>{/if}</span>{/if}
+    {#if !rail}<span class="name" data-tauri-drag-region>NOVA <span>HELPER</span>{#if app.devMode}<em class="devtag" title="Режим разработчика">DEV</em>{:else}<em class="devtag" title="Бета-версия: программа ещё дорабатывается">BETA</em>{/if}</span>{/if}
     <button class="collapse" onclick={() => (app.sidebarOpen ? (app.sidebarOpen = false) : app.toggleSidebar())}
       title={rail ? 'Развернуть меню' : 'Свернуть меню'} aria-label={rail ? 'Развернуть меню' : 'Свернуть меню'}>
       <span class:flip={rail}><Icon name="collapse" size={16} /></span>

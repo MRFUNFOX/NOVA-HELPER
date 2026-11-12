@@ -4,7 +4,7 @@
   import { app } from '../state.svelte';
   import { ai, pieces, sourceLabel, SCOPES, type Source, type Turn } from '../ai.svelte';
   import type { Section } from '../state.svelte';
-  import type { AiProvider } from '../backend';
+  import ModelPicker from './ModelPicker.svelte';
   import { ease, ms } from '../motion';
 
   let input = $state('');
@@ -151,14 +151,7 @@
       </div>
       <div class="foot">
         <p class="note">Подсказка. Окончательно решает администрация.</p>
-        <label class="model" title="Какая нейросеть отвечает">
-          <span class="sr">Нейросеть</span>
-          <select value={ai.provider} onchange={(e) => { const el = e.currentTarget; const v = el.value as AiProvider; el.value = ai.provider; void ai.use(v); }} disabled={ai.busy}>
-            <option value="groq">Groq · Европа</option>
-            <option value="zai">Z.ai · Россия и СНГ</option>
-          </select>
-          <Icon name="chevron" size={12} />
-        </label>
+        <ModelPicker />
       </div>
     </footer>
   {/if}
@@ -230,13 +223,6 @@
   .send:disabled { background: var(--surface-3); color: var(--text-muted); }
   .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
   .note { margin: 0 2px; font-size: 11px; line-height: 1.35; color: var(--text-muted); }
-  .model { position: relative; flex-shrink: 0; display: flex; align-items: center; }
-  .model select { appearance: none; height: 26px; padding: 0 24px 0 9px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-dim); font: inherit; font-size: 11.5px; font-weight: 600; color-scheme: dark; cursor: pointer; }
-  .model select:hover:not(:disabled) { border-color: var(--accent-line); color: var(--text); }
-  .model select:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 1px; }
-  .model :global(svg) { position: absolute; right: 7px; transform: rotate(90deg); color: var(--text-muted); pointer-events: none; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .model select option { background: var(--surface-2); color: var(--text); }
 
   @media (max-width: 899px) {
     .ai { position: absolute; top: 0; right: 0; bottom: 0; z-index: 30; width: min(380px, 100%); box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5); }
