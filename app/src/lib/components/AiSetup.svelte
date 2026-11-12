@@ -19,10 +19,13 @@
     groq: { name: 'Groq', url: 'https://console.groq.com/keys', address: 'console.groq.com/keys', placeholder: 'gsk_…' },
     zai: { name: 'Z.ai', url: 'https://z.ai/manage-apikey/apikey-list', address: 'z.ai/manage-apikey/apikey-list', placeholder: 'Вставьте ключ Z.ai' },
   } as const;
-  let service = $state<Service>(ai.status?.provider === 'Z.ai' ? 'zai' : 'groq');
+  // Пришли из списка нейросетей — сразу к получению ключа для выбранной
+  const preset = ai.setupService;
+  ai.setupService = null;
+  let service = $state<Service>(preset ?? (ai.status?.provider === 'Z.ai' ? 'zai' : 'groq'));
   const sv = $derived(SERVICES[service]);
   // Ключ уже есть (смена ключа) — сразу к выбору сервиса
-  let step = $state(ai.ready ? 1 : 0);
+  let step = $state(preset ? 2 : ai.ready ? 1 : 0);
 
   function pickService(s: Service) {
     service = s;

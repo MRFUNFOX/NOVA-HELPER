@@ -48,9 +48,27 @@ impl Provider {
 #[derive(Serialize, Deserialize, Default, Clone)]
 #[serde(default, rename_all = "camelCase")]
 struct Stored {
+    /// Ключ нейросети, которая сейчас выбрана
     key: String,
-    /// Модели, доступные этому ключу (из ответа Groq при проверке)
+    /// Модели, доступные ключу Groq (из ответа Groq при проверке)
     models: Vec<String>,
+    /// Ключи обеих нейросетей — чтобы переключаться без повторного ввода
+    groq: String,
+    zai: String,
+}
+
+impl Stored {
+    /// Старый файл хранил один ключ — раскладываем его по своей нейросети
+    fn migrate(mut self) -> Self {
+        if !self.key.is_empty() {
+            match Provider::of(&self.key) {
+                Provider::Groq if self.groq.is_empty() => self.groq = self.key.clone(),
+                Provider::Zai if self.zai.is_empty() => self.zai = self.key.clone(),
+                _ => {}
+            }
+        }
+        self
+    }
 }
 
 #[derive(Serialize, Clone)]
@@ -62,6 +80,9 @@ pub struct AiStatus {
     model: Option<String>,
     /// «Groq» или «Z.ai»
     provider: Option<String>,
+    /// Для каких нейросетей ключ уже введён
+    has_groq: bool,
+    has_zai: bool,
 }
 
 fn path(app: &AppHandle) -> Option<PathBuf> {
@@ -69,7 +90,7 @@ fn path(app: &AppHandle) -> Option<PathBuf> {
 }
 
 fn load(app: &AppHandle) -> Stored {
-    path(app).and_then(|p| fs::read_to_string(p).ok()).and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_default()
+    path(app).and_then(|p| fs::read_to_string(p).ok()).and_then(|s| serde_json::from_str::<Stored>(&s).ok()).unwrap_or_default().migrate()
 }
 
 fn store(app: &AppHandle, s: &Stored) -> Result<(), String> {
@@ -95,6 +116,8 @@ fn status_of(s: &Stored) -> AiStatus {
         key_hint: if has_key { format!("…{}", &s.key[s.key.len().saturating_sub(4)..]) } else { String::new() },
         model: has_key.then(|| pick(p.answer_models(), &s.models)[0].to_string()),
         provider: has_key.then(|| p.name().to_string()),
+        has_groq: !s.groq.is_empty(),
+        has_zai: !s.zai.is_empty(),
     }
 }
 
@@ -178,14 +201,38 @@ pub async fn ai_set_key(app: AppHandle, key: String) -> Result<AiStatus, String>
             Vec::new()
         }
     };
-    let s = Stored { key, models };
+    let mut s = load(&app);
+    match p {
+        Provider::Groq => { s.groq = key.clone(); s.models = models; }
+        Provider::Zai => s.zai = key.clone(),
+    }
+    s.key = key;
+    store(&app, &s)?;
+    Ok(status_of(&s))
+}
+
+/// Переключиться на другую нейросеть, ключ которой уже введён. `provider` — «groq» или «zai».
+#[tauri::command]
+pub fn ai_use(app: AppHandle, provider: String) -> Result<AiStatus, String> {
+    let mut s = load(&app);
+    let key = if provider == "zai" { s.zai.clone() } else { s.groq.clone() };
+    if key.is_empty() {
+        return Err("Для этой нейросети ещё нет ключа".into());
+    }
+    s.key = key;
     store(&app, &s)?;
     Ok(status_of(&s))
 }
 
 #[tauri::command]
 pub fn ai_clear_key(app: AppHandle) -> Result<AiStatus, String> {
-    let s = Stored::default();
+    // Удаляем ключ выбранной нейросети; если есть ключ другой — переключаемся на неё
+    let mut s = load(&app);
+    match Provider::of(&s.key) {
+        Provider::Groq => { s.groq.clear(); s.models.clear(); }
+        Provider::Zai => s.zai.clear(),
+    }
+    s.key = if !s.groq.is_empty() { s.groq.clone() } else { s.zai.clone() };
     store(&app, &s)?;
     Ok(status_of(&s))
 }

@@ -4,7 +4,7 @@
  * ссылаться, поэтому отвечает по нашим правилам, а не «из головы».
  */
 import type { RuleDocument } from '@shared/types';
-import { backend, type AiStatus, type ChatMsg } from './backend';
+import { backend, type AiProvider, type AiStatus, type ChatMsg } from './backend';
 import { app, sectionOf, shortTitle, type Section } from './state.svelte';
 import { nodeBadge, rank, type Entry } from './search';
 
@@ -63,6 +63,8 @@ class Assistant {
   busy = $state(false);
   /** Открыта пошаговая настройка (разовая после обновления или по кнопке «Настроить») */
   setupOpen = $state(false);
+  /** С какой нейросети начать настройку (выбрали в списке ту, для которой нет ключа) */
+  setupService = $state<AiProvider | null>(null);
   private chunkOff: (() => void) | null = null;
 
   get ready() { return !!this.status?.hasKey; }
@@ -79,6 +81,16 @@ class Assistant {
   async setKey(key: string) {
     this.status = await backend.aiSetKey(key);
     return this.status;
+  }
+
+  get provider(): AiProvider { return this.status?.provider === 'Z.ai' ? 'zai' : 'groq'; }
+  has(p: AiProvider) { return p === 'zai' ? !!this.status?.hasZai : !!this.status?.hasGroq; }
+
+  /** Выбор нейросети в списке: есть ключ — переключаемся, нет — открываем настройку для неё */
+  async use(p: AiProvider) {
+    if (p === this.provider && this.ready) return;
+    if (!this.has(p)) { this.setupService = p; this.setupOpen = true; return; }
+    this.status = await backend.aiUse(p);
   }
 
   async clearKey() {

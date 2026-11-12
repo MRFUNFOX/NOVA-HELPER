@@ -39,7 +39,8 @@ export interface CheckResult {
   summary: string[];
 }
 
-export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null; provider?: string | null }
+export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null; provider?: string | null; hasGroq?: boolean; hasZai?: boolean }
+export type AiProvider = 'groq' | 'zai';
 export interface ChatMsg { role: 'system' | 'user' | 'assistant'; content: string }
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -75,6 +76,7 @@ export const backend = {
   aiStatus: () => invoke<AiStatus>('ai_status'),
   aiSetKey: (key: string) => invoke<AiStatus>('ai_set_key', { key }),
   aiClearKey: () => invoke<AiStatus>('ai_clear_key'),
+  aiUse: (provider: AiProvider) => invoke<AiStatus>('ai_use', { provider }),
   aiComplete: (messages: ChatMsg[]) => invoke<string>('ai_complete', { messages }),
   aiChat: (id: string, messages: ChatMsg[]) => invoke<{ text: string; model: string }>('ai_chat', { id, messages }),
 
@@ -149,6 +151,8 @@ const mockState = {
   autostart: true,
   dbLoaded: false,
   aiKey: '',
+  aiGroq: '',
+  aiZai: '',
 };
 
 async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknown> {
@@ -192,10 +196,10 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       mockState.settings.firstRunDone = true;
       return;
     case 'ai_status': {
-      // ?aikey — помощник уже настроен
-      if (params.has('aikey') && !mockState.aiKey) mockState.aiKey = 'gsk_mockmockmock1234';
-      const k = mockState.aiKey;
-      return { hasKey: !!k, keyHint: k ? `…${k.slice(-4)}` : '', model: k ? 'openai/gpt-oss-120b' : null, provider: k ? (k.startsWith('gsk_') ? 'Groq' : 'Z.ai') : null };
+      // ?aikey — помощник уже настроен (Groq), ?aizai — есть ещё и ключ Z.ai
+      if (params.has('aikey') && !mockState.aiKey) mockState.aiKey = mockState.aiGroq = 'gsk_mockmockmock1234';
+      if (params.has('aizai') && !mockState.aiZai) mockState.aiZai = 'a1b2c3d4e5f6a7b8c9d0e1f2.Zai9';
+      return mockStatus();
     }
     case 'ai_set_key': {
       await new Promise((r) => setTimeout(r, 700));
@@ -205,12 +209,20 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       const groq = key.startsWith('gsk_');
       if (!groq && key.length < 20) throw 'Это не похоже на ключ. У Groq он начинается с «gsk_», у Z.ai — длинный набор букв и цифр. Скопируйте ключ ещё раз.';
       if (key.includes('bad')) throw 'Ключ не подходит. Скопируйте его ещё раз целиком.';
+      if (groq) mockState.aiGroq = key; else mockState.aiZai = key;
       mockState.aiKey = key;
-      return { hasKey: true, keyHint: `…${key.slice(-4)}`, model: groq ? 'openai/gpt-oss-120b' : 'glm-4.7-flash', provider: groq ? 'Groq' : 'Z.ai' };
+      return mockStatus();
+    }
+    case 'ai_use': {
+      const k = args!.provider === 'zai' ? mockState.aiZai : mockState.aiGroq;
+      if (!k) throw 'Для этой нейросети ещё нет ключа';
+      mockState.aiKey = k;
+      return mockStatus();
     }
     case 'ai_clear_key':
-      mockState.aiKey = '';
-      return { hasKey: false, keyHint: '', model: null };
+      if (mockState.aiKey.startsWith('gsk_')) mockState.aiGroq = ''; else mockState.aiZai = '';
+      mockState.aiKey = mockState.aiGroq || mockState.aiZai;
+      return mockStatus();
     case 'ai_complete':
       return JSON.stringify({ keywords: [] });
     case 'ai_chat': {
@@ -223,8 +235,17 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.5.3';
+      return '0.5.4';
     default:
       return;
   }
+}
+
+function mockStatus(): AiStatus {
+  const k = mockState.aiKey;
+  const groq = k.startsWith('gsk_');
+  return {
+    hasKey: !!k, keyHint: k ? `…${k.slice(-4)}` : '', model: k ? (groq ? 'openai/gpt-oss-120b' : 'glm-4.7-flash') : null,
+    provider: k ? (groq ? 'Groq' : 'Z.ai') : null, hasGroq: !!mockState.aiGroq, hasZai: !!mockState.aiZai,
+  };
 }

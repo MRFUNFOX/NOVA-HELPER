@@ -164,6 +164,7 @@ pub fn run() {
             ai::ai_status,
             ai::ai_set_key,
             ai::ai_clear_key,
+            ai::ai_use,
             ai::ai_complete,
             ai::ai_chat,
         ])
