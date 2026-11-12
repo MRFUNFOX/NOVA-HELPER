@@ -223,7 +223,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { text, model: 'openai/gpt-oss-120b' };
     }
     case 'app_version':
-      return '0.5.1';
+      return '0.5.2';
     default:
       return;
   }

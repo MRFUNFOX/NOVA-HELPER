@@ -133,8 +133,8 @@
             {:else}
               <li><span>1</span><div>Нажмите кнопку ниже — сайт Z.ai откроется в браузере.</div></li>
               <li><span>2</span><div>Войдите: <b>«Continue with Google»</b> или зарегистрируйтесь по почте. Это бесплатно.</div></li>
-              <li><span>3</span><div>На странице <b>«API Keys»</b> нажмите кнопку создания ключа (<b>«Create a new API key»</b>). Название — любое, например <b>NOVA</b>.</div></li>
-              <li><span>4</span><div>Скопируйте ключ значком копирования. Это длинный набор букв и цифр.<br /><small>Пополнять баланс не нужно: помощник использует только бесплатные модели.</small></div></li>
+              <li><span>3</span><div>Нажмите <b>«Add API Key»</b> справа вверху. Название — любое, например <b>NOVA</b>.</div></li>
+              <li><span>4</span><div>В строке с ключом, в столбце <b>«Action»</b>, нажмите значок копирования. Копируйте именно <b>API Key</b>, а не «API Key ID».<br /><small>Пополнять баланс не нужно: помощник использует только бесплатные модели.</small></div></li>
             {/if}
           </ol>
           <button class="btn wide open" class:primary={!opened} onclick={openSite}><Icon name="external" size={16} />Открыть сайт {sv.name}</button>
