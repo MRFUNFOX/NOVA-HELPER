@@ -10,7 +10,7 @@ use tauri::AppHandle;
 
 /// Ключ приложения в Aptabase. Он не секретный — всё равно лежит внутри программы.
 /// Пустой — статистика не отправляется вовсе.
-const APP_KEY: &str = "";
+const APP_KEY: &str = "A-EU-0587265149";
 
 fn session() -> &'static str {
     static S: OnceLock<String> = OnceLock::new();
