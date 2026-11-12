@@ -7,6 +7,7 @@ import type { RuleDocument } from '@shared/types';
 import { backend, type AiProvider, type AiStatus, type ChatMsg } from './backend';
 import { app, sectionOf, shortTitle, type Section } from './state.svelte';
 import { nodeBadge, rank, type Entry } from './search';
+import { slang } from './slang';
 
 export interface Source { n: number; entry: Entry }
 export interface Turn {
@@ -20,6 +21,8 @@ export interface Turn {
   scope?: Section;
   /** Что выбрала нейросеть перед поиском — показываем в режиме разработчика */
   plan?: { docs: string[]; keywords: string };
+  /** Сколько заняли шаги, в секундах — для режима разработчика */
+  time?: { plan?: number; first?: number; total?: number; start?: number };
 }
 
 /** Инструкция для ответа. Отдельная часть — для правил проекта и для законов штата */
@@ -74,7 +77,9 @@ class Assistant {
     this.chunkOff ??= await backend.on('ai-chunk', (p) => {
       const { id, delta } = p as { id: string; delta: string };
       const t = this.turns.find((x) => x.id === id);
-      if (t) t.a += delta;
+      if (!t) return;
+      if (t.time?.start && t.time.first === undefined) t.time.first = Math.round((performance.now() - t.time.start) / 100) / 10;
+      t.a += delta;
     });
   }
 
@@ -129,18 +134,25 @@ class Assistant {
       const prev = before.at(-1)?.q ?? '';
       const inScope = (d: RuleDocument) => sectionOf(d) === scope;
 
+      const t0 = performance.now();
+      const sec = () => Math.round((performance.now() - t0) / 100) / 10;
+      t.time = { start: t0 };
+      // Бесплатные модели Z.ai медленные — для них пропускаем шаг выбора документов (минус один запрос),
+      // а разговорные слова переводим сами
+      const fast = this.provider === 'zai';
+
       // 1. Нейросеть выбирает подходящие документы и переводит разговорный вопрос на язык правил
       const docs = app.db.docs.filter(inScope);
       const catalog = docs.map((d, n) => `D${n + 1} ${shortTitle(d.title)}`).join('\n');
-      let extra = '';
+      let extra = slang(`${q} ${prev}`);
       const boost = new Set<string>();
-      try {
+      if (!fast) try {
         const raw = await backend.aiComplete([
           { role: 'system', content: PLAN },
           { role: 'user', content: `Документы (${SCOPES[scope].label.toLowerCase()}):\n${catalog}\n\n${prev ? `Предыдущий вопрос: ${prev}\n` : ''}Вопрос: ${q}` },
         ]);
         const plan = JSON.parse(raw) as { docs?: unknown; keywords?: unknown };
-        if (Array.isArray(plan.keywords)) extra = plan.keywords.filter((x) => typeof x === 'string').join(' ');
+        if (Array.isArray(plan.keywords)) extra += ' ' + plan.keywords.filter((x) => typeof x === 'string').join(' ');
         if (Array.isArray(plan.docs)) {
           for (const id of plan.docs) {
             const d = docs[Number(String(id).replace(/\D/g, '')) - 1];
@@ -148,10 +160,11 @@ class Assistant {
           }
         }
       } catch { /* без подсказки ищем по самому вопросу */ }
-      t.plan = { docs: [...boost].map((id) => shortTitle(app.doc(id)?.title ?? id)), keywords: extra };
+      if (!fast) t.time.plan = sec();
+      t.plan = { docs: [...boost].map((id) => shortTitle(app.doc(id)?.title ?? id)), keywords: extra.trim() };
 
       // 2. Подбор пунктов только в выбранном разделе: по вопросу, словам-подсказкам и прошлому вопросу
-      const entries = rank(app.index, `${q} ${extra} ${prev}`, 14, inScope, boost);
+      const entries = rank(app.index, `${q} ${extra} ${prev}`, fast ? 10 : 14, inScope, boost);
       t.sources = entries.map((entry, n) => ({ n: n + 1, entry }));
 
       // 3. Ответ: пункты + последние пару вопросов-ответов того же раздела
@@ -160,13 +173,14 @@ class Assistant {
         { role: 'assistant' as const, content: x.a.replace(/\s*\[S\d+(?:\s*,\s*S\d+)*\]/g, '') },
       ]);
       const context = t.sources.length
-        ? t.sources.map((s) => fragment(s)).join('\n\n')
+        ? t.sources.map((s) => fragment(s, fast ? 420 : 550)).join('\n\n')
         : '(подходящих фрагментов не найдено)';
       await backend.aiChat(t.id, [
         { role: 'system', content: system(scope) },
         ...history,
         { role: 'user', content: `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.)` },
       ]).then((r) => { if (!t.a) t.a = r.text; });
+      t.time.total = sec();
     } catch (e) {
       t.error = String(e);
     } finally {
@@ -177,12 +191,12 @@ class Assistant {
 }
 
 /** Фрагмент для нейросети: откуда пункт, номер, текст, наказание, примечания */
-function fragment(s: Source): string {
+function fragment(s: Source, max = 550): string {
   const e = s.entry;
   const law = e.doc.scope === 'server';
   const where = [law ? 'Законы штата' : 'Правила проекта', shortTitle(e.doc.title), ...e.path.slice(-2)].join(' › ');
   const num = e.article ? `ст. ${e.article}, ч. ${e.node.number}` : nodeBadge(e.node, law) || '';
-  const lines = [`[S${s.n}] ${where}${num ? ` › ${law ? num : `п. ${num}`}` : ''}`, cut(e.node.text, 550)];
+  const lines = [`[S${s.n}] ${where}${num ? ` › ${law ? num : `п. ${num}`}` : ''}`, cut(e.node.text, max)];
   for (const p of e.node.punishments) lines.push(`Наказание: ${p.raw}`);
   for (const a of e.node.annotations) lines.push(`${a.type === 'exception' ? 'Исключение' : 'Примечание'}: ${cut(a.text, 300)}`);
   return lines.join('\n');

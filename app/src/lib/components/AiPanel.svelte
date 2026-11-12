@@ -132,6 +132,9 @@
                   <p><b>Документы:</b> {t.plan.docs.length ? t.plan.docs.join('; ') : 'не выбраны'}</p>
                   <p><b>Слова:</b> {t.plan.keywords || '—'}</p>
                 {/if}
+                {#if t.time}
+                  <p><b>Время:</b> {[t.time.plan !== undefined ? `выбор документов ${t.time.plan} с` : 'без выбора документов', t.time.first !== undefined ? `первые слова ${t.time.first} с` : '', t.time.total !== undefined ? `весь ответ ${t.time.total} с` : ''].filter(Boolean).join(' · ')} · {ai.status?.provider}</p>
+                {/if}
                 <ol>
                   {#each t.sources as s (s.n)}
                     <li><button onclick={() => open(s)}>S{s.n} · {sourceLabel(s).num} · {sourceLabel(s).doc}</button></li>
