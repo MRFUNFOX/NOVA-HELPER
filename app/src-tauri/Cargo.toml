@@ -1,6 +1,6 @@
 [package]
 name = "nova-helper"
-version = "0.5.5"
+version = "0.5.6"
 description = "NOVA HELPER — правила NOVA RP поверх игры"
 edition = "2021"
 
@@ -25,7 +25,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 ed25519-dalek = "2"
 sha2 = "0.10"
 base64 = "0.22"
-tokio = { version = "1", features = ["fs"] }
+tokio = { version = "1", features = ["fs", "macros"] }
 thiserror = "2"
 
 [target.'cfg(windows)'.dependencies]

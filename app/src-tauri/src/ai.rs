@@ -298,8 +298,79 @@ struct Chunk<'a> {
     delta: &'a str,
 }
 
-/// Ответ на вопрос: текст приходит по кусочкам событиями `ai-chunk`, по мере того как Groq его пишет.
+/// Разобрать готовые строки потока «data: {…}» и вернуть кусочки текста
+fn take_deltas(buf: &mut String) -> Vec<String> {
+    let mut out = Vec::new();
+    while let Some(nl) = buf.find('\n') {
+        let line: String = buf.drain(..=nl).collect();
+        let Some(data) = line.trim().strip_prefix("data:") else { continue };
+        let data = data.trim();
+        if data == "[DONE]" {
+            continue;
+        }
+        if let Ok(v) = serde_json::from_str::<Value>(data) {
+            if let Some(d) = v["choices"][0]["delta"]["content"].as_str() {
+                if !d.is_empty() {
+                    out.push(d.to_string());
+                }
+            }
+        }
+    }
+    out
+}
+
+/// Открытый поток ответа, в котором уже пришли первые слова
+struct Opened {
+    model: &'static str,
+    resp: reqwest::Response,
+    buf: String,
+    first: Vec<String>,
+}
+
+/// Ошибка открытия потока: код ответа (если был) и понятное сообщение
+type OpenErr = (Option<u16>, String);
+
+/// Отправить вопрос модели и дождаться первых слов ответа
+async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'static str, messages: &[Msg]) -> Result<Opened, OpenErr> {
+    let mut resp = http
+        .post(format!("{}/chat/completions", p.api()))
+        .bearer_auth(key)
+        .json(&body(p, model, messages, true, false, 900))
+        .send()
+        .await
+        .map_err(|e| (None, explain(p, None, "", Some(&e))))?;
+    let code = resp.status();
+    if !code.is_success() {
+        let text = resp.text().await.unwrap_or_default();
+        return Err((Some(code.as_u16()), explain(p, Some(code), &text, None)));
+    }
+    let mut buf = String::new();
+    loop {
+        match resp.chunk().await {
+            Ok(Some(c)) => {
+                buf.push_str(&String::from_utf8_lossy(&c));
+                let first = take_deltas(&mut buf);
+                if !first.is_empty() {
+                    return Ok(Opened { model, resp, buf, first });
+                }
+            }
+            // Поток закончился, а текста нет
+            Ok(None) => return Err((Some(503), format!("Пустой ответ {}", p.name()))),
+            Err(e) => return Err((None, explain(p, None, "", Some(&e)))),
+        }
+    }
+}
+
+/// Лимит исчерпан или модель недоступна — можно попробовать другую
+fn retryable(e: &OpenErr) -> bool {
+    matches!(e.0, Some(429 | 404 | 400 | 503))
+}
+
+/// Ответ на вопрос: текст приходит по кусочкам событиями `ai-chunk`, по мере того как нейросеть его пишет.
 /// Возвращает весь ответ и модель, которая отвечала.
+///
+/// У Z.ai бесплатные модели иногда подолгу стоят в очереди, поэтому спрашиваем две модели сразу
+/// и берём ту, что начала отвечать первой; вторая отменяется.
 #[tauri::command]
 pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<Value, String> {
     let s = load(&app);
@@ -308,50 +379,57 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<V
     }
     let p = Provider::of(&s.key);
     let http = client()?;
-    let mut last = String::new();
-    for model in pick(p.answer_models(), &s.models) {
-        let mut resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, true, false, 900)).send().await {
-            Ok(r) => r,
-            Err(e) => return Err(explain(p, None, "", Some(&e))),
-        };
-        let code = resp.status();
-        if !code.is_success() {
-            let text = resp.text().await.unwrap_or_default();
-            last = explain(p, Some(code), &text, None);
-            if matches!(code.as_u16(), 429 | 404 | 400 | 503) {
-                continue;
-            }
-            return Err(last);
-        }
-        // Потоковый ответ: строки «data: {…}», конец — «data: [DONE]»
-        let mut full = String::new();
-        let mut buf = String::new();
+    let models = pick(p.answer_models(), &s.models);
+
+    let opened: Result<Opened, String> = if p == Provider::Zai && models.len() >= 2 {
+        let fa = open_stream(&http, p, &s.key, models[0], &messages);
+        let fb = open_stream(&http, p, &s.key, models[1], &messages);
+        tokio::pin!(fa);
+        tokio::pin!(fb);
+        let (mut a_done, mut b_done) = (false, false);
+        let mut last = String::new();
         loop {
-            let chunk = match resp.chunk().await {
-                Ok(Some(c)) => c,
-                Ok(None) => break,
-                Err(e) => return Err(explain(p, None, "", Some(&e))),
-            };
-            buf.push_str(&String::from_utf8_lossy(&chunk));
-            while let Some(nl) = buf.find('\n') {
-                let line: String = buf.drain(..=nl).collect();
-                let line = line.trim();
-                let Some(data) = line.strip_prefix("data:") else { continue };
-                let data = data.trim();
-                if data == "[DONE]" {
-                    continue;
-                }
-                if let Ok(v) = serde_json::from_str::<Value>(data) {
-                    if let Some(d) = v["choices"][0]["delta"]["content"].as_str() {
-                        if !d.is_empty() {
-                            full.push_str(d);
-                            let _ = app.emit("ai-chunk", Chunk { id: &id, delta: d });
-                        }
-                    }
+            tokio::select! {
+                r = &mut fa, if !a_done => { a_done = true; match r { Ok(o) => break Ok(o), Err(e) => last = e.1 } }
+                r = &mut fb, if !b_done => { b_done = true; match r { Ok(o) => break Ok(o), Err(e) => last = e.1 } }
+                else => break Err(last),
+            }
+        }
+    } else {
+        let mut res = Err(String::new());
+        for model in models {
+            match open_stream(&http, p, &s.key, model, &messages).await {
+                Ok(o) => { res = Ok(o); break; }
+                Err(e) => {
+                    let again = retryable(&e);
+                    res = Err(e.1);
+                    if !again { break; }
                 }
             }
         }
-        return Ok(json!({ "text": full, "model": model }));
+        res
+    };
+    let Opened { model, mut resp, mut buf, first } = opened?;
+
+    let mut full = String::new();
+    let mut send = |d: &str| {
+        full.push_str(d);
+        let _ = app.emit("ai-chunk", Chunk { id: &id, delta: d });
+    };
+    for d in &first {
+        send(d);
     }
-    Err(last)
+    loop {
+        match resp.chunk().await {
+            Ok(Some(c)) => {
+                buf.push_str(&String::from_utf8_lossy(&c));
+                for d in take_deltas(&mut buf) {
+                    send(&d);
+                }
+            }
+            Ok(None) => break,
+            Err(e) => return Err(explain(p, None, "", Some(&e))),
+        }
+    }
+    Ok(json!({ "text": full, "model": model }))
 }

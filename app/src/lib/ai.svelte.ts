@@ -23,6 +23,8 @@ export interface Turn {
   plan?: { docs: string[]; keywords: string };
   /** Сколько заняли шаги, в секундах — для режима разработчика */
   time?: { plan?: number; first?: number; total?: number; start?: number };
+  /** Какая модель отвечала */
+  model?: string;
 }
 
 /** Инструкция для ответа. Отдельная часть — для правил проекта и для законов штата */
@@ -179,7 +181,7 @@ class Assistant {
         { role: 'system', content: system(scope) },
         ...history,
         { role: 'user', content: `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.)` },
-      ]).then((r) => { if (!t.a) t.a = r.text; });
+      ]).then((r) => { if (!t.a) t.a = r.text; t.model = r.model; });
       t.time.total = sec();
     } catch (e) {
       t.error = String(e);
