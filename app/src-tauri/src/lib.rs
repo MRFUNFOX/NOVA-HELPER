@@ -1,4 +1,5 @@
 mod ai;
+mod stats;
 mod overlay;
 mod settings;
 mod sync;
@@ -165,6 +166,7 @@ pub fn run() {
             ai::ai_set_key,
             ai::ai_clear_key,
             ai::ai_use,
+            stats::stat,
             ai::ai_complete,
             ai::ai_chat,
         ])

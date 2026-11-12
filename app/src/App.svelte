@@ -15,6 +15,8 @@
   import { app, focusSearch } from './lib/state.svelte';
   import { ai } from './lib/ai.svelte';
   import AiSetup from './lib/components/AiSetup.svelte';
+  import Consent from './lib/components/Consent.svelte';
+  import { track, trackEmptySearch, trackErrors } from './lib/stats';
   import { scale } from 'svelte/transition';
   import { backend } from './lib/backend';
   import { ms } from './lib/motion';
@@ -27,12 +29,27 @@
     app.start()
       .then(async () => {
         started = true;
+        trackErrors();
+        track('app_start', { section: app.section, laws: app.hasLaws ? 1 : 0 });
         await ai.init();
         // Программа стояла до появления помощника: один раз предлагаем его настроить
         if (app.aiEnabled && app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;
         else if (ai.ready) app.markAiSetupDone();
       })
       .catch((e) => { started = true; app.loaded = true; app.notify(String(e), 'error'); });
+  });
+
+  // Вопрос о статистике — один раз, после первого запуска и после окна настройки помощника
+  const consentOpen = $derived(started && !!app.settings?.firstRunDone && app.settings.analytics == null && !ai.setupOpen && !app.updateDialog);
+
+  // Поиск ничего не нашёл — запоминаем запрос (если игрок разрешил статистику), когда он перестал печатать
+  $effect(() => {
+    const q = app.query.trim();
+    const none = !!q && app.hits.length === 0;
+    const section = app.section;
+    if (!none) return;
+    const timer = setTimeout(() => trackEmptySearch(section, q), 1500);
+    return () => clearTimeout(timer);
   });
 
   // При смене экрана — наверх (если не переходим к конкретному пункту)
@@ -120,6 +137,13 @@
     <div class="backdrop" transition:fade={{ duration: ms(160) }}>
       <div class="dialog" role="dialog" aria-modal="true" aria-label="Настройка ИИ-помощника" transition:scale={{ start: 0.96, duration: ms(220) }}>
         <AiSetup compact onDone={(ok) => { ai.setupOpen = false; app.markAiSetupDone(); if (ok) app.aiOpen = true; }} />
+      </div>
+    </div>
+  {/if}
+  {#if consentOpen}
+    <div class="backdrop" transition:fade={{ duration: ms(160) }}>
+      <div class="dialog" role="dialog" aria-modal="true" aria-label="Анонимная статистика" transition:scale={{ start: 0.96, duration: ms(220) }}>
+        <Consent onDone={(ok) => { if (ok) track('app_start', { section: app.section, laws: app.hasLaws ? 1 : 0 }); }} />
       </div>
     </div>
   {/if}

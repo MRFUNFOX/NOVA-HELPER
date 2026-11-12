@@ -17,6 +17,8 @@ export interface Settings {
   aiSetupDone?: boolean;
   /** Режим разработчика: видны функции, которые игрокам ещё не показываем */
   devMode?: boolean;
+  /** Анонимная статистика: null — ещё не спрашивали */
+  analytics?: boolean | null;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -77,6 +79,10 @@ export const backend = {
   aiSetKey: (key: string) => invoke<AiStatus>('ai_set_key', { key }),
   aiClearKey: () => invoke<AiStatus>('ai_clear_key'),
   aiUse: (provider: AiProvider) => invoke<AiStatus>('ai_use', { provider }),
+  stat: (name: string, props: Record<string, string | number> | undefined) => invoke<void>('stat', {
+    name, props, locale: navigator.language || '',
+    osVersion: /Windows NT ([\d.]+)/.exec(navigator.userAgent)?.[1] ?? '',
+  }),
   aiComplete: (messages: ChatMsg[]) => invoke<string>('ai_complete', { messages }),
   aiChat: (id: string, messages: ChatMsg[]) => invoke<{ text: string; model: string }>('ai_chat', { id, messages }),
 
@@ -184,6 +190,8 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       if (params.has('ready') && !params.has('aisetup') && mockState.settings.aiSetupDone === undefined) mockState.settings.aiSetupDone = true;
       // ?dev — режим разработчика уже включён
       if (params.has('dev') && mockState.settings.devMode === undefined) mockState.settings.devMode = true;
+      // ?ready без ?consent — статистику уже спрашивали (отказ), чтобы окно не мешало тестам
+      if (params.has('ready') && !params.has('consent') && mockState.settings.analytics === undefined) mockState.settings.analytics = false;
       return { ...mockState.settings };
     case 'save_settings':
       mockState.settings = { ...(args!.new as Settings), hotkey: mockState.settings.hotkey };
@@ -236,6 +244,9 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       }
       return { text, model: 'openai/gpt-oss-120b' };
     }
+    case 'stat':
+      console.debug('[статистика]', args!.name, args!.props ?? '');
+      return;
     case 'app_version':
       return '0.5.7';
     default:

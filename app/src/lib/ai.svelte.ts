@@ -8,6 +8,7 @@ import { backend, type AiProvider, type AiStatus, type ChatMsg } from './backend
 import { app, sectionOf, shortTitle, type Section } from './state.svelte';
 import { nodeBadge, rank, type Entry } from './search';
 import { slang } from './slang';
+import { errorKind, track } from './stats';
 
 export interface Source { n: number; entry: Entry }
 export interface Turn {
@@ -183,8 +184,10 @@ class Assistant {
         { role: 'user', content: `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.)` },
       ]).then((r) => { if (!t.a) t.a = r.text; t.model = r.model; });
       t.time.total = sec();
+      track('ai_answer', { provider: this.provider, scope, model: t.model ?? '', first: t.time.first ?? t.time.total, total: t.time.total, sources: t.sources.length });
     } catch (e) {
       t.error = String(e);
+      track('ai_error', { provider: this.provider, scope, kind: errorKind(t.error) });
     } finally {
       t.pending = false;
       this.busy = false;

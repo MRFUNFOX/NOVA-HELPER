@@ -84,6 +84,10 @@
         <span><b>Запускать вместе с Windows</b><span class="hint">Окно не откроется само — только подсказка с клавишей.</span></span>
       </label>
     {/if}
+    <label class="toggle">
+      <input type="checkbox" checked={app.settings?.analytics === true} onchange={(e) => app.setAnalytics(e.currentTarget.checked)} />
+      <span><b>Анонимная статистика</b><span class="hint">Скорость ответов помощника, сбои и поиски без результата — чтобы улучшать программу. Ники, ключи и тексты вопросов не отправляются.</span></span>
+    </label>
   </section>
 
   {#if app.aiEnabled}

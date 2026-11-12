@@ -42,6 +42,8 @@ pub struct Settings {
     pub ai_setup_done: bool,
     /// Режим разработчика: видны функции, которые игрокам ещё не показываем (включается кодом)
     pub dev_mode: bool,
+    /// Анонимная статистика: None — ещё не спрашивали, Some(true) — разрешил, Some(false) — отказался
+    pub analytics: Option<bool>,
     pub window: Option<WindowGeom>,
 }
 
@@ -54,6 +56,7 @@ impl Default for Settings {
             first_run_done: false,
             ai_setup_done: false,
             dev_mode: false,
+            analytics: None,
             window: None,
         }
     }

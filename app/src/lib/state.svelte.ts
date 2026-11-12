@@ -315,6 +315,12 @@ class AppState {
   }
 
   /** Игрок увидел настройку ИИ-помощника (настроил или пропустил) — больше не показываем */
+  /** Ответ на вопрос о статистике (окно при запуске или переключатель в настройках) */
+  async setAnalytics(on: boolean) {
+    if (!this.settings) return;
+    try { this.settings = await backend.saveSettings({ ...this.settings, analytics: on }); } catch { /* не страшно */ }
+  }
+
   async markAiSetupDone() {
     // Пока помощник скрыт, игрок настройку не видел — не отмечаем, иначе потом она ему не покажется
     if (!this.settings || this.settings.aiSetupDone || !this.aiEnabled) return;
