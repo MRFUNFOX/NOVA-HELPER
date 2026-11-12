@@ -2,6 +2,21 @@
   import { app, formatDate, shortTitle } from '../state.svelte';
   import { wordDiff } from '../diff';
   import type { NodeChange } from '@shared/format';
+  import { APP_CHANGELOG } from '../changelog';
+
+  // Две вкладки: правки правил с форума и что нового в самой программе
+  const SEEN = 'nova.seenAppVersion';
+  const read = () => { try { return localStorage.getItem(SEEN) ?? ''; } catch { return ''; } };
+  let tab = $state<'rules' | 'app'>('rules');
+  let seen = $state(read());
+  const unseen = $derived(!!app.version && seen !== app.version);
+  function openApp() {
+    tab = 'app';
+    seen = app.version;
+    try { localStorage.setItem(SEEN, app.version); } catch { /* не страшно */ }
+  }
+  const isCurrent = (v: string) => v === app.version || v.split(' – ').includes(app.version);
+  const appDate = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
   const KIND: Record<NodeChange['kind'], string> = { added: 'Новый пункт', removed: 'Пункт удалён', modified: 'Изменён' };
 
@@ -28,6 +43,22 @@
 
 <div class="changes">
   <h1>Что изменилось</h1>
+  <div class="tabs" role="tablist" aria-label="Что показывать">
+    <button role="tab" aria-selected={tab === 'rules'} class:on={tab === 'rules'} onclick={() => (tab = 'rules')}>Правила{#if app.recentChanges}<span class="count">{app.recentChanges}</span>{/if}</button>
+    <button role="tab" aria-selected={tab === 'app'} class:on={tab === 'app'} onclick={openApp}>Программа{#if unseen}<span class="new">новое</span>{/if}</button>
+  </div>
+
+  {#if tab === 'app'}
+    <p class="lead muted">Что нового в NOVA HELPER. Программа обновляется сама.</p>
+    {#each APP_CHANGELOG as r (r.version)}
+      <section class="release">
+        <h2>Версия {r.version}<span class="date">{appDate(r.date)}</span>{#if isCurrent(r.version)}<span class="tag">у вас сейчас</span>{/if}</h2>
+        <ul class="items">
+          {#each r.items as it (it)}<li>{it}</li>{/each}
+        </ul>
+      </section>
+    {/each}
+  {:else}
   <p class="lead muted">Правки правил с форума, которые программа нашла при обновлениях. Новое подсвечено жёлтым, удалённое зачёркнуто.</p>
 
   {#if !releases.length}
@@ -73,12 +104,23 @@
       {/each}
     </section>
   {/each}
+  {/if}
 </div>
 
 <style>
   .changes { max-width: 860px; padding: 22px 24px 64px; }
   h1 { margin: 0 0 6px; font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.01em; }
   .lead { margin: 0 0 20px; font-size: var(--fs-sm); }
+  .tabs { display: inline-flex; gap: 3px; padding: 3px; margin: 6px 0 14px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+  .tabs button { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 14px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-dim); font-size: var(--fs-sm); font-weight: 700; transition: background 0.15s var(--ease), color 0.15s var(--ease); }
+  .tabs button:hover:not(.on) { background: var(--surface-2); color: var(--text); }
+  .tabs button.on { background: var(--accent); color: var(--on-accent); }
+  .count { padding: 0 6px; border-radius: 9px; background: var(--danger-line); color: #fff; font-size: 11px; line-height: 17px; }
+  .new { padding: 0 6px; border-radius: 9px; background: var(--success-tint); color: var(--success); font-size: 11px; line-height: 17px; }
+  .on .new { background: rgba(0, 0, 0, 0.18); color: var(--on-accent); }
+  .date { font-weight: 600; font-size: var(--fs-sm); color: var(--text-muted); }
+  .items { margin: 0; padding: 12px 16px 14px 34px; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-sm); line-height: 1.55; color: var(--text-dim); }
+  .items li::marker { color: var(--accent); }
   .empty { padding: 20px; color: var(--text-dim); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
   .release { margin-bottom: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
   h2 { display: flex; align-items: center; gap: 10px; font-size: var(--fs-md); font-weight: 800; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--border); }
