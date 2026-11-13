@@ -312,7 +312,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       console.debug('[статистика]', args!.name, args!.props ?? '');
       return;
     case 'app_version':
-      return '0.5.10';
+      return '0.5.11';
     default:
       return;
   }
