@@ -16,6 +16,7 @@
   import { ai } from './lib/ai.svelte';
   import AiSetup from './lib/components/AiSetup.svelte';
   import Consent from './lib/components/Consent.svelte';
+  import News from './lib/components/News.svelte';
   import { track, trackEmptySearch, trackErrors } from './lib/stats';
   import { scale } from 'svelte/transition';
   import { backend } from './lib/backend';
@@ -41,6 +42,16 @@
 
   // Вопрос о статистике — один раз, после первого запуска и после окна настройки помощника
   const consentOpen = $derived(started && !!app.settings?.firstRunDone && app.settings.analytics == null && !ai.setupOpen && !app.updateDialog);
+
+  // Новость «Пункты поверх игры» с гайдом — всем один раз, после остальных окон
+  const NEWS = 'pins-0.6.0';
+  let newsSeen = $state((() => { try { return localStorage.getItem('nova.news') === NEWS; } catch { return false; } })());
+  const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen));
+  function closeNews() {
+    newsSeen = true;
+    app.guideOpen = false;
+    try { localStorage.setItem('nova.news', NEWS); } catch { /* не страшно — покажем ещё раз */ }
+  }
 
   // Поиск ничего не нашёл — запоминаем запрос (если игрок разрешил статистику), когда он перестал печатать
   $effect(() => {
@@ -88,7 +99,7 @@
       e.preventDefault();
       focusSearch();
     }
-    if (e.key === 'Escape' && !app.updateDialog && !firstRun && !ai.setupOpen) {
+    if (e.key === 'Escape' && !app.updateDialog && !firstRun && !ai.setupOpen && !newsOpen) {
       if (app.query) app.query = '';
       else if (app.aiOpen) app.aiOpen = false;
       else if (app.sidebarOpen) app.sidebarOpen = false;
@@ -169,6 +180,13 @@
       </div>
     </div>
   {/if}
+  {#if newsOpen}
+    <div class="backdrop" transition:fade={{ duration: ms(160) }}>
+      <div class="dialog wide" role="dialog" aria-modal="true" aria-label="Новое: пункты поверх игры" transition:scale={{ start: 0.96, duration: ms(220) }}>
+        <News onDone={closeNews} />
+      </div>
+    </div>
+  {/if}
   {#if app.toast}
     {#key app.toast}
       <div class="toast" class:error={app.toast.tone === 'error'} role="status" in:fly={{ y: 12, duration: ms(220) }} out:fade={{ duration: ms(150) }}>
@@ -194,6 +212,7 @@
   .empty p { color: var(--text-dim); margin: 0 0 18px; }
   .error { color: var(--danger); font-size: var(--fs-sm); margin-top: 12px !important; }
   .backdrop { position: absolute; inset: 0; z-index: 55; display: grid; place-items: center; padding: 16px; background: rgba(10, 10, 12, 0.66); overflow-y: auto; }
+  .dialog.wide { max-width: 600px; padding: 22px 24px 20px; }
   .dialog { width: 100%; max-width: 480px; padding: 24px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border-strong); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
   .toast {
     position: absolute;

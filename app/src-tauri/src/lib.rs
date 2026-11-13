@@ -197,13 +197,14 @@ pub fn run() {
                 eprintln!("{e}");
             }
             build_tray(&handle)?;
-            // Главное окно создаём сами: в режиме разработчика — с прозрачным фоном (ползунок
-            // «Прозрачность фона» в настройках). У обычных игроков окно ровно такое же, как раньше.
+            // Главное окно создаём сами: с прозрачным фоном, когда открыты окна поверх игры
+            // (ползунок прозрачности в заголовке программы).
             if let Some(cfg) = app.config().app.windows.iter().find(|w| w.label == "main") {
+                let glass = pins::PUBLIC || s.dev_mode;
                 let mut cfg = cfg.clone();
-                cfg.transparent = s.dev_mode;
+                cfg.transparent = glass;
                 tauri::WebviewWindowBuilder::from_config(&handle, &cfg)?.build()?;
-                GLASS.store(s.dev_mode, std::sync::atomic::Ordering::Relaxed);
+                GLASS.store(glass, std::sync::atomic::Ordering::Relaxed);
             }
             if let Some(win) = app.get_webview_window("main") {
                 overlay::restore_geometry(&handle, &win);

@@ -70,7 +70,10 @@
       <HotkeyField kind="editor" />
       <div class="pins-row">
         <span class="hint">{app.pins.length ? `Закреплено: ${app.pins.length} из 8` : 'Пока ничего не закреплено'}</span>
-        {#if app.pins.length}<button class="btn sm" onclick={() => backend.pinsEditor(true)}>Открыть редактор</button>{/if}
+        <span class="pins-btns">
+          <button class="btn sm ghost" onclick={() => (app.guideOpen = true)}>Как это работает</button>
+          {#if app.pins.length}<button class="btn sm" onclick={() => backend.pinsEditor(true)}>Открыть редактор</button>{/if}
+        </span>
       </div>
     </section>
   {/if}
@@ -177,6 +180,7 @@
 <style>
   .pins-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
   .pins-row .hint { margin: 0; }
+  .pins-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
   .settings { max-width: 680px; padding: 22px 24px 64px; display: flex; flex-direction: column; gap: 12px; }
   h1 { margin: 0 0 8px; font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.01em; }
   section { padding: 18px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }

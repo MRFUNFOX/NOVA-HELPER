@@ -8,3 +8,6 @@ out/
 !config/*.pub.pem
 app/src-tauri/target/
 app/dist/
+
+# Тестовые картинки для скриншотов — никогда не в репозиторий
+app/public/__*

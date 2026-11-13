@@ -1,6 +1,6 @@
 [package]
 name = "nova-helper"
-version = "0.5.13"
+version = "0.6.0"
 description = "NOVA HELPER — правила NOVA RP поверх игры"
 edition = "2021"
 

@@ -123,6 +123,8 @@ class AppState {
   glassReady = $state(false);
   /** GTA запущена в полноэкранном режиме — окна поверх неё не видны (подсказываем включить «Оконный без рамки») */
   gameFullscreen = $state(false);
+  /** Гайд «Пункты поверх игры» открыт из настроек */
+  guideOpen = $state(false);
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Поиск — только в открытом разделе: в правилах или в законах */

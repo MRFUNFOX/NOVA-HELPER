@@ -16,7 +16,7 @@ use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, Positio
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 /// Открыто ли всем игрокам. Пока `false` — только в режиме разработчика.
-const PUBLIC: bool = false;
+pub const PUBLIC: bool = true;
 const LABEL: &str = "pins";
 /// Поля раскладки — их хранит и меняет слой окон; остальное (текст пункта) — главное окно
 const LAYOUT: &[&str] = &["x", "y", "w", "bg", "font", "locked"];
