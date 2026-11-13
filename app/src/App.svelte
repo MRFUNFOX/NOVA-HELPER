@@ -109,6 +109,13 @@
     <Sidebar />
     <div class="column">
       <TitleBar onSearchKey={(e) => results?.onKey(e)} />
+      {#if app.pinsEnabled && app.gameFullscreen}
+        <!-- Поверх полноэкранной игры Windows ничего не показывает -->
+        <p class="game-warn" role="status">
+          <Icon name="alert" size={15} />
+          <span><b>GTA запущена в полноэкранном режиме</b> — программа и закреплённые пункты не видны поверх игры. В настройках игры: Графика → Тип экрана → «Оконный без рамки».</span>
+        </p>
+      {/if}
       <div class="body">
         <main bind:this={main}>
           {#if !started || !app.loaded || (app.updating && !app.ready)}
@@ -175,6 +182,9 @@
   .shell { position: relative; height: 100%; display: flex; background: var(--bg); border: 1px solid var(--border-strong); overflow: hidden; }
   .column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .body { position: relative; flex: 1; display: flex; min-height: 0; }
+  .game-warn { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 16px; background: var(--orange-tint); border-bottom: 1px solid var(--border); color: var(--orange); font-size: var(--fs-sm); line-height: 1.45; flex-shrink: 0; }
+  .game-warn :global(svg) { flex-shrink: 0; margin-top: 3px; }
+  .game-warn b { color: var(--text); }
   main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; }
   .screen { min-height: 100%; }
   .empty { padding: 32px 24px; max-width: 520px; }

@@ -82,6 +82,8 @@ export const backend = {
   pinsRemove: (key: string) => invoke<void>('pins_remove', { key }),
   pinsEditor: (open: boolean) => invoke<void>('pins_editor', { open }),
   pinsSync: () => invoke<void>('pins_sync'),
+  /** В игре ли игрок и не в полноэкранном ли режиме игра */
+  gameState: () => invoke<{ inGame: boolean; fullscreen: boolean }>('game_state'),
   finishFirstRun: () => invoke<void>('finish_first_run'),
   hide: () => invoke<void>('hide_main'),
   minimize: () => invoke<void>('minimize_main'),
@@ -306,6 +308,8 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { ...mockState.settings };
     case 'suspend_editor_hotkey':
       return;
+    case 'game_state':
+      return { inGame: params.has('ingame'), fullscreen: params.has('fullscreen') };
     case 'window_glass':
       return !!mockState.settings.devMode;
     case 'stat':

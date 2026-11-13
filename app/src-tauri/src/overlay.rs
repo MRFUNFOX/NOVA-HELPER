@@ -109,7 +109,8 @@ pub fn show_main(app: &AppHandle) {
     }
     let _ = win.unminimize();
     let _ = win.show();
-    let _ = win.set_always_on_top(true);
+    // Поверх всех окон — только в игре; вне игры (в режиме разработчика) — обычное окно
+    let _ = win.set_always_on_top(crate::game::in_game() || !crate::game::aware(app));
     let _ = win.set_focus();
     let _ = win.emit("overlay-shown", ());
     hide_hint(app);
@@ -138,7 +139,8 @@ pub fn toggle(app: &AppHandle) {
 pub fn show_hint(app: &AppHandle) {
     let s = settings::load(app);
     let Some(hint) = hint_window(app) else { return };
-    if s.hint == HintMode::Off || !s.first_run_done {
+    // В режиме разработчика подсказка видна только в игре
+    if s.hint == HintMode::Off || !s.first_run_done || (crate::game::aware(app) && !crate::game::in_game()) {
         let _ = hint.hide();
         return;
     }

@@ -121,6 +121,8 @@ class AppState {
   glass = $state(100);
   /** Окно создано прозрачным — ползунок работает; иначе нужен перезапуск программы */
   glassReady = $state(false);
+  /** GTA запущена в полноэкранном режиме — окна поверх неё не видны (подсказываем включить «Оконный без рамки») */
+  gameFullscreen = $state(false);
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Поиск — только в открытом разделе: в правилах или в законах */
@@ -261,6 +263,8 @@ class AppState {
     backend.on('pins-changed', (p) => { if (this.pinsEnabled) this.pins = p as Pin[]; });
     void this.loadPins();
     backend.windowGlass().then((g) => (this.glassReady = g)).catch(() => {});
+    backend.gameState().then((g) => (this.gameFullscreen = g.fullscreen)).catch(() => {});
+    backend.on('game-fullscreen', (f) => { this.gameFullscreen = !!f; });
     // Мастер первого запуска сам скачает базу; иначе — тихая проверка при старте
     if (settings.firstRunDone) {
       this.analyze(false);

@@ -118,7 +118,16 @@ fn hwnd_of(w: &WebviewWindow) -> isize {
 /// Растянуть слой на весь основной монитор. На 1 пиксель ниже экрана — иначе Windows
 /// посчитает его «полноэкранным приложением» и спрячет панель задач и уведомления.
 fn cover(w: &WebviewWindow) {
-    if let Ok(Some(m)) = w.primary_monitor() {
+    // Монитор, на котором игра; не знаем — основной
+    let on_game = crate::game::rect().and_then(|(x, y, gw, gh)| {
+        let (cx, cy) = (x + gw / 2, y + gh / 2);
+        w.available_monitors().ok()?.into_iter().find(|m| {
+            let p = m.position();
+            let s = m.size();
+            cx >= p.x && cx < p.x + s.width as i32 && cy >= p.y && cy < p.y + s.height as i32
+        })
+    });
+    if let Some(m) = on_game.or_else(|| w.primary_monitor().ok().flatten()) {
         let p = m.position();
         let s = m.size();
         let _ = w.set_position(Position::Physical(PhysicalPosition::new(p.x, p.y)));
@@ -185,10 +194,15 @@ pub fn active_editor_key(app: &AppHandle) -> Option<String> {
 /// Показать или убрать слой в зависимости от того, включена ли функция и есть ли закреплённые пункты
 pub fn sync(app: &AppHandle) {
     let pins = if enabled(app) { load(app) } else { Vec::new() };
-    if pins.is_empty() {
-        editor(app, false);
+    // Окна видны только в игре (или пока открыт редактор)
+    let visible = crate::game::in_game() || EDITOR.load(Ordering::Relaxed);
+    if pins.is_empty() || !visible {
+        if pins.is_empty() {
+            editor(app, false);
+        }
         set_editor_key(app, false);
         if let Some(w) = app.get_webview_window(LABEL) {
+            let _ = w.emit("pins-changed", &pins);
             let _ = w.hide();
         }
     } else if let Some(w) = layer(app) {
@@ -212,10 +226,15 @@ pub fn editor(app: &AppHandle, open: bool) {
     if EDITOR.swap(open, Ordering::Relaxed) == open {
         return;
     }
-    let Some(w) = app.get_webview_window(LABEL) else {
+    // Редактор можно открыть и вне игры (кнопкой в настройках) — тогда слой создаём сейчас
+    let w = if open { layer(app) } else { app.get_webview_window(LABEL) };
+    let Some(w) = w else {
         EDITOR.store(false, Ordering::Relaxed);
         return;
     };
+    if open {
+        let _ = w.emit("pins-changed", load(app));
+    }
     let gs = app.global_shortcut();
     if open {
         let fg = win::foreground();
@@ -243,6 +262,10 @@ pub fn editor(app: &AppHandle, open: bool) {
         }
     }
     let _ = app.emit("pins-editor", open);
+    // Редактор открыли вне игры (кнопкой в настройках) — после закрытия окна снова прячутся
+    if !open {
+        sync(app);
+    }
 }
 
 #[tauri::command]

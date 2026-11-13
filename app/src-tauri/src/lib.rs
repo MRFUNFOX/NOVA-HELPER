@@ -1,4 +1,5 @@
 mod ai;
+mod game;
 mod stats;
 mod overlay;
 mod pins;
@@ -183,6 +184,7 @@ pub fn run() {
             pins::pins_remove,
             pins::pins_editor,
             pins::pins_sync,
+            game::game_state,
             pins::set_editor_hotkey,
             pins::suspend_editor_hotkey,
             ai::ai_complete,
@@ -218,6 +220,8 @@ pub fn run() {
             }
             // Закреплённые пункты (только в режиме разработчика, пока функция в работе)
             pins::sync(&handle);
+            // Следим, в игре ли игрок (тоже пока только в режиме разработчика)
+            game::watch(handle.clone());
             let minimized = std::env::args().any(|a| a == "--minimized");
             if minimized && s.first_run_done {
                 overlay::show_hint(&handle);
