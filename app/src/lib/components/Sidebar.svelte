@@ -15,6 +15,21 @@
   ];
   const rail = $derived(app.sidebarCollapsed && !app.sidebarOpen);
 
+  // Низкое окно: если список меню не влез, нижний край плавно гаснет — видно, что ниже есть ещё пункты
+  let scroller: HTMLElement | undefined = $state();
+  let more = $state(false);
+  function measure() {
+    if (scroller) more = scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 4;
+  }
+  $effect(() => {
+    if (!scroller) return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(scroller);
+    for (const c of scroller.children) ro.observe(c);
+    measure();
+    return () => ro.disconnect();
+  });
+
   function go(view: 'changes' | 'settings') {
     app.view = { kind: view };
     app.sidebarOpen = false;
@@ -43,7 +58,7 @@
     </div>
   {/if}
 
-  <div class="scroll">
+  <div class="scroll" class:more bind:this={scroller} onscroll={measure}>
     {#if !rail}<p class="caption">{app.section === 'laws' ? `Законы сервера ${app.serverName}` : 'Правила проекта'}</p>{/if}
 
     {#if !app.loaded}
@@ -146,6 +161,7 @@
   .switch.rail button.on { background: var(--accent); }
   .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 6px 12px 10px; display: flex; flex-direction: column; gap: 2px; }
   .rail .scroll { padding: 10px 10px; align-items: center; }
+  .scroll.more { mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent); }
   /* В длинном списке пункты меню не сжимаются, а список прокручивается */
   .scroll > :global(*) { flex-shrink: 0; }
   .caption { margin: 10px 10px 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); }

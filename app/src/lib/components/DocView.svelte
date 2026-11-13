@@ -143,7 +143,7 @@
 <style>
   .server-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
   .server-note :global(svg) { flex-shrink: 0; }
-  .doc { max-width: 860px; padding: 22px 24px 64px; }
+  .doc { max-width: 860px; padding: 22px 24px 64px; container: doc / inline-size; }
   .crumbs { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); margin-bottom: 8px; min-width: 0; }
   .crumbs span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .crumbs .here { color: var(--text-dim); }
@@ -196,7 +196,8 @@
     h1 { font-size: var(--fs-xl); }
     .title-row { flex-direction: column; gap: 10px; }
   }
-  @media (max-width: 519px) {
+  /* Карточки статистики смотрят на ширину самого документа (рядом может быть меню и ИИ-панель) */
+  @container doc (max-width: 560px) {
     .stats { gap: 8px; }
     .stat { padding: 10px 12px; gap: 8px; grid-template-areas: 'ico ico' 'value value' 'label label'; }
     .stat-ico { width: 28px; height: 28px; }

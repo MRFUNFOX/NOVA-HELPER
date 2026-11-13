@@ -6,6 +6,21 @@
 
   let { onSearchKey, wizard = false }: { onSearchKey?: (e: KeyboardEvent) => void; wizard?: boolean } = $props();
   let maximized = $state(false);
+  /** Узкое окно: ползунок прозрачности прячется в выпадашку под кнопкой */
+  let glassOpen = $state(false);
+  // Подсказка в поле поиска короче, когда панель узкая — иначе от неё видно «Поиск по г…»
+  let barWidth = $state(1000);
+  const placeholder = $derived(
+    barWidth < 520 ? 'Поиск' : barWidth < 760 ? (app.section === 'laws' ? 'Поиск по законам' : 'Поиск по правилам')
+      : app.section === 'laws' ? 'Поиск по законам: «ук 12.1», «арест»…' : 'Поиск по правилам: «дм», «4.1»…',
+  );
+  let glassBox: HTMLElement | undefined = $state();
+  $effect(() => {
+    if (!glassOpen) return;
+    const off = (e: PointerEvent) => { if (glassBox && !glassBox.contains(e.target as Node)) glassOpen = false; };
+    document.addEventListener('pointerdown', off, true);
+    return () => document.removeEventListener('pointerdown', off, true);
+  });
 
   async function toggleMax() {
     await backend.toggleMaximize();
@@ -14,7 +29,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<header class="topbar" data-tauri-drag-region ondblclick={(e) => { if (e.target === e.currentTarget) toggleMax(); }}>
+<header class="topbar" bind:clientWidth={barWidth} data-tauri-drag-region ondblclick={(e) => { if (e.target === e.currentTarget) toggleMax(); }}>
   {#if wizard}
     <div class="brand" data-tauri-drag-region><span class="mark" aria-hidden="true">§</span><span class="name" data-tauri-drag-region>NOVA <span>HELPER</span></span></div>
   {:else}
@@ -24,7 +39,7 @@
       <input
         id="search"
         type="search"
-        placeholder={app.section === 'laws' ? 'Поиск по законам: «ук 12.1», «арест»…' : 'Поиск по правилам: «дм», «4.1»…'}
+        {placeholder}
         autocomplete="off"
         spellcheck="false"
         bind:value={app.query}
@@ -41,11 +56,19 @@
   <div class="actions">
     {#if !wizard && app.pinsEnabled}
       <!-- Прозрачность фона программы: текст и кнопки остаются чёткими, сквозь фон видно игру -->
-      <label class="glass" class:off={!app.glassReady} title={app.glassReady ? `Прозрачность фона: ${100 - app.glass}% — сквозь окно видно игру` : 'Перезапустите программу, чтобы включить прозрачность'}>
-        <Icon name="contrast" size={16} />
-        <input type="range" min="30" max="100" step="5" value={app.glass} disabled={!app.glassReady}
+      <div class="glass" class:off={!app.glassReady} bind:this={glassBox} title={app.glassReady ? `Прозрачность фона: ${100 - app.glass}% — сквозь окно видно игру` : 'Перезапустите программу, чтобы включить прозрачность'}>
+        <button class="glass-btn" onclick={() => (glassOpen = !glassOpen)} aria-label="Прозрачность фона программы" aria-expanded={glassOpen}><Icon name="contrast" size={16} /></button>
+        <input class="glass-inline" type="range" min="30" max="100" step="5" value={app.glass} disabled={!app.glassReady}
           oninput={(e) => (app.glass = Number(e.currentTarget.value))} aria-label="Прозрачность фона программы" />
-      </label>
+        {#if glassOpen}
+          <div class="glass-pop">
+            <span class="glass-cap">Прозрачность фона <b>{100 - app.glass}%</b></span>
+            <input type="range" min="30" max="100" step="5" value={app.glass} disabled={!app.glassReady}
+              oninput={(e) => (app.glass = Number(e.currentTarget.value))} aria-label="Прозрачность фона программы" />
+            {#if !app.glassReady}<span class="glass-cap">Перезапустите программу, чтобы включить</span>{/if}
+          </div>
+        {/if}
+      </div>
       <span class="sep" aria-hidden="true"></span>
     {/if}
     {#if !wizard && app.aiEnabled}
@@ -67,6 +90,8 @@
 
 <style>
   .topbar {
+    /* Кнопки подстраиваются под реальную ширину панели, а не всего окна (рядом меню и ИИ-панель) */
+    container: topbar / inline-size;
     height: var(--topbar);
     display: flex;
     align-items: center;
@@ -83,7 +108,7 @@
   .search {
     flex: 1;
     max-width: 440px;
-    min-width: 0;
+    min-width: 120px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -104,10 +129,15 @@
   .clear:hover { background: var(--surface-2); color: var(--text); }
 
   .actions { display: flex; align-items: center; gap: 2px; margin-left: auto; }
-  .glass { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; margin-right: 4px; border-radius: var(--radius-sm); color: var(--text-dim); }
+  .glass { position: relative; display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 10px 0 0; margin-right: 4px; border-radius: var(--radius-sm); color: var(--text-dim); flex-shrink: 0; }
   .glass:hover { background: var(--surface-2); color: var(--text); }
-  .glass.off { opacity: 0.5; }
-  .glass input { width: 84px; margin: 0; accent-color: var(--accent); direction: rtl; }
+  .glass.off .glass-inline, .glass.off .glass-btn { opacity: 0.5; }
+  .glass input { margin: 0; accent-color: var(--accent); direction: rtl; }
+  .glass-inline { width: 84px; }
+  .glass-btn { display: grid; place-items: center; width: 30px; height: 34px; padding: 0; border: 0; background: none; color: inherit; pointer-events: none; }
+  .glass-pop { display: none; }
+  .ai-label { white-space: nowrap; }
+  .actions { flex-shrink: 0; }
   .icon-btn {
     display: grid; place-items: center;
     width: 36px; height: 34px;
@@ -135,9 +165,26 @@
   @media (max-width: 639px) {
     .menu { display: grid; }
     .topbar { padding-left: 16px; }
+  }
+  /* Ширина самой панели: сначала прячем подсказку Ctrl K, потом сворачиваем ползунок, потом подпись ИИ */
+  @container topbar (max-width: 700px) {
     .hint { display: none; }
   }
-  @media (max-width: 519px) {
+  @container topbar (max-width: 620px) {
+    .glass { padding: 0; }
+    .glass-inline { display: none; }
+    .glass-btn { pointer-events: auto; width: 36px; }
+    .glass-pop {
+      position: absolute; top: calc(100% + 8px); right: 0; z-index: 50;
+      display: flex; flex-direction: column; gap: 8px; width: 220px;
+      padding: 12px 14px; border-radius: 12px;
+      background: var(--surface-2); border: 1px solid var(--border-strong); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    }
+    .glass-pop input { width: 100%; }
+    .glass-cap { font-size: var(--fs-xs); color: var(--text-dim); font-weight: 600; }
+    .glass-cap b { color: var(--text); }
+  }
+  @container topbar (max-width: 520px) {
     .ai-label { display: none; }
     .ai { padding: 0 10px; }
     .sep { display: none; }
