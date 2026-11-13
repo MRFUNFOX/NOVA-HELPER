@@ -85,6 +85,7 @@
         <Icon name="external" size={15} />Тема на форуме
       </button>
     </div>
+    {#if law}<p class="server-note"><Icon name="info" size={13} />Законы сервера {app.serverName}. На других серверах NOVA RP законы могут отличаться.</p>{/if}
   </header>
 
   {#if s.punished}
@@ -140,6 +141,8 @@
 </article>
 
 <style>
+  .server-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
+  .server-note :global(svg) { flex-shrink: 0; }
   .doc { max-width: 860px; padding: 22px 24px 64px; }
   .crumbs { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); margin-bottom: 8px; min-width: 0; }
   .crumbs span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

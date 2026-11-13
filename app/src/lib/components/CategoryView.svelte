@@ -27,6 +27,7 @@
     <span class="here">{categoryLabel(category)}</span>
   </nav>
   <h1>{categoryLabel(category)}</h1>
+  {#if law}<p class="server-note"><Icon name="info" size={13} />Законы сервера {app.serverName}. На других серверах NOVA RP законы могут отличаться.</p>{/if}
 
   <div class="grid">
     {#each cards as { doc, s } (doc.id)}
@@ -42,6 +43,8 @@
 </section>
 
 <style>
+  .server-note { display: flex; align-items: center; gap: 6px; margin: -10px 0 18px; font-size: var(--fs-xs); color: var(--text-muted); }
+  .server-note :global(svg) { flex-shrink: 0; }
   .cat { max-width: 980px; padding: 22px 24px 64px; }
   .crumbs { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
   .crumbs .here { color: var(--text-dim); }

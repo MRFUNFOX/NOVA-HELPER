@@ -159,7 +159,7 @@
 
     <footer>
       {#if app.hasLaws}
-        <p class="scopebar"><Icon name={scope === 'laws' ? 'gavel' : 'book'} size={14} /><span>Отвечаю по <b>{scope === 'laws' ? 'законам штата' : 'правилам проекта'}</b>. {scope === 'laws' ? 'Правила' : 'Законы'} — переключатель слева вверху</span></p>
+        <p class="scopebar"><Icon name={scope === 'laws' ? 'gavel' : 'book'} size={14} /><span>Отвечаю по <b>{scope === 'laws' ? `законам сервера ${app.serverName}` : 'правилам проекта'}</b>. {scope === 'laws' ? 'Правила' : 'Законы'} — переключатель слева вверху</span></p>
       {/if}
       <div class="input">
         <textarea bind:this={field} bind:value={input} onkeydown={onKey} rows="1" placeholder={scope === 'laws' ? 'Вопрос по законам штата…' : 'Вопрос по правилам проекта…'} maxlength="600" disabled={ai.busy}></textarea>
