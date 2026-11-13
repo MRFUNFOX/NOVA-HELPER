@@ -1,7 +1,7 @@
 <script lang="ts">
   /**
    * Слой закреплённых пунктов поверх игры (прозрачное окно во весь монитор).
-   * Обычно мышь проходит сквозь него в игру. В режиме редактора окна можно таскать за 9 точек,
+   * Обычно мышь проходит сквозь него в игру. В режиме редактора окна можно таскать мышкой за любое место,
    * менять ширину за уголок (высота — всегда по тексту), фон, шрифт, залочить и открепить.
    */
   import { backend } from './lib/backend';
@@ -52,7 +52,7 @@
     save(fresh);
   }
 
-  /** Место над окном под кнопки редактора (замок, крестик, 9 точек) */
+  /** Место над окном под кнопки редактора (замок, крестик) */
   const CTRL = 36;
 
   /** Окно не должно уехать за экран (например, после смены разрешения). Если окно помещается —
@@ -91,17 +91,22 @@
     return () => { offs.forEach((f) => f()); window.removeEventListener('resize', resize); window.removeEventListener('keydown', esc); };
   });
 
-  // ── Перетаскивание за 9 точек ──
+  // ── Перетаскивание: зажать мышкой в любом месте окна ──
+  let moving = $state<string | null>(null);
   function drag(e: PointerEvent, p: Pin) {
-    if (p.locked) return;
+    if (!editor) return;
+    selected = p.key;
+    if (p.locked || e.button !== 0 || (e.target as HTMLElement).closest('button, .rz')) return;
     e.preventDefault();
     selected = p.key;
     dragging = true;
+    moving = p.key;
     const sx = e.clientX - (p.x ?? 0);
     const sy = e.clientY - (p.y ?? 0);
     const move = (ev: PointerEvent) => { p.x = ev.clientX - sx; p.y = ev.clientY - sy; clamp(p); };
     const up = () => {
       dragging = false;
+      moving = null;
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       save([p]);
@@ -171,7 +176,7 @@
     <div class="dim" aria-hidden="true"></div>
     <div class="topbar" role="toolbar" aria-label="Редактор окон">
       <b>Редактор окон</b>
-      <span class="how">Тяните за <span class="grip-ico"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>, ширину — за уголок</span>
+      <span class="how">Двигайте окно мышкой, ширину — за уголок <span class="rz-ico"></span></span>
       <span class="k">Esc</span>
       <button class="done" onclick={() => backend.pinsEditor(false)}>Готово</button>
     </div>
@@ -186,13 +191,14 @@
       class:ed={editor}
       class:sel={editor && selected === p.key}
       class:locked={editor && p.locked}
+      class:moving={moving === p.key}
       style:left="{p.x ?? -9999}px"
       style:top="{p.y ?? -9999}px"
       style:width="{W(p)}px"
       style:--bg="rgba(14, 15, 19, {BG(p) / 100})"
       style:--font="{FONT(p)}px"
       bind:this={els[p.key]}
-      onpointerdown={() => editor && (selected = p.key)}
+      onpointerdown={(e) => drag(e, p)}
     >
       {#if editor}
         <div class="ctrl" class:inside={ctrlInside(p)}>
@@ -200,9 +206,6 @@
             <Icon name={p.locked ? 'lock' : 'unlock'} size={13} />
           </button>
           <button class="c" onclick={() => unpin(p)} title="Открепить" aria-label="Открепить"><Icon name="close" size={13} /></button>
-          <button class="c grip" disabled={p.locked} onpointerdown={(e) => drag(e, p)} title={p.locked ? 'Окно залочено' : 'Перетащить'} aria-label="Перетащить">
-            <span class="grip-ico"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
-          </button>
         </div>
         {#if !p.locked}<span class="rz" style:top="{rzTop(p)}px" onpointerdown={(e) => resizeW(e, p)} title="Тяните, чтобы поменять ширину" aria-hidden="true"></span>{/if}
       {/if}
@@ -272,7 +275,11 @@
     font-size: var(--font);
     pointer-events: none;
   }
-  .pin.ed { pointer-events: auto; outline: 1.5px dashed rgba(255, 255, 255, 0.4); outline-offset: 3px; }
+  .pin.ed { z-index: 1; pointer-events: auto; outline: 1.5px dashed rgba(255, 255, 255, 0.4); outline-offset: 3px; cursor: grab; user-select: none; touch-action: none; }
+  .pin.ed:hover:not(.locked):not(.sel) { outline-color: rgba(255, 255, 255, 0.75); }
+  .pin.moving { cursor: grabbing; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5); }
+  .pin.ed.locked { cursor: default; }
+  .pin.ed .c { cursor: pointer; }
   .pin.sel { outline: 2px solid var(--accent); z-index: 3; }
   .pin.locked { outline-color: rgba(255, 255, 255, 0.2); }
   .h { display: flex; align-items: center; gap: 7px; margin-bottom: 0.4em; min-width: 0; }
@@ -287,12 +294,7 @@
   .c { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-radius: 6px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-dim); }
   .c:hover:not(:disabled) { color: var(--text); border-color: var(--accent-line); }
   .c.lock.on { background: var(--accent-tint); border-color: var(--accent-line); color: var(--accent); }
-  .c.grip { background: var(--accent); border-color: var(--accent); cursor: grab; touch-action: none; }
-  .c.grip:active { cursor: grabbing; }
-  .c.grip:disabled { opacity: 0.35; cursor: not-allowed; }
-  .grip-ico { display: inline-grid; grid-template-columns: repeat(3, 3px); gap: 2px; }
-  .grip-ico i { width: 3px; height: 3px; border-radius: 50%; background: var(--on-accent); }
-  .how .grip-ico { padding: 4px; border-radius: 4px; background: var(--accent); }
+  .rz-ico { display: inline-block; width: 11px; height: 11px; border-radius: 3px; background: var(--accent); border: 2px solid #111; }
   .rz { position: absolute; right: -7px; width: 14px; height: 14px; border-radius: 3px; background: var(--accent); border: 2px solid #111; cursor: ew-resize; touch-action: none; }
 
   .panel { position: absolute; width: 270px; padding: 13px 15px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); font-size: 12.5px; z-index: 4; }
