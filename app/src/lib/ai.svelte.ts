@@ -108,22 +108,31 @@ class Assistant {
 
   clear() { this.turns = []; }
 
-  /** Вопрос игрока. Если есть и правила, и законы — сначала спрашиваем, где искать ответ */
-  ask(question: string, scope?: Section) {
+  /** Вопрос игрока. Отвечаем по разделу, выбранному в меню слева: «Правила» или «Законы» */
+  ask(question: string) {
     const q = question.trim();
     if (!q || this.busy) return;
-    // Вопрос, для которого так и не выбрали раздел, заменяем новым
-    this.turns = this.turns.filter((x) => x.scope || x.error);
-    this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope: scope ?? (app.hasLaws ? undefined : 'project') });
-    const t = this.turns[this.turns.length - 1]!; // реактивная копия
-    if (t.scope) void this.answer(t);
+    const scope: Section = app.hasLaws ? app.section : 'project';
+    this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope });
+    void this.answer(this.turns[this.turns.length - 1]!); // реактивная копия
   }
 
-  /** Игрок выбрал раздел — ищем и отвечаем */
-  choose(t: Turn, scope: Section) {
-    if (this.busy || t.scope) return;
-    t.scope = scope;
-    void this.answer(t);
+  /** Вся переписка текстом — чтобы скопировать в Discord, жалобу и т. п. */
+  transcript() {
+    return this.turns.filter((t) => t.a || t.error).map((t) => {
+      const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' ? [p.n] : [])));
+      const text = pieces(t.a).map((p) => {
+        if (p.t !== 'ref') return p.v;
+        const s = t.sources.find((x) => x.n === p.n);
+        return s ? `(${sourceLabel(s).num})` : '';
+      }).join('').replace(/[ \t]+([.,;:])/g, '$1').trim();
+      const src = t.sources.filter((s) => used.has(s.n)).map((s) => { const l = sourceLabel(s); return `${l.num} — ${l.doc}`; });
+      return [
+        `Вопрос: ${t.q}`,
+        `Ответ (${t.scope ? SCOPES[t.scope].label.toLowerCase() : ''}): ${t.error ? `ошибка — ${t.error}` : text}`,
+        ...(src.length ? [`Пункты: ${src.join('; ')}`] : []),
+      ].join('\n');
+    }).join('\n\n');
   }
 
   private async answer(t: Turn) {

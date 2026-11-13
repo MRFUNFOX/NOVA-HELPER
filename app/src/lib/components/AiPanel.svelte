@@ -10,12 +10,23 @@
   let input = $state('');
   let list: HTMLElement | undefined = $state();
   let field: HTMLTextAreaElement | undefined = $state();
-  const examples = [
+  const scope = $derived<Section>(app.hasLaws ? app.section : 'project');
+  const examples = $derived(scope === 'laws' ? [
+    'Что грозит за убийство полицейского?',
+    'Сколько дают за угон машины?',
+    'Можно ли носить оружие без лицензии?',
+    'Что будет за отказ выйти из машины по требованию полиции?',
+  ] : [
     'Можно ли убить человека без причины?',
     'Что будет за оскорбление родных?',
     'Какое наказание за кражу машины?',
     'Можно ли грабить в зелёной зоне?',
-  ];
+  ]);
+
+  async function copyAll() {
+    try { await navigator.clipboard.writeText(ai.transcript()); app.notify('Переписка скопирована', 'ok'); }
+    catch { app.notify('Не удалось скопировать', 'error'); }
+  }
 
   // Новое сообщение и каждый кусочек ответа — прокрутка вниз
   $effect(() => {
@@ -35,7 +46,6 @@
     return () => clearInterval(timer);
   });
 
-  const other = (s: Section): Section => (s === 'laws' ? 'project' : 'laws');
 
   function send(text = input) {
     if (!text.trim() || ai.busy) return;
@@ -63,6 +73,9 @@
   <header>
     <span class="title"><Icon name="spark" size={17} /> ИИ-помощник</span>
     <span class="tools">
+      {#if ai.turns.some((t) => t.a || t.error)}
+        <button class="tool" title="Копировать всю переписку" aria-label="Копировать всю переписку" onclick={copyAll} disabled={ai.busy}><Icon name="copy" size={15} /></button>
+      {/if}
       {#if ai.turns.length}
         <button class="tool" title="Начать заново" aria-label="Начать заново" onclick={() => ai.clear()} disabled={ai.busy}><Icon name="refresh" size={15} /></button>
       {/if}
@@ -82,7 +95,7 @@
   {:else}
     <div class="body" bind:this={list}>
       {#if !ai.turns.length}
-        <p class="lead">Спросите своими словами — помощник ответит по правилам проекта и законам штата и покажет пункты, на которые опирается.</p>
+        <p class="lead">{scope === 'laws' ? 'Спросите своими словами — помощник ответит по законам штата и покажет статьи, на которые опирается.' : 'Спросите своими словами — помощник ответит по правилам проекта и покажет пункты, на которые опирается.'}</p>
         <div class="examples">
           {#each examples as q (q)}<button onclick={() => send(q)}>{q}</button>{/each}
         </div>
@@ -94,21 +107,11 @@
           {#if t.error}
             <p class="error"><Icon name="alert" size={15} />{t.error}</p>
             <div class="err-actions">
-              <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); ai.ask(t.q, t.scope); }} disabled={ai.busy}>Спросить снова</button>
+              <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); ai.ask(t.q); }} disabled={ai.busy}>Спросить снова</button>
               {#if t.error.includes('Z.ai') && ai.status?.provider !== 'Z.ai'}<button class="btn sm primary" onclick={() => (ai.setupOpen = true)}>Подключить Z.ai</button>{/if}
             </div>
-          {:else if !t.scope}
-            <p class="choose-lead">Где искать ответ?</p>
-            <div class="choices" role="group" aria-label="Где искать ответ">
-              {#each ['project', 'laws'] as const as id (id)}
-                <button class="choice" onclick={() => ai.choose(t, id)} disabled={ai.busy}>
-                  <span class="choice-ico"><Icon name={id === 'laws' ? 'gavel' : 'book'} size={17} /></span>
-                  <span class="choice-text"><b>{SCOPES[id].label}</b><small>{SCOPES[id].hint}</small></span>
-                </button>
-              {/each}
-            </div>
           {:else if !t.a}
-            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
+            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
             {#if slow && waited >= 3}
               <p class="wait-note">Бесплатные серверы Z.ai загружены — ответ может занять до минуты. Быстрее отвечает Groq, но он не работает в России и СНГ.</p>
             {/if}
@@ -130,12 +133,6 @@
                   </button>
                 {/each}
               </div>
-            {/if}
-            {#if !t.pending && app.hasLaws}
-              <p class="scope">
-                <Icon name={t.scope === 'laws' ? 'gavel' : 'book'} size={13} />{SCOPES[t.scope].label}
-                <button onclick={() => ai.ask(t.q, other(t.scope!))} disabled={ai.busy}>{other(t.scope) === 'laws' ? 'Спросить по законам' : 'Спросить по правилам'}</button>
-              </p>
             {/if}
             {#if app.devMode && !t.pending}
               <!-- Только в режиме разработчика: что выбрала нейросеть и что нашёл поиск -->
@@ -161,8 +158,11 @@
     </div>
 
     <footer>
+      {#if app.hasLaws}
+        <p class="scopebar"><Icon name={scope === 'laws' ? 'gavel' : 'book'} size={14} /><span>Отвечаю по <b>{scope === 'laws' ? 'законам штата' : 'правилам проекта'}</b>. {scope === 'laws' ? 'Правила' : 'Законы'} — переключатель слева вверху</span></p>
+      {/if}
       <div class="input">
-        <textarea bind:this={field} bind:value={input} onkeydown={onKey} rows="1" placeholder="Ваш вопрос…" maxlength="600" disabled={ai.busy}></textarea>
+        <textarea bind:this={field} bind:value={input} onkeydown={onKey} rows="1" placeholder={scope === 'laws' ? 'Вопрос по законам штата…' : 'Вопрос по правилам проекта…'} maxlength="600" disabled={ai.busy}></textarea>
         <button class="send" onclick={() => send()} disabled={ai.busy || !input.trim()} aria-label="Спросить"><Icon name="chevron" size={18} /></button>
       </div>
       <div class="foot">
@@ -209,18 +209,6 @@
   .debug ol { margin: 6px 0 0; padding-left: 18px; }
   .debug li button { border: 0; background: none; padding: 1px 0; color: var(--text-dim); text-align: left; font-size: 11.5px; }
   .debug li button:hover { color: var(--accent-soft); }
-  .choose-lead { margin: 0 0 8px; font-weight: 700; color: var(--text); }
-  .choices { display: flex; flex-direction: column; gap: 6px; }
-  .choice { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--surface); text-align: left; transition: border-color 0.15s var(--ease), background 0.15s var(--ease); }
-  .choice:hover:not(:disabled) { border-color: var(--accent-line); background: var(--accent-tint); }
-  .choice:disabled { opacity: 0.5; }
-  .choice-ico { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--accent); }
-  .choice-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .choice-text b { font-size: var(--fs-sm); color: var(--text); }
-  .choice-text small { font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.35; }
-  .scope { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 10px 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
-  .scope button { border: 0; background: none; padding: 0; margin-left: auto; color: var(--accent-soft); font-size: inherit; font-weight: 600; }
-  .scope button:hover:not(:disabled) { text-decoration: underline; }
   .thinking { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--text-muted); }
   .secs { margin-left: auto; font-size: var(--fs-xs); font-variant-numeric: tabular-nums; color: var(--text-muted); }
   .wait-note { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-tint); color: var(--accent-soft); font-size: var(--fs-xs); line-height: 1.45; }
@@ -239,6 +227,9 @@
   textarea { flex: 1; min-width: 0; min-height: 32px; max-height: 120px; padding: 6px 0; resize: none; field-sizing: content; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); line-height: 1.45; }
   .send { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); }
   .send:disabled { background: var(--surface-3); color: var(--text-muted); }
+  .scopebar { display: flex; align-items: flex-start; gap: 7px; margin: 0 0 8px; padding: 7px 10px; border-radius: var(--radius-sm); background: var(--accent-tint); color: var(--accent-soft); font-size: var(--fs-xs); line-height: 1.4; }
+  .scopebar :global(svg) { flex-shrink: 0; margin-top: 1px; }
+  .scopebar b { color: var(--text); }
   .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
   .note { margin: 0 2px; font-size: 11px; line-height: 1.35; color: var(--text-muted); }
 
