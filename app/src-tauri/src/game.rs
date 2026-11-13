@@ -7,7 +7,7 @@
 //! Пока функция в разработке, поведение меняется только в режиме разработчика:
 //! - программа поверх всех окон только в игре, вне игры — обычное окно;
 //! - закреплённые пункты видны только в игре, на мониторе с игрой;
-//! - подсказка в углу экрана — только в игре;
+//! - подсказка в углу экрана — только в игре, но там всегда (окно программы ложится поверх неё);
 //! - игра в полноэкранном режиме → программа подскажет включить «Оконный без рамки».
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -157,9 +157,7 @@ fn apply(app: &AppHandle) {
         let _ = m.set_always_on_top(game || !aware(app));
     }
     crate::pins::sync(app);
-    if app.get_webview_window("main").is_some_and(|m| !m.is_visible().unwrap_or(true)) {
-        crate::overlay::show_hint(app);
-    }
+    crate::overlay::show_hint_if_hidden(app);
     let _ = app.emit("game-state", json_state());
 }
 

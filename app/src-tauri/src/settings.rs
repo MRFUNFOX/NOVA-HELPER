@@ -6,9 +6,9 @@ use tauri::{AppHandle, Manager};
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum HintMode {
-    /// Всегда, пока окно программы скрыто
+    /// Всегда, пока игрок в игре
     Always,
-    /// 10 секунд после скрытия окна
+    /// 10 секунд после входа в игру или скрытия окна
     Timed,
     Off,
 }

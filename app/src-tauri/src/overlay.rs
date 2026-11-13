@@ -113,7 +113,12 @@ pub fn show_main(app: &AppHandle) {
     let _ = win.set_always_on_top(crate::game::in_game() || !crate::game::aware(app));
     let _ = win.set_focus();
     let _ = win.emit("overlay-shown", ());
-    hide_hint(app);
+    // В игре подсказка в углу остаётся на экране — окно программы просто ложится поверх неё
+    if crate::game::aware(app) {
+        show_hint(app);
+    } else {
+        hide_hint(app);
+    }
 }
 
 pub fn hide_main(app: &AppHandle) {
@@ -161,6 +166,10 @@ pub fn show_hint(app: &AppHandle) {
     let _ = hint.set_ignore_cursor_events(true);
     let _ = hint.emit("hint-update", serde_json::json!({ "hotkey": s.hotkey, "editor": editor }));
     let _ = hint.show();
+    // Окно программы открыто — оно поверх подсказки
+    if let Some(m) = main_window(app).filter(|m| m.is_visible().unwrap_or(false)) {
+        crate::pins::raise_window(&m);
+    }
 
     let epoch = app.state::<OverlayState>().hint_epoch.fetch_add(1, Ordering::Relaxed) + 1;
     if s.hint == HintMode::Timed {
@@ -175,9 +184,9 @@ pub fn show_hint(app: &AppHandle) {
     }
 }
 
-/// Обновить подсказку, если окно программы сейчас скрыто
+/// Обновить подсказку: в игре она видна всегда, вне режима «окна поверх игры» — пока окно скрыто
 pub fn show_hint_if_hidden(app: &AppHandle) {
-    if main_window(app).is_some_and(|m| !m.is_visible().unwrap_or(true)) {
+    if crate::game::aware(app) || main_window(app).is_some_and(|m| !m.is_visible().unwrap_or(true)) {
         show_hint(app);
     }
 }

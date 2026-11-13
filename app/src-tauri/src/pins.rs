@@ -103,6 +103,11 @@ mod win {
     pub fn raise(_h: isize) {}
 }
 
+/// Поднять окно наверх среди окон «поверх всех», не забирая фокус
+pub fn raise_window(w: &WebviewWindow) {
+    win::raise(hwnd_of(w));
+}
+
 fn hwnd_of(w: &WebviewWindow) -> isize {
     #[cfg(windows)]
     {
@@ -219,9 +224,7 @@ pub fn sync(app: &AppHandle) {
     }
     let _ = app.emit("pins-changed", &pins);
     // В подсказке в углу появляется (или пропадает) строка про редактор
-    if app.get_webview_window("main").is_some_and(|m| !m.is_visible().unwrap_or(true)) {
-        crate::overlay::show_hint(app);
-    }
+    crate::overlay::show_hint_if_hidden(app);
 }
 
 /// Открыть или закрыть редактор окон

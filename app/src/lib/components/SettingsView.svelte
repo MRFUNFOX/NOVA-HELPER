@@ -80,7 +80,7 @@
 
   <section>
     <h2>Подсказка в углу экрана</h2>
-    <p class="hint">Маленькая надпись справа внизу с клавишей вызова, пока окно скрыто. Клики сквозь неё проходят в игру.</p>
+    <p class="hint">Маленькая надпись справа внизу с клавишами, пока вы в игре. Окно программы открывается поверх неё, клики сквозь неё проходят в игру.</p>
     <div class="segmented" role="radiogroup" aria-label="Подсказка в углу экрана">
       {#each HINTS as h (h.value)}
         <button role="radio" aria-checked={app.settings?.hint === h.value} class:on={app.settings?.hint === h.value} onclick={() => save({ hint: h.value })}>{h.label}</button>
