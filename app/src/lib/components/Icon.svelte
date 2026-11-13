@@ -2,7 +2,7 @@
   export type IconName =
     | 'search' | 'close' | 'minus' | 'square' | 'squares' | 'settings' | 'spark' | 'menu' | 'book' | 'history'
     | 'refresh' | 'external' | 'copy' | 'check' | 'chevron' | 'alert' | 'keyboard' | 'download' | 'window' | 'shield'
-    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception';
+    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast';
 </script>
 
 <script lang="ts">
@@ -24,6 +24,10 @@
   {:else if name === 'refresh'}<path d="M16 9.5A6 6 0 0 0 5 6.3" /><path d="M4.5 3.5v3h3" /><path d="M4 10.5a6 6 0 0 0 11 3.2" /><path d="M15.5 16.5v-3h-3" />
   {:else if name === 'external'}<path d="M11 4h5v5" /><path d="m16 4-7 7" /><path d="M14 11.5V15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3.5" />
   {:else if name === 'copy'}<rect x="7" y="7" width="9" height="9" rx="1.5" /><path d="M13 4.5V4a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h.5" />
+  {:else if name === 'pin'}<path d="M12.6 2.9l4.5 4.5-2 .7-3 3 .3 3.5-1.3 1.3-3-3-4 4" /><path d="M5.1 8.4l1.3-1.3 3.5.3 3-3 .7-2" /><path d="M5.1 8.4l6.5 6.5" />
+  {:else if name === 'lock'}<rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" />
+  {:else if name === 'unlock'}<rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 5.8-1" />
+  {:else if name === 'contrast'}<circle cx="10" cy="10" r="6.5" /><path d="M10 3.5v13a6.5 6.5 0 0 0 0-13Z" fill="currentColor" stroke="none" />
   {:else if name === 'check'}<path d="m4.5 10.5 3.5 3.5 7.5-8" />
   {:else if name === 'chevron'}<path d="m8 5 5 5-5 5" />
   {:else if name === 'alert'}<path d="M10 3.5 17.5 16.5h-15L10 3.5Z" /><path d="M10 8.5v3.5M10 14.3v.2" />

@@ -63,6 +63,18 @@
     <HotkeyField />
   </section>
 
+  {#if app.pinsEnabled}
+    <section>
+      <h2>Окна поверх игры</h2>
+      <p class="hint">Закрепляйте пункты булавкой — они появятся поверх игры. Эта клавиша открывает редактор: двигать окна, менять ширину, фон и шрифт.</p>
+      <HotkeyField kind="editor" />
+      <div class="pins-row">
+        <span class="hint">{app.pins.length ? `Закреплено: ${app.pins.length} из 8` : 'Пока ничего не закреплено'}</span>
+        {#if app.pins.length}<button class="btn sm" onclick={() => backend.pinsEditor(true)}>Открыть редактор</button>{/if}
+      </div>
+    </section>
+  {/if}
+
   <section>
     <h2>Подсказка в углу экрана</h2>
     <p class="hint">Маленькая надпись справа внизу с клавишей вызова, пока окно скрыто. Клики сквозь неё проходят в игру.</p>
@@ -163,6 +175,8 @@
 </div>
 
 <style>
+  .pins-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; }
+  .pins-row .hint { margin: 0; }
   .settings { max-width: 680px; padding: 22px 24px 64px; display: flex; flex-direction: column; gap: 12px; }
   h1 { margin: 0 0 8px; font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.01em; }
   section { padding: 18px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }

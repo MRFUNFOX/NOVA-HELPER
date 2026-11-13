@@ -142,19 +142,22 @@ pub fn show_hint(app: &AppHandle) {
         let _ = hint.hide();
         return;
     }
+    // Есть закреплённые окна — во второй строке подсказка, как открыть их редактор
+    let editor = crate::pins::active_editor_key(app);
+    let lh = if editor.is_some() { 82.0 } else { 44.0 };
     if let Ok(Some(mon)) = hint.primary_monitor() {
         let scale = mon.scale_factor();
         let area = mon.work_area();
         let w = (300.0 * scale) as i32;
-        let h = (44.0 * scale) as i32;
+        let h = (lh * scale) as i32;
         let x = area.position.x + area.size.width as i32 - w - (16.0 * scale) as i32;
         let y = area.position.y + area.size.height as i32 - h - (16.0 * scale) as i32;
-        let _ = hint.set_size(Size::Logical(LogicalSize::new(300.0, 44.0)));
+        let _ = hint.set_size(Size::Logical(LogicalSize::new(300.0, lh)));
         let _ = hint.set_position(Position::Physical(PhysicalPosition::new(x, y)));
     }
     // Подсказка не перехватывает мышь: клики проходят в игру
     let _ = hint.set_ignore_cursor_events(true);
-    let _ = hint.emit("hint-update", s.hotkey.clone());
+    let _ = hint.emit("hint-update", serde_json::json!({ "hotkey": s.hotkey, "editor": editor }));
     let _ = hint.show();
 
     let epoch = app.state::<OverlayState>().hint_epoch.fetch_add(1, Ordering::Relaxed) + 1;
@@ -167,6 +170,13 @@ pub fn show_hint(app: &AppHandle) {
                 hide_hint(&app);
             }
         });
+    }
+}
+
+/// Обновить подсказку, если окно программы сейчас скрыто
+pub fn show_hint_if_hidden(app: &AppHandle) {
+    if main_window(app).is_some_and(|m| !m.is_visible().unwrap_or(true)) {
+        show_hint(app);
     }
 }
 

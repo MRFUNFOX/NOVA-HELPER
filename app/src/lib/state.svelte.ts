@@ -3,6 +3,7 @@ import { backend, checkAppUpdate, type AppUpdate, type CheckResult, type Db, typ
 import { buildIndex, search, type Hit, type Index } from './search';
 import type { IconName } from './components/Icon.svelte';
 import { PUBLIC } from './features';
+import { PIN_LIMIT, pinFrom, sameContent, type Pin } from './pins';
 
 export type View =
   | { kind: 'home' }
@@ -113,6 +114,13 @@ class AppState {
   appUpdateProgress = $state<number | null>(null);
 
   toast = $state<{ text: string; tone: 'ok' | 'error' } | null>(null);
+  /** Закреплённые поверх игры пункты */
+  pins = $state<Pin[]>([]);
+  editorKey = $state('Alt+Shift+Z');
+  /** Непрозрачность фона программы, 30–100. При запуске всегда 100 — сплошное окно. */
+  glass = $state(100);
+  /** Окно создано прозрачным — ползунок работает; иначе нужен перезапуск программы */
+  glassReady = $state(false);
   private toastTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Поиск — только в открытом разделе: в правилах или в законах */
@@ -161,11 +169,75 @@ class AppState {
   get devMode() { return !!this.settings?.devMode; }
   /** ИИ-помощник виден: открыт для всех или включён режим разработчика */
   get aiEnabled() { return PUBLIC.ai || this.devMode; }
+  /** Закрепление пунктов, редактор окон и прозрачный фон: открыто всем или режим разработчика */
+  get pinsEnabled() { return PUBLIC.pins || this.devMode; }
+  isPinned(nodeId: string) { return this.pins.some((p) => p.nodeId === nodeId); }
+
+  /** Булавка у пункта: закрепить поверх игры или открепить */
+  async togglePin(nodeId: string) {
+    const e = this.index.byId.get(nodeId);
+    if (!e) return;
+    const was = this.pins.find((p) => p.nodeId === nodeId);
+    if (was) {
+      await backend.pinsRemove(was.key).catch(() => {});
+      this.pins = this.pins.filter((p) => p !== was);
+      return;
+    }
+    if (this.pins.length >= PIN_LIMIT) {
+      this.notify(`Можно закрепить не больше ${PIN_LIMIT} пунктов — открепите какой-нибудь`, 'error');
+      return;
+    }
+    const next = [...this.pins, pinFrom(e, shortTitle(e.doc.title))];
+    try {
+      await backend.pinsSet(next);
+      this.pins = next;
+      this.notify(this.pins.length === 1 ? `Закреплено поверх игры. Двигать и настраивать окна — ${this.editorKey.replaceAll('+', ' + ')}` : 'Закреплено поверх игры');
+    } catch (err) { this.notify(String(err), 'error'); }
+  }
+
+  /** После обновления правил: тексты закреплённых пунктов — свежие, удалённые с форума — открепить */
+  async reconcilePins() {
+    if (!this.pins.length) return;
+    const removed: Pin[] = [];
+    const next: Pin[] = [];
+    for (const p of this.pins) {
+      const e = this.index.byId.get(p.nodeId);
+      if (!e || e.doc.id !== p.docId) { removed.push(p); continue; }
+      const fresh = pinFrom(e, shortTitle(e.doc.title));
+      next.push(sameContent(fresh, p) ? p : { ...p, ...fresh });
+    }
+    const changed = removed.length || next.some((p, i) => p !== this.pins.filter((x) => !removed.includes(x))[i]);
+    if (!changed) return;
+    await backend.pinsSet(next).catch(() => {});
+    this.pins = next;
+    if (removed.length) {
+      const names = removed.map((p) => `${p.badge} (${p.doc})`).join(', ');
+      this.notify(removed.length === 1 ? `Пункт ${names} удалён с форума — окно откреплено` : `Пункты удалены с форума и откреплены: ${names}`);
+      try {
+        const key = 'nova.unpinned';
+        const list = JSON.parse(localStorage.getItem(key) ?? '[]') as { badge: string; doc: string; date: string }[];
+        const date = new Date().toISOString();
+        localStorage.setItem(key, JSON.stringify([...removed.map((p) => ({ badge: p.badge, doc: p.doc, date })), ...list].slice(0, 20)));
+      } catch { /* не страшно */ }
+    }
+  }
+
+  async loadPins() {
+    try {
+      const s = await backend.pinsGet();
+      this.editorKey = s.editorKey;
+      this.pins = s.enabled ? s.pins : [];
+      if (s.enabled) await this.reconcilePins();
+    } catch { this.pins = []; }
+  }
 
   async setDevMode(on: boolean) {
     if (!this.settings) return;
     this.settings = await backend.saveSettings({ ...this.settings, devMode: on });
-    if (!on) this.aiOpen = false;
+    if (!on) { this.aiOpen = false; this.glass = 100; }
+    // Закреплённые окна появляются или прячутся вместе с режимом разработчика
+    await backend.pinsSync().catch(() => {});
+    await this.loadPins();
   }
 
   doc(id: string) { return this.db.docs.find((d) => d.id === id); }
@@ -184,7 +256,11 @@ class AppState {
     if (this.ready && this.view.kind === 'home') this.open(this.mainDocId());
     backend.on('overlay-shown', () => focusSearch());
     backend.on('check-updates', () => this.analyze(true));
-    backend.on('settings-changed', (s) => { this.settings = s as Settings; });
+    backend.on('settings-changed', (s) => { this.settings = s as Settings; if (this.settings?.editorHotkey) this.editorKey = this.settings.editorHotkey; });
+    // Слой окон сообщает об откреплении крестиком
+    backend.on('pins-changed', (p) => { if (this.pinsEnabled) this.pins = p as Pin[]; });
+    void this.loadPins();
+    backend.windowGlass().then((g) => (this.glassReady = g)).catch(() => {});
     // Мастер первого запуска сам скачает базу; иначе — тихая проверка при старте
     if (settings.firstRunDone) {
       this.analyze(false);
@@ -262,6 +338,7 @@ class AppState {
       if (!this.check) this.check = await backend.checkDb();
       const db = await backend.updateDb();
       this.setDb(db);
+      void this.reconcilePins();
       this.updateDialog = false;
       this.check = { ...this.check, status: 'upToDate' };
       if (this.view.kind === 'home' || (this.view.kind === 'doc' && !this.doc(this.view.docId))) {

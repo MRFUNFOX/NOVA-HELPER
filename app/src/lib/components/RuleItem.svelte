@@ -18,6 +18,7 @@
   import { backend } from '../backend';
   import { isStructural, matches, stats } from '../punish';
   import { fold } from '../motion';
+  import { pinnable } from '../pins';
   import Lazy from './Lazy.svelte';
   import { contains, estimate } from '../tree';
 
@@ -55,6 +56,8 @@
   let showOld = $state(false);
   let copied = $state(false);
   let hover = $state(false);
+  const canPin = $derived(app.pinsEnabled && pinnable(node));
+  const pinned = $derived(canPin && app.isPinned(node.id));
 
   function isRecent(a: Amendment) {
     return !!a.effectiveAt && Date.now() - new Date(a.effectiveAt).getTime() < 14 * 864e5;
@@ -206,10 +209,17 @@
           </div>
         {/if}
       </div>
-      <!-- Кнопка появляется только под мышью: тысячи невидимых кнопок замедляют прокрутку -->
+      <!-- Кнопки появляются только под мышью: тысячи невидимых кнопок замедляют прокрутку -->
       {#if hover || copied}
-        <button class="copy" onclick={copy} title="Скопировать пункт с наказанием — например, для жалобы" aria-label="Скопировать пункт">
+        <button class="copy" class:shifted={canPin} onclick={copy} title="Скопировать пункт с наказанием — например, для жалобы" aria-label="Скопировать пункт">
           <Icon name={copied ? 'check' : 'copy'} size={15} />
+        </button>
+      {/if}
+      <!-- Закрепить поверх игры (пока только в режиме разработчика). Закреплённый пункт отмечен всегда. -->
+      {#if canPin && (hover || pinned)}
+        <button class="pinbtn" class:on={pinned} onclick={() => app.togglePin(node.id)}
+          title={pinned ? 'Открепить с экрана' : 'Закрепить на экране поверх игры'} aria-label={pinned ? 'Открепить с экрана' : 'Закрепить на экране'} aria-pressed={pinned}>
+          <Icon name="pin" size={15} />
         </button>
       {/if}
     </article>
@@ -413,6 +423,24 @@
   .copy { animation: copy-in 0.12s var(--ease); }
   @keyframes copy-in { from { opacity: 0; } }
   .copy:hover { background: var(--surface-2); color: var(--text); }
+
+  /* ── Закрепить на экране ── */
+  .copy.shifted { right: 34px; }
+  .pt.loose > .copy.shifted { right: 42px; }
+  .pinbtn {
+    position: absolute; top: 10px; right: 0;
+    display: grid; place-items: center;
+    width: 30px; height: 30px;
+    border: 0; border-radius: var(--radius-sm);
+    background: none; color: var(--text-muted);
+    transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    animation: copy-in 0.12s var(--ease);
+  }
+  .pt.loose > .pinbtn { top: 12px; right: 8px; }
+  .pt.sub > .pinbtn { top: 4px; }
+  .pinbtn:hover { background: var(--surface-2); color: var(--text); }
+  .pinbtn.on { background: var(--accent); color: var(--on-accent); }
+  .pinbtn.on:hover { background: var(--accent-soft); color: var(--on-accent); }
 
   @media (max-width: 479px) {
     .sec-head { padding: 12px; gap: 10px; }

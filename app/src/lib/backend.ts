@@ -5,6 +5,7 @@
  */
 import type { RuleDocument } from '@shared/types';
 import type { Changelog, Manifest } from '@shared/format';
+import type { Pin } from './pins';
 
 export type HintMode = 'always' | 'timed' | 'off';
 
@@ -19,6 +20,8 @@ export interface Settings {
   devMode?: boolean;
   /** Анонимная статистика: null — ещё не спрашивали */
   analytics?: boolean | null;
+  /** Клавиша редактора закреплённых окон */
+  editorHotkey?: string;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -43,6 +46,7 @@ export interface CheckResult {
 
 export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null; provider?: string | null; hasGroq?: boolean; hasZai?: boolean }
 export type AiProvider = 'groq' | 'zai';
+export interface PinsState { enabled: boolean; pins: Pin[]; editorKey: string; editor: boolean }
 export interface ChatMsg { role: 'system' | 'user' | 'assistant'; content: string }
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -68,11 +72,23 @@ export const backend = {
   saveSettings: (s: Settings) => invoke<Settings>('save_settings', { new: s }),
   setHotkey: (hotkey: string) => invoke<Settings>('set_hotkey', { hotkey }),
   suspendHotkey: (suspended: boolean) => invoke<void>('suspend_hotkey', { suspended }),
+  setEditorHotkey: (hotkey: string) => invoke<Settings>('set_editor_hotkey', { hotkey }),
+  suspendEditorHotkey: (suspended: boolean) => invoke<void>('suspend_editor_hotkey', { suspended }),
+
+  // ── Закреплённые пункты поверх игры ──
+  pinsGet: () => invoke<PinsState>('pins_get'),
+  pinsSet: (pins: Pin[]) => invoke<void>('pins_set', { pins }),
+  pinsLayout: (layout: Partial<Pin>[]) => invoke<void>('pins_layout', { layout }),
+  pinsRemove: (key: string) => invoke<void>('pins_remove', { key }),
+  pinsEditor: (open: boolean) => invoke<void>('pins_editor', { open }),
+  pinsSync: () => invoke<void>('pins_sync'),
   finishFirstRun: () => invoke<void>('finish_first_run'),
   hide: () => invoke<void>('hide_main'),
   minimize: () => invoke<void>('minimize_main'),
   quit: () => invoke<void>('quit_app'),
   version: () => invoke<string>('app_version'),
+  /** Окно умеет быть прозрачным (создано так при запуске в режиме разработчика) */
+  windowGlass: () => invoke<boolean>('window_glass'),
 
   // ── ИИ-помощник (ключ Groq или Z.ai хранится в программе, сюда не передаётся) ──
   aiStatus: () => invoke<AiStatus>('ai_status'),
@@ -159,7 +175,16 @@ const mockState = {
   aiKey: '',
   aiGroq: '',
   aiZai: '',
+  pins: [] as Pin[],
+  editor: false,
 };
+
+/** Пример закреплённых окон для тестовой страницы слоя (pins.html?sample) */
+const SAMPLE_PINS: Pin[] = [
+  { key: 'a#4.1', docId: 'a', nodeId: '4.1', badge: '4.1', doc: 'Общие правила проекта', law: false, text: 'Запрещено убийство игрока без весомой IC-причины (DeathMatch, DM).', punish: ['JAIL 120 мин'] },
+  { key: 'b#2.7', docId: 'b', nodeId: '2.7', badge: '2.7', doc: 'Правила зелёных зон', law: false, text: 'В зелёной зоне запрещены любые нападения, ограбления и похищения.', punish: ['JAIL 60 мин'] },
+  { key: 'c#6.2', docId: 'c', nodeId: '6.2', badge: 'ст. 6.2 ч. 1', doc: 'Уголовный кодекс', law: true, text: 'Умышленное причинение смерти другому человеку наказывается лишением свободы на срок 4 года.', punish: [], x: 1560, y: 330, bg: 30, font: 13, locked: true },
+];
 
 async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknown> {
   const params = new URLSearchParams(location.search);
@@ -194,7 +219,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       if (params.has('ready') && !params.has('consent') && mockState.settings.analytics === undefined) mockState.settings.analytics = false;
       return { ...mockState.settings };
     case 'save_settings':
-      mockState.settings = { ...(args!.new as Settings), hotkey: mockState.settings.hotkey };
+      mockState.settings = { ...(args!.new as Settings), hotkey: mockState.settings.hotkey, editorHotkey: mockState.settings.editorHotkey };
       return { ...mockState.settings };
     case 'set_hotkey':
       if (args!.hotkey === 'Alt+Tab') throw 'Сочетание «Alt+Tab» не подходит или уже занято другой программой. Выберите другое.';
@@ -244,11 +269,50 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       }
       return { text, model: 'openai/gpt-oss-120b' };
     }
+    case 'pins_get': {
+      if (params.has('sample') && !mockState.pins.length) mockState.pins = SAMPLE_PINS.map((p) => ({ ...p }));
+      if (params.has('editor')) mockState.editor = true;
+      const enabled = !!mockState.settings.devMode || params.has('sample');
+      return { enabled, pins: mockState.pins, editorKey: mockState.settings.editorHotkey ?? 'Alt+Shift+Z', editor: mockState.editor };
+    }
+    case 'pins_set': {
+      const old = mockState.pins;
+      mockState.pins = (args!.pins as Pin[]).map((p) => {
+        const o = old.find((x) => x.key === p.key);
+        return o ? { ...p, x: o.x, y: o.y, w: o.w, bg: o.bg, font: o.font, locked: o.locked } : p;
+      });
+      mockEmit('pins-changed', mockState.pins);
+      return;
+    }
+    case 'pins_layout':
+      for (const l of args!.layout as Partial<Pin>[]) {
+        const p = mockState.pins.find((x) => x.key === l.key);
+        if (p) Object.assign(p, { x: l.x, y: l.y, w: l.w, bg: l.bg, font: l.font, locked: l.locked });
+      }
+      return;
+    case 'pins_remove':
+      mockState.pins = mockState.pins.filter((p) => p.key !== args!.key);
+      mockEmit('pins-changed', mockState.pins);
+      return;
+    case 'pins_editor':
+      mockState.editor = !!args!.open;
+      mockEmit('pins-editor', mockState.editor);
+      return;
+    case 'pins_sync':
+      return;
+    case 'set_editor_hotkey':
+      if (args!.hotkey === mockState.settings.hotkey) throw 'Это сочетание уже открывает саму программу. Выберите другое.';
+      mockState.settings = { ...mockState.settings, editorHotkey: String(args!.hotkey) };
+      return { ...mockState.settings };
+    case 'suspend_editor_hotkey':
+      return;
+    case 'window_glass':
+      return !!mockState.settings.devMode;
     case 'stat':
       console.debug('[статистика]', args!.name, args!.props ?? '');
       return;
     case 'app_version':
-      return '0.5.9';
+      return '0.5.10';
     default:
       return;
   }

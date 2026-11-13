@@ -39,6 +39,15 @@
   {/if}
 
   <div class="actions">
+    {#if !wizard && app.pinsEnabled}
+      <!-- Прозрачность фона программы: текст и кнопки остаются чёткими, сквозь фон видно игру -->
+      <label class="glass" class:off={!app.glassReady} title={app.glassReady ? `Прозрачность фона: ${100 - app.glass}% — сквозь окно видно игру` : 'Перезапустите программу, чтобы включить прозрачность'}>
+        <Icon name="contrast" size={16} />
+        <input type="range" min="30" max="100" step="5" value={app.glass} disabled={!app.glassReady}
+          oninput={(e) => (app.glass = Number(e.currentTarget.value))} aria-label="Прозрачность фона программы" />
+      </label>
+      <span class="sep" aria-hidden="true"></span>
+    {/if}
     {#if !wizard && app.aiEnabled}
       <button class="ai" class:active={app.aiOpen} onclick={() => (app.aiOpen = !app.aiOpen)} title="Спросить ИИ-помощника о правилах">
         <Icon name="spark" size={17} />
@@ -95,6 +104,10 @@
   .clear:hover { background: var(--surface-2); color: var(--text); }
 
   .actions { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+  .glass { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; margin-right: 4px; border-radius: var(--radius-sm); color: var(--text-dim); }
+  .glass:hover { background: var(--surface-2); color: var(--text); }
+  .glass.off { opacity: 0.5; }
+  .glass input { width: 84px; margin: 0; accent-color: var(--accent); direction: rtl; }
   .icon-btn {
     display: grid; place-items: center;
     width: 36px; height: 34px;

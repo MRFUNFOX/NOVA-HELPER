@@ -3,6 +3,7 @@
   import { wordDiff } from '../diff';
   import type { NodeChange } from '@shared/format';
   import { APP_CHANGELOG } from '../changelog';
+  import Icon from './Icon.svelte';
 
   // Две вкладки: правки правил с форума и что нового в самой программе
   const SEEN = 'nova.seenAppVersion';
@@ -15,6 +16,14 @@
     seen = app.version;
     try { localStorage.setItem(SEEN, app.version); } catch { /* не страшно */ }
   }
+  // Закреплённые пункты, которые удалили с форума: окна убраны автоматически — показываем, какие
+  const unpinned = (() => {
+    try {
+      const list = JSON.parse(localStorage.getItem('nova.unpinned') ?? '[]') as { badge: string; doc: string; date: string }[];
+      const since = Date.now() - 14 * 86_400_000;
+      return list.filter((x) => new Date(x.date).getTime() > since);
+    } catch { return []; }
+  })();
   const isCurrent = (v: string) => v === app.version || v.split(' – ').includes(app.version);
   const appDate = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
 
@@ -60,6 +69,14 @@
     {/each}
   {:else}
   <p class="lead muted">Правки правил с форума, которые программа нашла при обновлениях. Новое подсвечено жёлтым, удалённое зачёркнуто.</p>
+  {#if app.pinsEnabled && unpinned.length}
+    <div class="unpinned">
+      <Icon name="pin" size={15} />
+      <div><b>Откреплены, потому что их удалили с форума:</b>
+        {#each unpinned as u, i (i)}{#if i}, {/if}{u.badge} ({u.doc}) — {appDate(u.date.slice(0, 10))}{/each}
+      </div>
+    </div>
+  {/if}
 
   {#if !releases.length}
     <p class="empty">Пока изменений не было. Когда администрация поправит правила, здесь появится, что именно поменялось.</p>
@@ -111,6 +128,9 @@
   .changes { max-width: 860px; padding: 22px 24px 64px; }
   h1 { margin: 0 0 6px; font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.01em; }
   .lead { margin: 0 0 20px; font-size: var(--fs-sm); }
+  .unpinned { display: flex; gap: 10px; align-items: flex-start; margin: -8px 0 18px; padding: 10px 12px; border-radius: var(--radius); background: var(--accent-tint); color: var(--accent-soft); font-size: var(--fs-sm); line-height: 1.5; }
+  .unpinned :global(svg) { flex-shrink: 0; margin-top: 3px; }
+  .unpinned b { color: var(--text); }
   .tabs { display: inline-flex; gap: 3px; padding: 3px; margin: 6px 0 14px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
   .tabs button { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 14px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-dim); font-size: var(--fs-sm); font-weight: 700; transition: background 0.15s var(--ease), color 0.15s var(--ease); }
   .tabs button:hover:not(.on) { background: var(--surface-2); color: var(--text); }

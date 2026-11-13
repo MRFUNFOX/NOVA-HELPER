@@ -4,7 +4,8 @@
   "description": "Права окон NOVA HELPER: только то, что реально нужно интерфейсу",
   "windows": [
     "main",
-    "hint"
+    "hint",
+    "pins"
   ],
   "permissions": [
     "core:default",

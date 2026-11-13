@@ -44,6 +44,8 @@ pub struct Settings {
     pub dev_mode: bool,
     /// Анонимная статистика: None — ещё не спрашивали, Some(true) — разрешил, Some(false) — отказался
     pub analytics: Option<bool>,
+    /// Клавиша редактора закреплённых окон
+    pub editor_hotkey: String,
     pub window: Option<WindowGeom>,
 }
 
@@ -57,6 +59,7 @@ impl Default for Settings {
             ai_setup_done: false,
             dev_mode: false,
             analytics: None,
+            editor_hotkey: "Alt+Shift+Z".into(),
             window: None,
         }
     }

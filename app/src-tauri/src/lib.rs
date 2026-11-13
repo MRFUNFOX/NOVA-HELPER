@@ -1,6 +1,7 @@
 mod ai;
 mod stats;
 mod overlay;
+mod pins;
 mod settings;
 mod sync;
 
@@ -34,7 +35,7 @@ fn get_settings(app: AppHandle) -> Settings {
 fn save_settings(app: AppHandle, new: Settings) -> Result<Settings, String> {
     let old = settings::load(&app);
     // Клавишу меняем через set_hotkey; здесь сохраняем остальное, не трогая геометрию окна
-    let merged = Settings { hotkey: old.hotkey.clone(), window: old.window.clone(), ..new };
+    let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), window: old.window.clone(), ..new };
     settings::save(&app, &merged)?;
     let _ = app.emit("settings-changed", merged.clone());
     Ok(merged)
@@ -101,6 +102,14 @@ fn quit_app(app: AppHandle) {
     app.exit(0);
 }
 
+/// Окно создано с прозрачным фоном (режим разработчика при запуске) — можно двигать ползунок прозрачности
+static GLASS: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[tauri::command]
+fn window_glass() -> bool {
+    GLASS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 #[tauri::command]
 fn app_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
@@ -162,11 +171,20 @@ pub fn run() {
             finish_first_run,
             quit_app,
             app_version,
+            window_glass,
             ai::ai_status,
             ai::ai_set_key,
             ai::ai_clear_key,
             ai::ai_use,
             stats::stat,
+            pins::pins_get,
+            pins::pins_set,
+            pins::pins_layout,
+            pins::pins_remove,
+            pins::pins_editor,
+            pins::pins_sync,
+            pins::set_editor_hotkey,
+            pins::suspend_editor_hotkey,
             ai::ai_complete,
             ai::ai_chat,
         ])
@@ -177,6 +195,14 @@ pub fn run() {
                 eprintln!("{e}");
             }
             build_tray(&handle)?;
+            // Главное окно создаём сами: в режиме разработчика — с прозрачным фоном (ползунок
+            // «Прозрачность фона» в настройках). У обычных игроков окно ровно такое же, как раньше.
+            if let Some(cfg) = app.config().app.windows.iter().find(|w| w.label == "main") {
+                let mut cfg = cfg.clone();
+                cfg.transparent = s.dev_mode;
+                tauri::WebviewWindowBuilder::from_config(&handle, &cfg)?.build()?;
+                GLASS.store(s.dev_mode, std::sync::atomic::Ordering::Relaxed);
+            }
             if let Some(win) = app.get_webview_window("main") {
                 overlay::restore_geometry(&handle, &win);
                 // Крестик системы (Alt+F4) тоже прячет в трей, если так настроено
@@ -190,6 +216,8 @@ pub fn run() {
                     }
                 });
             }
+            // Закреплённые пункты (только в режиме разработчика, пока функция в работе)
+            pins::sync(&handle);
             let minimized = std::env::args().any(|a| a == "--minimized");
             if minimized && s.first_run_done {
                 overlay::show_hint(&handle);

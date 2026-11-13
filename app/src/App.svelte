@@ -52,6 +52,21 @@
     return () => clearTimeout(timer);
   });
 
+  // Прозрачный фон программы (ползунок вверху): прозрачнее только подложки, текст и кнопки — как были
+  $effect(() => {
+    const a = app.pinsEnabled && app.glassReady ? app.glass / 100 : 1;
+    const root = document.documentElement.style;
+    if (a >= 1) {
+      for (const v of ['--bg', '--surface', '--surface-2', '--surface-3']) root.removeProperty(v);
+      return;
+    }
+    const f = (x: number) => Math.min(1, x).toFixed(2);
+    root.setProperty('--bg', `rgba(26, 27, 30, ${f(a)})`);
+    root.setProperty('--surface', `rgba(33, 34, 38, ${f(a + 0.08)})`);
+    root.setProperty('--surface-2', `rgba(39, 40, 45, ${f(a + 0.14)})`);
+    root.setProperty('--surface-3', `rgba(49, 50, 56, ${f(a + 0.2)})`);
+  });
+
   // При смене экрана — наверх (если не переходим к конкретному пункту)
   $effect(() => {
     const v = app.view;

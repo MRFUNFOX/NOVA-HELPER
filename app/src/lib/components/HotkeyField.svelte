@@ -3,6 +3,11 @@
   import { app } from '../state.svelte';
   import { keys, pretty, recordHotkey } from '../hotkey';
 
+  /** main — клавиша вызова программы, editor — клавиша редактора закреплённых окон */
+  let { kind = 'main' }: { kind?: 'main' | 'editor' } = $props();
+  const value = $derived(kind === 'editor' ? (app.settings?.editorHotkey ?? 'Alt+Shift+Z') : (app.settings?.hotkey ?? ''));
+  const suspend = (on: boolean) => (kind === 'editor' ? backend.suspendEditorHotkey(on) : backend.suspendHotkey(on));
+
   let recording = $state(false);
   let error = $state('');
   let saved = $state(false);
@@ -13,13 +18,13 @@
     saved = false;
     recording = true;
     // Пока записываем, текущая клавиша не должна срабатывать и прятать окно
-    await backend.suspendHotkey(true).catch(() => {});
+    await suspend(true).catch(() => {});
     box?.focus();
   }
 
   async function stop() {
     recording = false;
-    await backend.suspendHotkey(false).catch(() => {});
+    await suspend(false).catch(() => {});
   }
 
   async function onKey(e: KeyboardEvent) {
@@ -35,11 +40,12 @@
     }
     recording = false;
     try {
-      app.settings = await backend.setHotkey(r.hotkey);
+      app.settings = kind === 'editor' ? await backend.setEditorHotkey(r.hotkey) : await backend.setHotkey(r.hotkey);
+      if (kind === 'editor') app.editorKey = r.hotkey;
       saved = true;
     } catch (err) {
       error = String(err);
-      await backend.suspendHotkey(false).catch(() => {});
+      await suspend(false).catch(() => {});
     }
   }
 </script>
@@ -52,18 +58,18 @@
     onclick={() => (recording ? stop() : start())}
     onkeydown={onKey}
     onblur={() => recording && stop()}
-    aria-label={recording ? 'Нажмите новое сочетание клавиш' : `Клавиша вызова: ${pretty(app.settings?.hotkey ?? '')}. Нажмите, чтобы изменить`}
+    aria-label={recording ? 'Нажмите новое сочетание клавиш' : `${kind === 'editor' ? 'Клавиша редактора' : 'Клавиша вызова'}: ${pretty(value)}. Нажмите, чтобы изменить`}
   >
     {#if recording}
       <span class="wait">Нажмите сочетание…</span>
     {:else}
-      {#each keys(app.settings?.hotkey ?? '') as k, i (i)}{#if i}<span class="plus">+</span>{/if}<kbd>{k}</kbd>{/each}
+      {#each keys(value) as k, i (i)}{#if i}<span class="plus">+</span>{/if}<kbd>{k}</kbd>{/each}
     {/if}
   </button>
   <button class="btn" onclick={() => (recording ? stop() : start())}>{recording ? 'Отмена' : 'Изменить'}</button>
 </div>
 {#if error}<p class="msg error" role="alert">{error}</p>
-{:else if saved}<p class="msg ok">Готово. Теперь окно открывается на {pretty(app.settings?.hotkey ?? '')}.</p>
+{:else if saved}<p class="msg ok">Готово. Теперь {kind === 'editor' ? 'редактор окон' : 'окно'} открывается на {pretty(value)}.</p>
 {:else if recording}<p class="msg muted">Например, Alt + Q или F8. Esc — отмена.</p>{/if}
 
 <style>
