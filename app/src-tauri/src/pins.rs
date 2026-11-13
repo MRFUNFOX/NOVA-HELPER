@@ -162,7 +162,9 @@ fn register_editor_key(app: &AppHandle, key: &str) -> Result<(), String> {
         .on_shortcut(key, |app, _s, e| {
             if e.state == ShortcutState::Pressed {
                 let open = !EDITOR.load(Ordering::Relaxed);
-                editor(app, open);
+                // Клавиша срабатывает в главном потоке — работаем в отдельном, чтобы окна не ждали сами себя
+                let app = app.clone();
+                std::thread::spawn(move || editor(&app, open));
             }
         })
         .map_err(|_| format!("Сочетание «{key}» не подходит или уже занято другой программой. Выберите другое."))
@@ -249,7 +251,8 @@ pub fn editor(app: &AppHandle, open: bool) {
         // Слой не берёт фокус клавиатуры, поэтому Esc ловим как глобальную клавишу, пока открыт редактор
         let _ = gs.on_shortcut("Escape", |app, _s, e| {
             if e.state == ShortcutState::Pressed {
-                editor(app, false);
+                let app = app.clone();
+                std::thread::spawn(move || editor(&app, false));
             }
         });
     } else {
@@ -275,7 +278,7 @@ pub fn pins_get(app: AppHandle) -> Value {
 
 /// Главное окно сообщает список закреплённых пунктов (текст). Раскладка уже закреплённых сохраняется.
 #[tauri::command]
-pub fn pins_set(app: AppHandle, pins: Vec<Value>) -> Result<(), String> {
+pub async fn pins_set(app: AppHandle, pins: Vec<Value>) -> Result<(), String> {
     if !enabled(&app) {
         return Ok(());
     }
@@ -301,7 +304,7 @@ pub fn pins_set(app: AppHandle, pins: Vec<Value>) -> Result<(), String> {
 
 /// Слой окон сообщает новую раскладку: положение, ширину, фон, шрифт, замок
 #[tauri::command]
-pub fn pins_layout(app: AppHandle, layout: Vec<Value>) -> Result<(), String> {
+pub async fn pins_layout(app: AppHandle, layout: Vec<Value>) -> Result<(), String> {
     let mut pins = load(&app);
     for l in &layout {
         if let Some(p) = pins.iter_mut().find(|p| key_of(p) == key_of(l)) {
@@ -322,7 +325,7 @@ pub fn pins_layout(app: AppHandle, layout: Vec<Value>) -> Result<(), String> {
 
 /// Открепить пункт (крестик в редакторе)
 #[tauri::command]
-pub fn pins_remove(app: AppHandle, key: String) -> Result<(), String> {
+pub async fn pins_remove(app: AppHandle, key: String) -> Result<(), String> {
     let pins: Vec<Value> = load(&app).into_iter().filter(|p| key_of(p) != key).collect();
     store(&app, &pins)?;
     sync(&app);
@@ -330,20 +333,20 @@ pub fn pins_remove(app: AppHandle, key: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn pins_editor(app: AppHandle, open: bool) {
+pub async fn pins_editor(app: AppHandle, open: bool) {
     editor(&app, open);
 }
 
 /// Пересчитать после включения/выключения режима разработчика
 #[tauri::command]
-pub fn pins_sync(app: AppHandle) {
+pub async fn pins_sync(app: AppHandle) {
     sync(&app);
 }
 
 
 /// Сменить клавишу редактора. Старая освобождается, только если новая зарегистрировалась.
 #[tauri::command]
-pub fn set_editor_hotkey(app: AppHandle, hotkey: String) -> Result<settings::Settings, String> {
+pub async fn set_editor_hotkey(app: AppHandle, hotkey: String) -> Result<settings::Settings, String> {
     let mut s = settings::load(&app);
     if hotkey == s.hotkey {
         return Err("Это сочетание уже открывает саму программу. Выберите другое.".into());
@@ -373,7 +376,7 @@ pub fn set_editor_hotkey(app: AppHandle, hotkey: String) -> Result<settings::Set
 
 /// Временно снять клавишу редактора, пока игрок записывает новое сочетание
 #[tauri::command]
-pub fn suspend_editor_hotkey(app: AppHandle, suspended: bool) {
+pub async fn suspend_editor_hotkey(app: AppHandle, suspended: bool) {
     if suspended {
         set_editor_key(&app, false);
     } else {
