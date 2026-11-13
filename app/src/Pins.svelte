@@ -52,11 +52,23 @@
     save(fresh);
   }
 
-  /** Окно не должно уехать за экран (например, после смены разрешения) */
+  /** Место над окном под кнопки редактора (замок, крестик, 9 точек) */
+  const CTRL = 36;
+
+  /** Окно не должно уехать за экран (например, после смены разрешения). Если окно помещается —
+   *  оставляем над ним место под кнопки, чтобы их было за что взять. */
   function clamp(p: Pin) {
     const h = els[p.key]?.offsetHeight ?? 100;
+    const top = h + CTRL <= vh ? CTRL : 0;
     if (p.x !== undefined) p.x = Math.max(0, Math.min(vw - W(p), p.x));
-    if (p.y !== undefined) p.y = Math.max(0, Math.min(vh - Math.min(h, vh), p.y));
+    if (p.y !== undefined) p.y = Math.max(top, Math.min(vh - Math.min(h, vh), p.y));
+  }
+  /** Окно прижато к верху экрана (очень длинный пункт) — кнопки рисуем внутри окна */
+  const ctrlInside = (p: Pin) => (p.y ?? 0) < CTRL;
+  /** Уголок для ширины — внизу справа, а если окно выше экрана — у нижнего края экрана, чтобы до него дотянуться */
+  function rzTop(p: Pin) {
+    const h = els[p.key]?.offsetHeight ?? 100;
+    return Math.min(h - 7, vh - (p.y ?? 0) - 24);
   }
 
   function apply(list: Pin[]) {
@@ -139,13 +151,17 @@
   }
 
   const sel = $derived(pins.find((p) => p.key === selected));
-  /** Ползунки — под выбранным окном, а если внизу нет места — над ним */
+  /** Ползунки — под выбранным окном; нет места — над ним; окно на весь экран — сбоку */
   const panelPos = $derived.by(() => {
     if (!sel || sel.x === undefined || sel.y === undefined) return null;
+    const PW = 270, PH = 150, gap = 14;
     const h = els[sel.key]?.offsetHeight ?? 100;
-    const below = sel.y + h + 14;
-    const y = below + 150 < vh ? below : Math.max(8, sel.y - 150 - 40);
-    return { x: Math.min(sel.x, vw - 282), y };
+    const x = Math.max(8, Math.min(sel.x, vw - PW - 8));
+    if (sel.y + h + gap + PH < vh) return { x, y: sel.y + h + gap };
+    if (sel.y - CTRL - gap - PH > 0) return { x, y: sel.y - CTRL - gap - PH };
+    const right = sel.x + W(sel) + gap;
+    const sx = right + PW < vw ? right : Math.max(8, sel.x - gap - PW);
+    return { x: sx, y: Math.max(84, Math.min(vh - PH - 8, sel.y + 48)) }; // 84 — ниже плашки «Редактор окон»
   });
 </script>
 
@@ -179,7 +195,7 @@
       onpointerdown={() => editor && (selected = p.key)}
     >
       {#if editor}
-        <div class="ctrl">
+        <div class="ctrl" class:inside={ctrlInside(p)}>
           <button class="c lock" class:on={p.locked} onclick={() => toggleLock(p)} title={p.locked ? 'Разлочить — можно будет двигать' : 'Залочить положение и размер'} aria-label={p.locked ? 'Разлочить' : 'Залочить'}>
             <Icon name={p.locked ? 'lock' : 'unlock'} size={13} />
           </button>
@@ -188,7 +204,7 @@
             <span class="grip-ico"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
           </button>
         </div>
-        {#if !p.locked}<span class="rz" onpointerdown={(e) => resizeW(e, p)} title="Тяните, чтобы поменять ширину" aria-hidden="true"></span>{/if}
+        {#if !p.locked}<span class="rz" style:top="{rzTop(p)}px" onpointerdown={(e) => resizeW(e, p)} title="Тяните, чтобы поменять ширину" aria-hidden="true"></span>{/if}
       {/if}
       <div class="h"><span class="badge">{p.badge}</span><span class="doc">{p.doc}</span></div>
       <p class="text">{p.text}</p>
@@ -266,7 +282,8 @@
   .pun { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0.5em; }
   .pun span { padding: 2px 8px; border-radius: 5px; background: rgba(255, 90, 95, 0.3); color: #ffc2c4; font-size: 0.86em; font-weight: 800; }
 
-  .ctrl { position: absolute; top: -32px; right: -4px; display: flex; gap: 4px; }
+  .ctrl { position: absolute; top: -32px; right: -4px; display: flex; gap: 4px; z-index: 2; }
+  .ctrl.inside { top: 6px; right: 6px; padding: 3px; border-radius: 8px; background: rgba(14, 15, 19, 0.85); }
   .c { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-radius: 6px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-dim); }
   .c:hover:not(:disabled) { color: var(--text); border-color: var(--accent-line); }
   .c.lock.on { background: var(--accent-tint); border-color: var(--accent-line); color: var(--accent); }
@@ -276,7 +293,7 @@
   .grip-ico { display: inline-grid; grid-template-columns: repeat(3, 3px); gap: 2px; }
   .grip-ico i { width: 3px; height: 3px; border-radius: 50%; background: var(--on-accent); }
   .how .grip-ico { padding: 4px; border-radius: 4px; background: var(--accent); }
-  .rz { position: absolute; right: -7px; bottom: -7px; width: 14px; height: 14px; border-radius: 3px; background: var(--accent); border: 2px solid #111; cursor: ew-resize; touch-action: none; }
+  .rz { position: absolute; right: -7px; width: 14px; height: 14px; border-radius: 3px; background: var(--accent); border: 2px solid #111; cursor: ew-resize; touch-action: none; }
 
   .panel { position: absolute; width: 270px; padding: 13px 15px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); font-size: 12.5px; z-index: 4; }
   .sl { display: block; margin-bottom: 11px; }
