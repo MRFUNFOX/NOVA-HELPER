@@ -12,6 +12,11 @@ export interface AppRelease {
 
 export const APP_CHANGELOG: AppRelease[] = [
   {
+    version: '0.6.1',
+    date: '2026-11-13',
+    items: ['Подсказка с клавишами в правом нижнем углу теперь всё время видна в игре — даже когда открыта программа (окно программы ложится поверх неё).'],
+  },
+  {
     version: '0.6.0',
     date: '2026-11-13',
     items: [
