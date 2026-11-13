@@ -2352,7 +2352,7 @@ dependencies = [
 
 [[package]]
 name = "nova-helper"
-version = "0.5.12"
+version = "0.5.13"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek",
