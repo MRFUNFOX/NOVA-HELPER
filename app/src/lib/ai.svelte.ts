@@ -117,24 +117,6 @@ class Assistant {
     void this.answer(this.turns[this.turns.length - 1]!); // реактивная копия
   }
 
-  /** Вся переписка текстом — чтобы скопировать в Discord, жалобу и т. п. */
-  transcript() {
-    return this.turns.filter((t) => t.a || t.error).map((t) => {
-      const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' ? [p.n] : [])));
-      const text = pieces(t.a).map((p) => {
-        if (p.t !== 'ref') return p.v;
-        const s = t.sources.find((x) => x.n === p.n);
-        return s ? `(${sourceLabel(s).num})` : '';
-      }).join('').replace(/[ \t]+([.,;:])/g, '$1').trim();
-      const src = t.sources.filter((s) => used.has(s.n)).map((s) => { const l = sourceLabel(s); return `${l.num} — ${l.doc}`; });
-      return [
-        `Вопрос: ${t.q}`,
-        `Ответ (${t.scope ? SCOPES[t.scope].label.toLowerCase() : ''}): ${t.error ? `ошибка — ${t.error}` : text}`,
-        ...(src.length ? [`Пункты: ${src.join('; ')}`] : []),
-      ].join('\n');
-    }).join('\n\n');
-  }
-
   private async answer(t: Turn) {
     const q = t.q;
     const scope = t.scope!;

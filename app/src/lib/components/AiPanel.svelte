@@ -23,10 +23,6 @@
     'Можно ли грабить в зелёной зоне?',
   ]);
 
-  async function copyAll() {
-    try { await navigator.clipboard.writeText(ai.transcript()); app.notify('Переписка скопирована', 'ok'); }
-    catch { app.notify('Не удалось скопировать', 'error'); }
-  }
 
   // Новое сообщение и каждый кусочек ответа — прокрутка вниз
   $effect(() => {
@@ -73,9 +69,6 @@
   <header>
     <span class="title"><Icon name="spark" size={17} /> ИИ-помощник</span>
     <span class="tools">
-      {#if ai.turns.some((t) => t.a || t.error)}
-        <button class="tool" title="Копировать всю переписку" aria-label="Копировать всю переписку" onclick={copyAll} disabled={ai.busy}><Icon name="copy" size={15} /></button>
-      {/if}
       {#if ai.turns.length}
         <button class="tool" title="Начать заново" aria-label="Начать заново" onclick={() => ai.clear()} disabled={ai.busy}><Icon name="refresh" size={15} /></button>
       {/if}
@@ -102,10 +95,10 @@
       {/if}
 
       {#each ai.turns as t (t.id)}
-        <div class="q">{t.q}</div>
+        <div class="q selectable">{t.q}</div>
         <div class="a" aria-live="polite">
           {#if t.error}
-            <p class="error"><Icon name="alert" size={15} />{t.error}</p>
+            <p class="error selectable"><Icon name="alert" size={15} />{t.error}</p>
             <div class="err-actions">
               <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); ai.ask(t.q); }} disabled={ai.busy}>Спросить снова</button>
               {#if t.error.includes('Z.ai') && ai.status?.provider !== 'Z.ai'}<button class="btn sm primary" onclick={() => (ai.setupOpen = true)}>Подключить Z.ai</button>{/if}
@@ -193,6 +186,7 @@
   .setup-card p { margin: 0 0 14px; font-size: var(--fs-sm); color: var(--text-dim); }
 
   .q { align-self: flex-end; max-width: 88%; padding: 9px 12px; border-radius: 14px 14px 4px 14px; background: var(--accent); color: var(--on-accent); font-size: var(--fs-sm); font-weight: 600; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .q::selection { background: var(--on-accent); color: var(--accent); }
   .a { align-self: stretch; padding: 12px 14px; border-radius: 14px 14px 14px 4px; background: var(--surface-2); border: 1px solid var(--border); font-size: var(--fs-sm); line-height: 1.6; }
   .text { margin: 0; color: var(--text); white-space: pre-wrap; }
   .text b { color: var(--accent-soft); }
