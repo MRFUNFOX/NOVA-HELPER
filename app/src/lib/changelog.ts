@@ -12,6 +12,11 @@ export interface AppRelease {
 
 export const APP_CHANGELOG: AppRelease[] = [
   {
+    version: '0.5.10',
+    date: '2026-11-13',
+    items: ['Технические работы: исправление ошибок.'],
+  },
+  {
     version: '0.5.9',
     date: '2026-11-13',
     items: [
