@@ -91,7 +91,7 @@
   img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.25s ease; user-select: none; }
   img.on { opacity: 1; }
 
-  .step { display: flex; gap: 12px; min-height: 108px; }
+  .step { display: flex; gap: 12px; min-height: 132px; }
   .n { flex-shrink: 0; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-size: var(--fs-xs); font-weight: 800; }
   h3 { margin: 2px 0 6px; font-size: var(--fs-md, 15px); font-weight: 800; }
   p { margin: 0 0 8px; color: var(--text-dim); font-size: var(--fs-sm); line-height: 1.55; }
