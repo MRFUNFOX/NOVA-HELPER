@@ -79,11 +79,11 @@ mod win {
         }
     }
 
-    /// Слой не забирает фокус у игры и не виден в Alt+Tab
+    /// Слой не виден в Alt+Tab (фокус он не берёт — это задаёт `focusable(false)` при создании)
     pub fn no_activate(h: isize) {
         unsafe {
             let ex = GetWindowLongPtrW(hwnd(h), GWL_EXSTYLE);
-            SetWindowLongPtrW(hwnd(h), GWL_EXSTYLE, ex | (WS_EX_NOACTIVATE.0 | WS_EX_TOOLWINDOW.0) as isize);
+            SetWindowLongPtrW(hwnd(h), GWL_EXSTYLE, ex | WS_EX_TOOLWINDOW.0 as isize);
         }
     }
 
@@ -148,6 +148,7 @@ fn layer(app: &AppHandle) -> Option<WebviewWindow> {
         .resizable(false)
         .shadow(false)
         .focused(false)
+        .focusable(false)
         .visible(false)
         .build()
         .ok()?;
@@ -248,6 +249,10 @@ pub fn editor(app: &AppHandle, open: bool) {
         let _ = w.show();
         // Выше всех окон — даже выше самой программы
         win::raise(hwnd_of(&w));
+        // Забираем фокус у игры: иначе она продолжает читать мышь и камера крутится вместе с окнами
+        let _ = w.set_focusable(true);
+        let _ = w.set_focus();
+        win::activate(hwnd_of(&w));
         // Слой не берёт фокус клавиатуры, поэтому Esc ловим как глобальную клавишу, пока открыт редактор
         let _ = gs.on_shortcut("Escape", |app, _s, e| {
             if e.state == ShortcutState::Pressed {
@@ -258,6 +263,7 @@ pub fn editor(app: &AppHandle, open: bool) {
     } else {
         let _ = gs.unregister("Escape");
         let _ = w.set_ignore_cursor_events(true);
+        let _ = w.set_focusable(false);
         // Если программа открыта — возвращаем её наверх, иначе отдаём фокус игре
         match app.get_webview_window("main") {
             Some(m) if m.is_visible().unwrap_or(false) && !m.is_minimized().unwrap_or(false) => win::raise(hwnd_of(&m)),
