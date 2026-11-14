@@ -80,9 +80,15 @@
 
   $effect(() => {
     const offs: (() => void)[] = [];
-    backend.pinsGet().then((s) => { editorKey = s.editorKey; editor = s.editor; apply(s.pins); }).catch(() => {});
+    backend.pinsGet().then((s) => { editorKey = s.editorKey; editor = s.editor; apply(s.pins); if (editor) sessionStart(); }).catch(() => {});
     backend.on('pins-changed', (p) => apply(p as Pin[])).then((u) => offs.push(u));
-    backend.on('pins-editor', (open) => { editor = !!open; if (!editor) selected = null; }).then((u) => offs.push(u));
+    backend.on('pins-editor', (open) => {
+      const was = editor;
+      editor = !!open;
+      if (!editor) selected = null;
+      if (editor && !was) sessionStart();
+      else if (!editor && was) sessionEnd();
+    }).then((u) => offs.push(u));
     backend.on('settings-changed', (s) => { const k = (s as { editorHotkey?: string }).editorHotkey; if (k) editorKey = k; }).then((u) => offs.push(u));
     const resize = () => { vw = window.innerWidth; vh = window.innerHeight; pins.forEach(clamp); };
     window.addEventListener('resize', resize);
@@ -153,6 +159,32 @@
     pins = pins.filter((x) => x !== p);
     if (selected === p.key) selected = null;
     void backend.pinsRemove(p.key).catch(() => {});
+    stat('pin_remove', { how: 'editor', left: pins.length });
+  }
+
+  // ── Анонимная статистика редактора (уходит, только если игрок её разрешил — проверяет программа) ──
+  const stat = (name: string, props: Record<string, string | number>) => void backend.stat(name, props).catch(() => {});
+  let session: { t: number; via: string; before: Map<string, Pin> } | null = null;
+  function sessionStart() {
+    session = { t: Date.now(), via: 'hotkey', before: new Map() };
+    // Снимок раскладки — после того как новые окна получили место на экране
+    setTimeout(() => { if (session) session.before = new Map(pins.map((p) => [p.key, { ...p }])); }, 300);
+    backend.pinsGet().then((s) => { if (session) session.via = s.editorVia ?? 'hotkey'; }).catch(() => {});
+  }
+  function sessionEnd() {
+    if (!session) return;
+    const { t, via, before } = session;
+    session = null;
+    let moved = 0, resized = 0, styled = 0, locked = 0;
+    for (const p of pins) {
+      const b = before.get(p.key);
+      if (p.locked) locked++;
+      if (!b) continue;
+      if (b.x !== undefined && (b.x !== p.x || b.y !== p.y)) moved++;
+      if (b.w !== p.w) resized++;
+      if (b.bg !== p.bg || b.font !== p.font) styled++;
+    }
+    stat('editor', { via, seconds: Math.round((Date.now() - t) / 1000), pins: pins.length, moved, resized, styled, locked });
   }
 
   const sel = $derived(pins.find((p) => p.key === selected));

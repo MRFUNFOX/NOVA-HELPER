@@ -26,6 +26,8 @@ static EDITOR: AtomicBool = AtomicBool::new(false);
 static KEY_ON: std::sync::Mutex<String> = std::sync::Mutex::new(String::new());
 /// Окно, активное до открытия редактора (обычно игра), — вернём ему фокус
 static PREVIOUS: AtomicIsize = AtomicIsize::new(0);
+/// Чем открыли редактор в последний раз: клавишами или кнопкой в программе (для статистики)
+static VIA_BUTTON: AtomicBool = AtomicBool::new(false);
 
 pub fn enabled(app: &AppHandle) -> bool {
     PUBLIC || settings::load(app).dev_mode
@@ -168,6 +170,9 @@ fn register_editor_key(app: &AppHandle, key: &str) -> Result<(), String> {
         .on_shortcut(key, |app, _s, e| {
             if e.state == ShortcutState::Pressed {
                 let open = !EDITOR.load(Ordering::Relaxed);
+                if open {
+                    VIA_BUTTON.store(false, Ordering::Relaxed);
+                }
                 // Клавиша срабатывает в главном потоке — работаем в отдельном, чтобы окна не ждали сами себя
                 let app = app.clone();
                 std::thread::spawn(move || editor(&app, open));
@@ -282,7 +287,8 @@ pub fn editor(app: &AppHandle, open: bool) {
 
 #[tauri::command]
 pub fn pins_get(app: AppHandle) -> Value {
-    json!({ "enabled": enabled(&app), "pins": load(&app), "editorKey": settings::load(&app).editor_hotkey, "editor": EDITOR.load(Ordering::Relaxed) })
+    json!({ "enabled": enabled(&app), "pins": load(&app), "editorKey": settings::load(&app).editor_hotkey, "editor": EDITOR.load(Ordering::Relaxed),
+        "editorVia": if VIA_BUTTON.load(Ordering::Relaxed) { "button" } else { "hotkey" } })
 }
 
 /// Главное окно сообщает список закреплённых пунктов (текст). Раскладка уже закреплённых сохраняется.
@@ -343,6 +349,9 @@ pub async fn pins_remove(app: AppHandle, key: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn pins_editor(app: AppHandle, open: bool) {
+    if open {
+        VIA_BUTTON.store(true, Ordering::Relaxed);
+    }
     editor(&app, open);
 }
 

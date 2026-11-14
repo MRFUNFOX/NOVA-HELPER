@@ -46,7 +46,7 @@ export interface CheckResult {
 
 export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null; provider?: string | null; hasGroq?: boolean; hasZai?: boolean }
 export type AiProvider = 'groq' | 'zai';
-export interface PinsState { enabled: boolean; pins: Pin[]; editorKey: string; editor: boolean }
+export interface PinsState { enabled: boolean; pins: Pin[]; editorKey: string; editor: boolean; editorVia?: 'hotkey' | 'button' }
 export interface ChatMsg { role: 'system' | 'user' | 'assistant'; content: string }
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;

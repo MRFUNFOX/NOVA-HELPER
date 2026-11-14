@@ -178,6 +178,11 @@ class AppState {
   isPinned(nodeId: string) { return this.pins.some((p) => p.nodeId === nodeId); }
 
   /** Булавка у пункта: закрепить поверх игры или открепить */
+  /** Анонимная статистика — только с разрешения игрока (как track в stats.ts) */
+  private stat(name: string, props: Record<string, string | number>) {
+    if (this.settings?.analytics === true) void backend.stat(name, props).catch(() => {});
+  }
+
   async togglePin(nodeId: string) {
     const e = this.index.byId.get(nodeId);
     if (!e) return;
@@ -185,9 +190,11 @@ class AppState {
     if (was) {
       await backend.pinsRemove(was.key).catch(() => {});
       this.pins = this.pins.filter((p) => p !== was);
+      this.stat('pin_remove', { how: 'app', left: this.pins.length });
       return;
     }
     if (this.pins.length >= PIN_LIMIT) {
+      this.stat('pin_limit', { count: this.pins.length });
       this.notify(`Можно закрепить не больше ${PIN_LIMIT} пунктов — открепите какой-нибудь`, 'error');
       return;
     }
@@ -195,6 +202,8 @@ class AppState {
     try {
       await backend.pinsSet(next);
       this.pins = next;
+      const added = next[next.length - 1]!;
+      this.stat('pin_add', { section: added.law ? 'laws' : 'rules', item: `${added.doc} ${added.badge}`.slice(0, 80), count: next.length });
       this.notify(this.pins.length === 1 ? `Закреплено поверх игры. Двигать и настраивать окна — ${this.editorKey.replaceAll('+', ' + ')}` : 'Закреплено поверх игры');
     } catch (err) { this.notify(String(err), 'error'); }
   }
@@ -215,6 +224,7 @@ class AppState {
     await backend.pinsSet(next).catch(() => {});
     this.pins = next;
     if (removed.length) {
+      this.stat('pin_remove', { how: 'forum', removed: removed.length, left: next.length });
       const names = removed.map((p) => `${p.badge} (${p.doc})`).join(', ');
       this.notify(removed.length === 1 ? `Пункт ${names} удалён с форума — окно откреплено` : `Пункты удалены с форума и откреплены: ${names}`);
       try {

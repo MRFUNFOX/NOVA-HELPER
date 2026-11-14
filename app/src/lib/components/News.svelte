@@ -10,7 +10,7 @@
   import imgGame from '../../assets/guide/2-game.webp';
   import imgEditor from '../../assets/guide/3-editor.webp';
 
-  let { onDone }: { onDone: () => void } = $props();
+  let { onDone }: { onDone: (result: 'done' | 'skip' | 'esc', step: number) => void } = $props();
 
   const steps = [
     { img: imgPin, alt: 'Булавка справа у пункта правил', title: 'Закрепите пункт' },
@@ -23,7 +23,7 @@
   function onKey(e: KeyboardEvent) {
     if (e.key === 'ArrowRight' && !last) i++;
     else if (e.key === 'ArrowLeft' && i > 0) i--;
-    else if (e.key === 'Escape') { e.stopPropagation(); onDone(); }
+    else if (e.key === 'Escape') { e.stopPropagation(); onDone('esc', i + 1); }
   }
 </script>
 
@@ -32,7 +32,7 @@
 <div class="news">
   <div class="head">
     <span class="tag"><Icon name="pin" size={13} />Новое в 0.6.0</span>
-    <button class="skip" onclick={onDone}>Пропустить</button>
+    <button class="skip" onclick={() => onDone('skip', i + 1)}>Пропустить</button>
   </div>
   <h2>Пункты поверх игры</h2>
 
@@ -71,7 +71,7 @@
     <div class="btns">
       {#if i > 0}<button class="btn ghost" onclick={() => i--}>Назад</button>{/if}
       {#if last}
-        <button class="btn primary" onclick={onDone}>Понятно</button>
+        <button class="btn primary" onclick={() => onDone('done', i + 1)}>Понятно</button>
       {:else}
         <button class="btn primary" onclick={() => i++}>Далее</button>
       {/if}

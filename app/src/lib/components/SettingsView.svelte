@@ -101,7 +101,7 @@
     {/if}
     <label class="toggle">
       <input type="checkbox" checked={app.settings?.analytics === true} onchange={(e) => app.setAnalytics(e.currentTarget.checked)} />
-      <span><b>Анонимная статистика</b><span class="hint">Скорость ответов помощника, сбои и поиски без результата — чтобы улучшать программу. Ники, ключи и тексты вопросов не отправляются.</span></span>
+      <span><b>Анонимная статистика</b><span class="hint">Скорость ответов помощника, сбои, поиски без результата и как пользуются окнами поверх игры — чтобы улучшать программу. Ники, ключи и тексты вопросов не отправляются.</span></span>
     </label>
   </section>
 

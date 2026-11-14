@@ -31,7 +31,7 @@
       .then(async () => {
         started = true;
         trackErrors();
-        track('app_start', { section: app.section, laws: app.hasLaws ? 1 : 0 });
+        track('app_start', startProps());
         await ai.init();
         // Программа стояла до появления помощника: один раз предлагаем его настроить
         if (app.aiEnabled && app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;
@@ -43,11 +43,17 @@
   // Вопрос о статистике — один раз, после первого запуска и после окна настройки помощника
   const consentOpen = $derived(started && !!app.settings?.firstRunDone && app.settings.analytics == null && !ai.setupOpen && !app.updateDialog);
 
+  const startProps = () => ({
+    section: app.section, laws: app.hasLaws ? 1 : 0,
+    pins: app.pins.length, editor_key: app.editorKey === 'Alt+Shift+Z' ? 'default' : 'custom', hint: app.settings?.hint ?? '',
+  });
+
   // Новость «Пункты поверх игры» с гайдом — всем один раз, после остальных окон
   const NEWS = 'pins-0.6.0';
   let newsSeen = $state((() => { try { return localStorage.getItem('nova.news') === NEWS; } catch { return false; } })());
   const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen));
-  function closeNews() {
+  function closeNews(result: string, step: number) {
+    track('guide', { from: app.guideOpen ? 'settings' : 'auto', result, step });
     newsSeen = true;
     app.guideOpen = false;
     try { localStorage.setItem('nova.news', NEWS); } catch { /* не страшно — покажем ещё раз */ }
@@ -176,7 +182,7 @@
   {#if consentOpen}
     <div class="backdrop" transition:fade={{ duration: ms(160) }}>
       <div class="dialog" role="dialog" aria-modal="true" aria-label="Анонимная статистика" transition:scale={{ start: 0.96, duration: ms(220) }}>
-        <Consent onDone={(ok) => { if (ok) track('app_start', { section: app.section, laws: app.hasLaws ? 1 : 0 }); }} />
+        <Consent onDone={(ok) => { if (ok) track('app_start', startProps()); }} />
       </div>
     </div>
   {/if}

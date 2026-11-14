@@ -3,11 +3,15 @@
   import Icon from './Icon.svelte';
   import { app, focusSearch } from '../state.svelte';
   import { backend } from '../backend';
+  import { track } from '../stats';
 
   let { onSearchKey, wizard = false }: { onSearchKey?: (e: KeyboardEvent) => void; wizard?: boolean } = $props();
   let maximized = $state(false);
   /** Узкое окно: ползунок прозрачности прячется в выпадашку под кнопкой */
   let glassOpen = $state(false);
+  // Статистика: какой прозрачностью пользуются (не больше 3 раз за запуск)
+  let glassSent = 0;
+  const glassStat = () => { if (glassSent++ < 3) track('glass', { value: app.glass }); };
   // Подсказка в поле поиска короче, когда панель узкая — иначе от неё видно «Поиск по г…»
   let barWidth = $state(1000);
   const placeholder = $derived(
@@ -59,12 +63,12 @@
       <div class="glass" class:off={!app.glassReady} bind:this={glassBox} title={app.glassReady ? `Прозрачность фона: ${100 - app.glass}% — сквозь окно видно игру` : 'Перезапустите программу, чтобы включить прозрачность'}>
         <button class="glass-btn" onclick={() => (glassOpen = !glassOpen)} aria-label="Прозрачность фона программы" aria-expanded={glassOpen}><Icon name="contrast" size={16} /></button>
         <input class="glass-inline" type="range" min="30" max="100" step="5" value={app.glass} disabled={!app.glassReady}
-          oninput={(e) => (app.glass = Number(e.currentTarget.value))} aria-label="Прозрачность фона программы" />
+          oninput={(e) => (app.glass = Number(e.currentTarget.value))} onchange={glassStat} aria-label="Прозрачность фона программы" />
         {#if glassOpen}
           <div class="glass-pop">
             <span class="glass-cap">Прозрачность фона <b>{100 - app.glass}%</b></span>
             <input type="range" min="30" max="100" step="5" value={app.glass} disabled={!app.glassReady}
-              oninput={(e) => (app.glass = Number(e.currentTarget.value))} aria-label="Прозрачность фона программы" />
+              oninput={(e) => (app.glass = Number(e.currentTarget.value))} onchange={glassStat} aria-label="Прозрачность фона программы" />
             {#if !app.glassReady}<span class="glass-cap">Перезапустите программу, чтобы включить</span>{/if}
           </div>
         {/if}

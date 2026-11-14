@@ -2,6 +2,7 @@
   import { backend } from '../backend';
   import { app } from '../state.svelte';
   import { keys, pretty, recordHotkey } from '../hotkey';
+  import { track } from '../stats';
 
   /** main — клавиша вызова программы, editor — клавиша редактора закреплённых окон */
   let { kind = 'main' }: { kind?: 'main' | 'editor' } = $props();
@@ -41,6 +42,7 @@
     recording = false;
     try {
       app.settings = kind === 'editor' ? await backend.setEditorHotkey(r.hotkey) : await backend.setHotkey(r.hotkey);
+      track(kind === 'editor' ? 'editor_key' : 'main_key', { key: r.hotkey });
       if (kind === 'editor') app.editorKey = r.hotkey;
       saved = true;
     } catch (err) {
