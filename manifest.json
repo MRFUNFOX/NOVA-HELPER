@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.14-1804",
- "generatedAt": "2026-11-14T18:04:47.279Z",
+ "dbVersion": "2026.11.14-2226",
+ "generatedAt": "2026-11-14T22:26:35.375Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -327,21 +327,6 @@
    "stats": {
     "nodes": 12,
     "punishments": 7,
-    "images": 0
-   }
-  },
-  {
-   "id": "project/412995",
-   "title": "test",
-   "scope": "project",
-   "category": "Общие правила мероприятий",
-   "sourceUrl": "https://forum.nova-rp.com/threads/412995/",
-   "sha256": "528e86f08fd7ec9fdf895c2d0ff9369dd2b4416c55d754224e25ac14b4b8d57f",
-   "size": 666,
-   "path": "docs/project_412995.ef501afeec4e.json",
-   "stats": {
-    "nodes": 1,
-    "punishments": 0,
     "images": 0
    }
   },
@@ -1096,5 +1081,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.14-1804.json"
+ "changelog": "changelog/2026.11.14-2226.json"
 }
