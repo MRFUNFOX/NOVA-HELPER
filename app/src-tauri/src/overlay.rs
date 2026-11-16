@@ -152,13 +152,13 @@ pub fn show_hint(app: &AppHandle) {
     // Есть закреплённые окна — во второй строке подсказка, как открыть их редактор
     let editor = crate::pins::active_editor_key(app);
     let lh = if editor.is_some() { 82.0 } else { 44.0 };
-    if let Ok(Some(mon)) = hint.primary_monitor() {
+    if let Some(mon) = crate::pins::game_monitor(&hint) {
         let scale = mon.scale_factor();
-        let area = mon.work_area();
         let w = (300.0 * scale) as i32;
         let h = (lh * scale) as i32;
-        let x = area.position.x + area.size.width as i32 - w - (16.0 * scale) as i32;
-        let y = area.position.y + area.size.height as i32 - h - (16.0 * scale) as i32;
+        let (right, bottom) = hint_offset(&mon, s.hint_pos);
+        let x = mon.position().x + mon.size().width as i32 - w - (right * scale) as i32;
+        let y = mon.position().y + mon.size().height as i32 - h - (bottom * scale) as i32;
         let _ = hint.set_size(Size::Logical(LogicalSize::new(300.0, lh)));
         let _ = hint.set_position(Position::Physical(PhysicalPosition::new(x, y)));
     }
@@ -189,6 +189,29 @@ pub fn show_hint_if_hidden(app: &AppHandle) {
     if crate::game::aware(app) || main_window(app).is_some_and(|m| !m.is_visible().unwrap_or(true)) {
         show_hint(app);
     }
+}
+
+/// Отступ подсказки от правого нижнего угла монитора (логические пиксели).
+/// Не двигали — 16 пикселей от края рабочей области (над панелью задач), как раньше.
+pub fn hint_offset(mon: &tauri::Monitor, pos: Option<settings::HintPos>) -> (f64, f64) {
+    if let Some(p) = pos {
+        return (p.right.max(0.0), p.bottom.max(0.0));
+    }
+    let scale = mon.scale_factor();
+    let area = mon.work_area();
+    let right = (mon.position().x + mon.size().width as i32) - (area.position.x + area.size.width as i32);
+    let bottom = (mon.position().y + mon.size().height as i32) - (area.position.y + area.size.height as i32);
+    (right.max(0) as f64 / scale + 16.0, bottom.max(0) as f64 / scale + 16.0)
+}
+
+/// Редактор окон: подсказку перетащили (None — вернуть на место по умолчанию)
+#[tauri::command]
+pub async fn hint_move(app: AppHandle, pos: Option<settings::HintPos>) -> Result<(), String> {
+    let mut s = settings::load(&app);
+    s.hint_pos = pos.map(|p| settings::HintPos { right: p.right.max(0.0).round(), bottom: p.bottom.max(0.0).round() });
+    settings::save(&app, &s)?;
+    let _ = app.emit("settings-changed", s);
+    Ok(())
 }
 
 pub fn hide_hint(app: &AppHandle) {

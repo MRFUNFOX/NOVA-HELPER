@@ -46,7 +46,10 @@ export interface CheckResult {
 
 export interface AiStatus { hasKey: boolean; keyHint: string; model: string | null; provider?: string | null; hasGroq?: boolean; hasZai?: boolean }
 export type AiProvider = 'groq' | 'zai';
-export interface PinsState { enabled: boolean; pins: Pin[]; editorKey: string; editor: boolean; editorVia?: 'hotkey' | 'button' }
+/** Подсказка в углу экрана: отступ от правого нижнего угла монитора (логические пиксели) */
+export interface HintSpot { right: number; bottom: number }
+export interface HintInfo extends HintSpot { show: boolean; moved: boolean; hotkey: string }
+export interface PinsState { enabled: boolean; pins: Pin[]; editorKey: string; editor: boolean; editorVia?: 'hotkey' | 'button'; hint?: HintInfo | null }
 export interface ChatMsg { role: 'system' | 'user' | 'assistant'; content: string }
 
 const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -82,6 +85,8 @@ export const backend = {
   pinsRemove: (key: string) => invoke<void>('pins_remove', { key }),
   pinsEditor: (open: boolean) => invoke<void>('pins_editor', { open }),
   pinsSync: () => invoke<void>('pins_sync'),
+  /** Редактор окон: подсказку в углу перетащили (null — вернуть на место) */
+  hintMove: (pos: HintSpot | null) => invoke<void>('hint_move', { pos }),
   /** В игре ли игрок и не в полноэкранном ли режиме игра */
   gameState: () => invoke<{ inGame: boolean; fullscreen: boolean }>('game_state'),
   finishFirstRun: () => invoke<void>('finish_first_run'),
@@ -179,6 +184,7 @@ const mockState = {
   aiZai: '',
   pins: [] as Pin[],
   editor: false,
+  hint: null as HintSpot | null,
 };
 
 /** Пример закреплённых окон для тестовой страницы слоя (pins.html?sample) */
@@ -287,7 +293,12 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       if (params.has('sample') && !mockState.pins.length) mockState.pins = SAMPLE_PINS.map((p) => ({ ...p }));
       if (params.has('editor')) mockState.editor = true;
       const enabled = !!mockState.settings.devMode || params.has('sample');
-      return { enabled, pins: mockState.pins, editorKey: mockState.settings.editorHotkey ?? 'Alt+Shift+Z', editor: mockState.editor };
+      return { enabled, pins: mockState.pins, editorKey: mockState.settings.editorHotkey ?? 'Alt+Shift+Z', editor: mockState.editor,
+        hint: { show: true, right: mockState.hint?.right ?? 16, bottom: mockState.hint?.bottom ?? 56, moved: !!mockState.hint, hotkey: mockState.settings.hotkey } };
+    }
+    case 'hint_move': {
+      mockState.hint = (args!.pos as HintSpot | null) ?? null;
+      return;
     }
     case 'pins_set': {
       const old = mockState.pins;

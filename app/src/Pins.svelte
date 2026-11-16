@@ -4,7 +4,7 @@
    * Обычно мышь проходит сквозь него в игру. В режиме редактора окна можно таскать мышкой за любое место,
    * менять ширину за уголок (высота — всегда по тексту), фон, шрифт, залочить и открепить.
    */
-  import { backend } from './lib/backend';
+  import { backend, type HintInfo } from './lib/backend';
   import { keys } from './lib/hotkey';
   import { BUYER_W, PIN_BG_DEFAULT, PIN_FONT, PIN_W, type Pin } from './lib/pins';
   import { fmtPrice, minutesLeft, timeLabel } from './lib/prices';
@@ -14,6 +14,9 @@
   let editor = $state(false);
   let editorKey = $state('Alt+Shift+Z');
   let selected = $state<string | null>(null);
+  /** Подсказка в углу экрана: в редакторе её копию можно передвинуть */
+  let hint = $state<HintInfo | null>(null);
+  let hintDrag = $state(false);
   let vw = $state(window.innerWidth);
   let vh = $state(window.innerHeight);
   const els: Record<string, HTMLElement> = $state({});
@@ -91,12 +94,13 @@
 
   $effect(() => {
     const offs: (() => void)[] = [];
-    backend.pinsGet().then((s) => { editorKey = s.editorKey; editor = s.editor; apply(s.pins); if (editor) sessionStart(); }).catch(() => {});
+    backend.pinsGet().then((s) => { editorKey = s.editorKey; editor = s.editor; hint = s.hint ?? null; apply(s.pins); if (editor) sessionStart(); }).catch(() => {});
     backend.on('pins-changed', (p) => apply(p as Pin[])).then((u) => offs.push(u));
     backend.on('pins-editor', (open) => {
       const was = editor;
       editor = !!open;
       if (!editor) selected = null;
+      if (editor) backend.pinsGet().then((s) => { if (!hintDrag) hint = s.hint ?? null; }).catch(() => {});
       if (editor && !was) sessionStart();
       else if (!editor && was) sessionEnd();
     }).then((u) => offs.push(u));
@@ -153,6 +157,34 @@
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+  }
+
+  // ── Подсказку в углу тоже можно перетащить ──
+  function dragHint(e: PointerEvent) {
+    if (!editor || !hint || e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
+    e.preventDefault();
+    selected = null;
+    hintDrag = true;
+    const h = hint;
+    const sx = e.clientX, sy = e.clientY, sr = h.right, sb = h.bottom;
+    const move = (ev: PointerEvent) => {
+      h.right = Math.max(0, Math.min(vw - 120, sr - (ev.clientX - sx)));
+      h.bottom = Math.max(0, Math.min(vh - 40, sb - (ev.clientY - sy)));
+    };
+    const up = () => {
+      hintDrag = false;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      h.moved = true;
+      void backend.hintMove({ right: Math.round(h.right), bottom: Math.round(h.bottom) }).catch(() => {});
+      stat('hint_move', {});
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+  async function resetHint() {
+    await backend.hintMove(null).catch(() => {});
+    hint = (await backend.pinsGet().catch(() => null))?.hint ?? hint;
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -220,7 +252,7 @@
     <div class="dim" aria-hidden="true"></div>
     <div class="topbar" role="toolbar" aria-label="Редактор окон">
       <b>Редактор окон</b>
-      <span class="how">Двигайте окно мышкой, ширину — за уголок <span class="rz-ico"></span></span>
+      <span class="how">Двигайте окна и подсказку мышкой, ширину — за уголок <span class="rz-ico"></span></span>
       <span class="k">Esc</span>
       <button class="done" onclick={() => backend.pinsEditor(false)}>Готово</button>
     </div>
@@ -288,6 +320,19 @@
       {/if}
     </div>
   {/each}
+
+  {#if editor && hint?.show}
+    <div class="hint-ghost" class:moving={hintDrag} style:right="{hint.right}px" style:bottom="{hint.bottom}px" onpointerdown={dragHint}
+      title="Подсказка с клавишами — тяните, чтобы переставить">
+      {#if hint.moved}
+        <div class="ctrl hint-ctrl"><button class="c" onclick={resetHint} title="Вернуть в угол" aria-label="Вернуть подсказку в угол">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a6 6 0 1 0 2-4.5" /><path d="M3.8 3.5v3h3" /></svg>
+        </button></div>
+      {/if}
+      <div class="h-pill"><span class="h-mark alt" aria-hidden="true">{#each Array(9) as _, i (i)}<i></i>{/each}</span><span class="h-keys">{#each keys(editorKey) as k, i (i)}{#if i}<span class="plus">+</span>{/if}<kbd>{k}</kbd>{/each}</span><span class="h-label">окна поверх игры</span></div>
+      <div class="h-pill"><span class="h-mark" aria-hidden="true">§</span><span class="h-keys">{#each keys(hint.hotkey) as k, i (i)}{#if i}<span class="plus">+</span>{/if}<kbd>{k}</kbd>{/each}</span><span class="h-label">правила NOVA</span></div>
+    </div>
+  {/if}
 
   {#if editor && sel && panelPos}
     <div class="panel" style:left="{panelPos.x}px" style:top="{panelPos.y}px">
@@ -402,4 +447,16 @@
   .tab { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); width: 104px; height: 20px; margin-top: -1px; pointer-events: none; }
   .tab svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .tab span { position: relative; display: block; text-align: center; font-size: 11px; line-height: 17px; font-weight: 800; color: #6fdc9a; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7); white-space: nowrap; }
+  /* ── Копия подсказки в углу (только в редакторе) ── */
+  .hint-ghost { position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; cursor: grab; user-select: none; touch-action: none; outline: 1.5px dashed rgba(255, 255, 255, 0.4); outline-offset: 5px; border-radius: 20px; }
+  .hint-ghost:hover { outline-color: rgba(255, 255, 255, 0.75); }
+  .hint-ghost.moving { cursor: grabbing; outline: 2px solid var(--accent); }
+  .hint-ctrl { top: -36px; right: -6px; }
+  .h-pill { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px 0 6px; border-radius: 999px; background: rgba(26, 27, 30, 0.9); border: 1px solid rgba(255, 195, 0, 0.35); color: var(--text); font-size: var(--fs-xs); font-weight: 700; white-space: nowrap; }
+  .h-mark { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 800; }
+  .h-mark.alt { grid-template-columns: repeat(3, 3px); gap: 2px; align-content: center; justify-content: center; }
+  .h-mark.alt i { width: 3px; height: 3px; border-radius: 50%; background: var(--on-accent); }
+  .h-keys { display: inline-flex; align-items: center; gap: 3px; }
+  .h-keys kbd { padding: 0 6px; min-width: 22px; font-size: 11px; background: rgba(255, 255, 255, 0.08); }
+  .h-label { color: var(--text-dim); font-weight: 600; }
 </style>

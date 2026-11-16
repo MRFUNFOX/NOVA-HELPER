@@ -28,6 +28,14 @@ impl Default for WindowGeom {
     }
 }
 
+/// Где стоит подсказка в углу: отступ её правого нижнего угла от правого нижнего угла монитора
+/// (логические пиксели, как в редакторе окон). Нет — стоит на месте по умолчанию.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
+pub struct HintPos {
+    pub right: f64,
+    pub bottom: f64,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
@@ -47,6 +55,8 @@ pub struct Settings {
     /// Клавиша редактора закреплённых окон
     pub editor_hotkey: String,
     pub window: Option<WindowGeom>,
+    /// Подсказку в углу передвинули в редакторе окон
+    pub hint_pos: Option<HintPos>,
 }
 
 impl Default for Settings {
@@ -61,6 +71,7 @@ impl Default for Settings {
             analytics: None,
             editor_hotkey: "Alt+Shift+Z".into(),
             window: None,
+            hint_pos: None,
         }
     }
 }

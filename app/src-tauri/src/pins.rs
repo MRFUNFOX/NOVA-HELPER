@@ -124,8 +124,8 @@ fn hwnd_of(w: &WebviewWindow) -> isize {
 
 /// Растянуть слой на весь основной монитор. На 1 пиксель ниже экрана — иначе Windows
 /// посчитает его «полноэкранным приложением» и спрячет панель задач и уведомления.
-fn cover(w: &WebviewWindow) {
-    // Монитор, на котором игра; не знаем — основной
+/// Монитор, на котором игра; не знаем — основной. На нём же слой окон и подсказка в углу.
+pub fn game_monitor(w: &WebviewWindow) -> Option<tauri::Monitor> {
     let on_game = crate::game::rect().and_then(|(x, y, gw, gh)| {
         let (cx, cy) = (x + gw / 2, y + gh / 2);
         w.available_monitors().ok()?.into_iter().find(|m| {
@@ -134,7 +134,11 @@ fn cover(w: &WebviewWindow) {
             cx >= p.x && cx < p.x + s.width as i32 && cy >= p.y && cy < p.y + s.height as i32
         })
     });
-    if let Some(m) = on_game.or_else(|| w.primary_monitor().ok().flatten()) {
+    on_game.or_else(|| w.primary_monitor().ok().flatten())
+}
+
+fn cover(w: &WebviewWindow) {
+    if let Some(m) = game_monitor(w) {
         let p = m.position();
         let s = m.size();
         let _ = w.set_position(Position::Physical(PhysicalPosition::new(p.x, p.y)));
@@ -253,6 +257,8 @@ pub fn editor(app: &AppHandle, open: bool) {
             PREVIOUS.store(fg, Ordering::Relaxed);
         }
         cover(&w);
+        // Настоящую подсказку прячем: в редакторе слой рисует её копию, которую можно двигать
+        crate::overlay::hide_hint(app);
         let _ = w.set_ignore_cursor_events(false);
         let _ = w.show();
         // Выше всех окон — даже выше самой программы
@@ -287,8 +293,18 @@ pub fn editor(app: &AppHandle, open: bool) {
 
 #[tauri::command]
 pub fn pins_get(app: AppHandle) -> Value {
-    json!({ "enabled": enabled(&app), "pins": load(&app), "editorKey": settings::load(&app).editor_hotkey, "editor": EDITOR.load(Ordering::Relaxed),
-        "editorVia": if VIA_BUTTON.load(Ordering::Relaxed) { "button" } else { "hotkey" } })
+    let s = settings::load(&app);
+    // Подсказка в углу — чтобы редактор показал её копию на том же месте
+    let hint = layer_or_main(&app).and_then(|w| game_monitor(&w)).map(|m| {
+        let (right, bottom) = crate::overlay::hint_offset(&m, s.hint_pos);
+        json!({ "show": s.hint != settings::HintMode::Off && s.first_run_done, "right": right, "bottom": bottom, "moved": s.hint_pos.is_some(), "hotkey": s.hotkey })
+    });
+    json!({ "enabled": enabled(&app), "pins": load(&app), "editorKey": s.editor_hotkey, "editor": EDITOR.load(Ordering::Relaxed),
+        "editorVia": if VIA_BUTTON.load(Ordering::Relaxed) { "button" } else { "hotkey" }, "hint": hint })
+}
+
+fn layer_or_main(app: &AppHandle) -> Option<WebviewWindow> {
+    app.get_webview_window(LABEL).or_else(|| app.get_webview_window("main"))
 }
 
 /// Главное окно сообщает список закреплённых пунктов (текст). Раскладка уже закреплённых сохраняется.

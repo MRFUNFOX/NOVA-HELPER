@@ -36,7 +36,7 @@ fn get_settings(app: AppHandle) -> Settings {
 fn save_settings(app: AppHandle, new: Settings) -> Result<Settings, String> {
     let old = settings::load(&app);
     // Клавишу меняем через set_hotkey; здесь сохраняем остальное, не трогая геометрию окна
-    let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), window: old.window.clone(), ..new };
+    let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), window: old.window.clone(), hint_pos: old.hint_pos, ..new };
     settings::save(&app, &merged)?;
     let _ = app.emit("settings-changed", merged.clone());
     Ok(merged)
@@ -187,6 +187,7 @@ pub fn run() {
             game::game_state,
             pins::set_editor_hotkey,
             pins::suspend_editor_hotkey,
+            overlay::hint_move,
             ai::ai_complete,
             ai::ai_chat,
         ])
