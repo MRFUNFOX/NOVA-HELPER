@@ -6,7 +6,8 @@
    */
   import { backend } from './lib/backend';
   import { keys } from './lib/hotkey';
-  import { PIN_BG_DEFAULT, PIN_FONT, PIN_W, type Pin } from './lib/pins';
+  import { BUYER_W, PIN_BG_DEFAULT, PIN_FONT, PIN_W, type Pin } from './lib/pins';
+  import { fmtPrice, minutesLeft, timeLabel } from './lib/prices';
   import Icon from './lib/components/Icon.svelte';
 
   let pins = $state<Pin[]>([]);
@@ -19,7 +20,17 @@
   /** Пока тянем окно, свежие списки от программы не перетирают положение */
   let dragging = false;
 
-  const W = (p: Pin) => Math.min(PIN_W.max, Math.max(PIN_W.min, p.w ?? PIN_W.default));
+  const W = (p: Pin) => {
+    // Окно продуктов узкое — по содержимому, пока игрок сам не поменял ширину
+    if (p.kind === 'buyer' && p.w === undefined) return p.buyer?.group === 'products' ? 0 : BUYER_W;
+    return Math.min(PIN_W.max, Math.max(p.kind === 'buyer' ? BUYER_MIN : PIN_W.min, p.w ?? PIN_W.default));
+  };
+  /** Окна скупщика можно сделать уже, чем пункты правил */
+  const BUYER_MIN = 130;
+  /** Для «следующие цены через N мин» в окнах скупщика */
+  let now = $state(Date.now());
+  $effect(() => { const t = setInterval(() => (now = Date.now()), 20e3); return () => clearInterval(t); });
+  const left = (p: Pin) => (p.buyer ? minutesLeft(p.buyer.time, now) : 0);
   const BG = (p: Pin) => p.bg ?? PIN_BG_DEFAULT;
   const FONT = (p: Pin) => p.font ?? PIN_FONT.default;
 
@@ -60,7 +71,7 @@
   function clamp(p: Pin) {
     const h = els[p.key]?.offsetHeight ?? 100;
     const top = h + CTRL <= vh ? CTRL : 0;
-    if (p.x !== undefined) p.x = Math.max(0, Math.min(vw - W(p), p.x));
+    if (p.x !== undefined) p.x = Math.max(0, Math.min(vw - (W(p) || (els[p.key]?.offsetWidth ?? BUYER_W)), p.x));
     if (p.y !== undefined) p.y = Math.max(top, Math.min(vh - Math.min(h, vh), p.y));
   }
   /** Окно прижато к верху экрана (очень длинный пункт) — кнопки рисуем внутри окна */
@@ -129,9 +140,9 @@
     selected = p.key;
     dragging = true;
     const sx = e.clientX;
-    const sw = W(p);
+    const sw = W(p) || (els[p.key]?.offsetWidth ?? BUYER_W);
     const move = (ev: PointerEvent) => {
-      p.w = Math.round(Math.min(PIN_W.max, Math.max(PIN_W.min, sw + ev.clientX - sx, 0), vw - (p.x ?? 0)));
+      p.w = Math.round(Math.min(PIN_W.max, Math.max(p.kind === 'buyer' ? BUYER_MIN : PIN_W.min, sw + ev.clientX - sx, 0), vw - (p.x ?? 0)));
     };
     const up = () => {
       dragging = false;
@@ -196,12 +207,13 @@
     const x = Math.max(8, Math.min(sel.x, vw - PW - 8));
     if (sel.y + h + gap + PH < vh) return { x, y: sel.y + h + gap };
     if (sel.y - CTRL - gap - PH > 0) return { x, y: sel.y - CTRL - gap - PH };
-    const right = sel.x + W(sel) + gap;
+    const right = sel.x + (W(sel) || (els[sel.key]?.offsetWidth ?? BUYER_W)) + gap;
     const sx = right + PW < vw ? right : Math.max(8, sel.x - gap - PW);
     return { x: sx, y: Math.max(84, Math.min(vh - PH - 8, sel.y + 48)) }; // 84 — ниже плашки «Редактор окон»
   });
 </script>
 
+<svg width="0" height="0" style="position: absolute" aria-hidden="true"><defs><linearGradient id="pin-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe68a" /><stop offset="0.55" stop-color="#ffc300" /><stop offset="1" stop-color="#d99a00" /></linearGradient></defs></svg>
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="layer" class:editor onpointerdown={(e) => { if (e.target === e.currentTarget) selected = null; }}>
   {#if editor}
@@ -220,13 +232,14 @@
   {#each pins as p (p.key)}
     <div
       class="pin"
+      class:buyer={p.kind === 'buyer'}
       class:ed={editor}
       class:sel={editor && selected === p.key}
       class:locked={editor && p.locked}
       class:moving={moving === p.key}
       style:left="{p.x ?? -9999}px"
       style:top="{p.y ?? -9999}px"
-      style:width="{W(p)}px"
+      style:width={W(p) ? `${W(p)}px` : 'max-content'}
       style:--bg="rgba(14, 15, 19, {BG(p) / 100})"
       style:--font="{FONT(p)}px"
       bind:this={els[p.key]}
@@ -241,10 +254,37 @@
         </div>
         {#if !p.locked}<span class="rz" style:top="{rzTop(p)}px" onpointerdown={(e) => resizeW(e, p)} title="Тяните, чтобы поменять ширину" aria-hidden="true"></span>{/if}
       {/if}
-      <div class="h"><span class="badge">{p.badge}</span><span class="doc">{p.doc}</span></div>
-      <p class="text">{p.text}</p>
-      {#if p.punish.length}
-        <div class="pun">{#each p.punish as x (x)}<span>{x}</span>{/each}</div>
+      {#if p.kind === 'buyer' && p.buyer}
+        {@const b = p.buyer}
+        <div class="h buy">
+          <span class="badge">{b.item}</span>
+          <span class="doc">{#if b.group === 'raw'}{timeLabel(b.time)} · {/if}{left(p) > 0 ? `↻ ${left(p)} мин` : '↻ скоро'}</span>
+        </div>
+        <div class="cells" class:one={b.group === 'products'}>
+          {#each b.cells as c (c.n)}
+            <div class="cell" class:best={c.best && !c.goal && !c.rare} class:rare={c.rare && !c.goal} class:goal={c.goal}>
+              {#if c.rare}
+                <svg class="seal" aria-hidden="true" viewBox="0 0 24 24"><path d="M0 0H24V24Z" fill="url(#pin-gold)" /><path d="M0.4 0.4 23.6 23.6" stroke="rgba(255,250,220,0.85)" stroke-width="0.9" /><g transform="translate(12.6 2.6) scale(0.6)"><path d="M1.5 10.5h13M2 9 1 2.5l4 3L8 1l3 4.5 4-3L14 9z" fill="#2a1e00" stroke="#2a1e00" stroke-width="1.4" stroke-linejoin="round" /></g></svg>
+              {/if}
+              {#if c.n}<span class="n">№{c.n}</span>{/if}
+              <span class="price">{fmtPrice(c.start)}</span>
+              {#if c.min !== null}<span class="min">мин {fmtPrice(c.min)}</span>{/if}
+              {#if c.delta !== null && c.delta !== 0}<span class="d" class:up={c.delta > 0}>{c.delta > 0 ? '▲' : '▼'}{Math.abs(c.delta)}%</span>{/if}
+            </div>
+          {/each}
+        </div>
+        {#if b.goal !== null && b.cells.some((c) => c.goal)}
+          <div class="tab" aria-label="Цель достигнута">
+            <svg aria-hidden="true" viewBox="0 0 104 20" preserveAspectRatio="none"><path d="M0 0C12 0 14 20 26 20H78C90 20 92 0 104 0Z" fill="var(--bg)" /></svg>
+            <span>цель {fmtPrice(b.goal)}</span>
+          </div>
+        {/if}
+      {:else}
+        <div class="h"><span class="badge">{p.badge}</span><span class="doc">{p.doc}</span></div>
+        <p class="text">{p.text}</p>
+        {#if p.punish.length}
+          <div class="pun">{#each p.punish as x (x)}<span>{x}</span>{/each}</div>
+        {/if}
       {/if}
     </div>
   {/each}
@@ -336,4 +376,30 @@
   .l span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
   .lim { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 11px; margin-top: 2px; }
   input[type='range'] { width: 100%; accent-color: var(--accent); margin: 0; }
+  /* ── Окно скупщика ── */
+  .pin.buyer { padding: 9px 11px 10px; }
+  .h.buy { justify-content: space-between; margin-bottom: 0.3em; }
+  .h.buy .doc { flex-shrink: 0; }
+  .cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7); }
+  .cells.one { display: flex; }
+  .cell { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 3px 2px 4px; border-radius: 6px; font-variant-numeric: tabular-nums; }
+  .cells.one .cell { flex: 1; flex-direction: row; justify-content: center; align-items: baseline; gap: 6px; padding: 2px 8px 3px; }
+  .n { font-size: 0.72em; font-weight: 800; color: rgba(255, 255, 255, 0.55); letter-spacing: 0.04em; }
+  .price { font-weight: 800; line-height: 1.25; }
+  .min { font-size: 0.72em; font-weight: 600; color: rgba(255, 255, 255, 0.55); }
+  .d { font-size: 0.7em; font-weight: 800; color: #ff8a8a; }
+  .d.up { color: #6fdc9a; }
+  .cell.best { background: rgba(255, 195, 0, 0.18); }
+  .cell.best .n, .cell.best .price { color: var(--accent-soft); }
+  .cell.best .min { color: rgba(255, 212, 83, 0.72); }
+  .cell.rare { background: linear-gradient(180deg, rgba(255, 195, 0, 0.24) 0%, rgba(255, 195, 0, 0.1) 100%); box-shadow: inset 0 0 0 1px rgba(255, 195, 0, 0.85), inset 0 1px 0 rgba(255, 236, 160, 0.5); }
+  .cell.rare .n, .cell.rare .price { color: var(--accent-soft); }
+  .cell.rare .min { color: rgba(255, 212, 83, 0.72); }
+  .cell.goal { background: rgba(111, 220, 154, 0.28); box-shadow: inset 0 0 0 1px rgba(111, 220, 154, 0.7); }
+  .cell.goal .n, .cell.goal .price { color: #a9f0c6; }
+  .cell.goal .min { color: rgba(169, 240, 198, 0.75); }
+  .seal { position: absolute; top: 0; right: 0; width: 1.6em; height: 1.6em; }
+  .tab { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); width: 104px; height: 20px; margin-top: -1px; pointer-events: none; }
+  .tab svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .tab span { position: relative; display: block; text-align: center; font-size: 11px; line-height: 17px; font-weight: 800; color: #6fdc9a; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7); white-space: nowrap; }
 </style>

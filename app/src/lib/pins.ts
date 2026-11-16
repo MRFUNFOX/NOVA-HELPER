@@ -4,6 +4,7 @@
  */
 import type { RuleNode } from '@shared/types';
 import type { Entry } from './search';
+import type { BuyerPinData } from './prices';
 import { nodeBadge } from './search';
 
 export interface Pin {
@@ -19,6 +20,9 @@ export interface Pin {
   /** Текст пункта; подпункты — отдельными строками */
   text: string;
   punish: string[];
+  /** Окно скупщика (цены товара) — вместо пункта правил */
+  kind?: 'buyer';
+  buyer?: BuyerPinData;
   // ── раскладка ──
   x?: number;
   y?: number;
@@ -32,6 +36,10 @@ export interface Pin {
 }
 
 export const PIN_LIMIT = 8;
+/** Окон скупщика — отдельно от пунктов правил */
+export const BUYER_LIMIT = 8;
+/** Ширина окна скупщика по умолчанию (продукты — по содержимому) */
+export const BUYER_W = 230;
 export const PIN_W = { min: 220, max: 640, default: 330 };
 export const PIN_FONT = { min: 11, max: 20, default: 14 };
 export const PIN_BG_DEFAULT = 55;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { fly, fade } from 'svelte/transition';
   import TitleBar from './lib/components/TitleBar.svelte';
   import Sidebar from './lib/components/Sidebar.svelte';
@@ -8,6 +9,8 @@
   import Changes from './lib/components/Changes.svelte';
   import CategoryView from './lib/components/CategoryView.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
+  import BuyersView from './lib/components/BuyersView.svelte';
+  import { prices } from './lib/prices.svelte';
   import Wizard from './lib/components/Wizard.svelte';
   import UpdateDialog from './lib/components/UpdateDialog.svelte';
   import AiPanel from './lib/components/AiPanel.svelte';
@@ -38,6 +41,13 @@
         else if (ai.ready) app.markAiSetupDone();
       })
       .catch((e) => { started = true; app.loaded = true; app.notify(String(e), 'error'); });
+  });
+
+  // Цены скупщиков: включены — качаем раз в час; выключили режим разработчика — убираем их окна с экрана
+  $effect(() => {
+    if (!started || !app.settings) return;
+    if (app.buyersEnabled) untrack(() => prices.start());
+    else if (app.pins.some((p) => p.kind === 'buyer')) void prices.stop();
   });
 
   // Вопрос о статистике — один раз, после первого запуска и после окна настройки помощника
@@ -144,6 +154,8 @@
                   <SearchResults bind:this={results} />
                 {:else if app.view.kind === 'settings'}
                   <SettingsView />
+                {:else if app.view.kind === 'buyers' && app.buyersEnabled}
+                  <BuyersView />
                 {:else if app.view.kind === 'changes'}
                   <Changes />
                 {:else if app.view.kind === 'category'}

@@ -186,6 +186,18 @@ const SAMPLE_PINS: Pin[] = [
   { key: 'a#4.1', docId: 'a', nodeId: '4.1', badge: '4.1', doc: 'Общие правила проекта', law: false, text: 'Запрещено убийство игрока без весомой IC-причины (DeathMatch, DM).', punish: ['JAIL 120 мин'] },
   { key: 'b#2.7', docId: 'b', nodeId: '2.7', badge: '2.7', doc: 'Правила зелёных зон', law: false, text: 'В зелёной зоне запрещены любые нападения, ограбления и похищения.', punish: ['JAIL 60 мин'] },
   { key: 'c#6.2', docId: 'c', nodeId: '6.2', badge: 'ст. 6.2 ч. 1', doc: 'Уголовный кодекс', law: true, text: 'Умышленное причинение смерти другому человеку наказывается лишением свободы на срок 4 года.', punish: [], x: 1560, y: 330, bg: 30, font: 13, locked: true },
+  // Окна скупщика: обычная цена, редкая, сработавшая цель, продукты
+  ...([
+    ['Бензин', [[91, 109, -34, 0, 0], [170, 204, 8, 1, 0], [170, 204, 11, 0, 0]], null, 420, 330],
+    ['Солярка', [[96, 115, 47, 0, 0], [193, 231, 22, 0, 1], [79, 94, -24, 0, 0]], null, 420, 470],
+    ['Лосось', [[3725, 4470, 80, 1, 0], [2123, 2547, -35, 0, 0], [3590, 4308, 116, 0, 0]], 4400, 680, 330],
+  ] as const).map(([item, cells, goal, x, y]) => ({
+    key: `buyer:${item}`, docId: '', nodeId: '', badge: item, doc: 'Скупщики', law: false, text: '', punish: [], kind: 'buyer' as const, x, y,
+    buyer: { item, group: 'raw' as const, time: new Date(Date.now() - 23 * 60e3).toISOString().slice(0, 11) + '22:05:00+03:00', goal,
+      cells: cells.map(([min, start, delta, best, rare], i) => ({ n: i + 1, start, min, delta, best: !!best, rare: !!rare, goal: goal !== null && start >= goal })) },
+  })),
+  { key: 'buyer:Тыква', docId: '', nodeId: '', badge: 'Тыква', doc: 'Скупщики', law: false, text: '', punish: [], kind: 'buyer', x: 680, y: 490,
+    buyer: { item: 'Тыква', group: 'products', time: new Date().toISOString().slice(0, 11) + '22:05:00+03:00', goal: null, cells: [{ n: 0, start: 764, min: null, delta: 14, best: false, rare: false, goal: false }] } },
 ];
 
 async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknown> {

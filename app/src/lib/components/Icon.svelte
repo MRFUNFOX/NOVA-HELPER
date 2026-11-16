@@ -2,7 +2,7 @@
   export type IconName =
     | 'search' | 'close' | 'minus' | 'square' | 'squares' | 'settings' | 'spark' | 'menu' | 'book' | 'history'
     | 'refresh' | 'external' | 'copy' | 'check' | 'chevron' | 'alert' | 'keyboard' | 'download' | 'window' | 'shield'
-    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast';
+    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast' | 'scale';
 </script>
 
 <script lang="ts">
@@ -27,6 +27,7 @@
   {:else if name === 'pin'}<path d="M12.6 2.9l4.5 4.5-2 .7-3 3 .3 3.5-1.3 1.3-3-3-4 4" /><path d="M5.1 8.4l1.3-1.3 3.5.3 3-3 .7-2" /><path d="M5.1 8.4l6.5 6.5" />
   {:else if name === 'lock'}<rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" />
   {:else if name === 'unlock'}<rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 5.8-1" />
+  {:else if name === 'scale'}<path d="M10 3v14M6.5 17h7" /><path d="M4 6h12" /><path d="M4 6l-2.2 5a2.4 2.4 0 0 0 4.4 0L4 6ZM16 6l-2.2 5a2.4 2.4 0 0 0 4.4 0L16 6Z" />
   {:else if name === 'contrast'}<circle cx="10" cy="10" r="6.5" /><path d="M10 3.5v13a6.5 6.5 0 0 0 0-13Z" fill="currentColor" stroke="none" />
   {:else if name === 'check'}<path d="m4.5 10.5 3.5 3.5 7.5-8" />
   {:else if name === 'chevron'}<path d="m8 5 5 5-5 5" />

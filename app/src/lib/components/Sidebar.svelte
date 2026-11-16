@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
   import { app, docCategory, formatDate, type Section } from '../state.svelte';
+  import { prices } from '../prices.svelte';
 
   const currentDoc = $derived(app.view.kind === 'doc' ? app.view.docId : '');
   /** Подсвеченный раздел меню: открытый раздел или раздел открытого документа */
@@ -30,7 +31,7 @@
     return () => ro.disconnect();
   });
 
-  function go(view: 'changes' | 'settings') {
+  function go(view: 'changes' | 'settings' | 'buyers') {
     app.view = { kind: view };
     app.sidebarOpen = false;
   }
@@ -86,6 +87,17 @@
         {#if app.recentChanges}<span class="badge">{app.recentChanges}</span>{/if}
       {/if}
     </button>
+
+    {#if app.buyersEnabled}
+      {#if !rail}<p class="caption gap">Инструменты</p>{:else}<div class="divider"></div>{/if}
+      <button class="item" class:active={app.view.kind === 'buyers'} onclick={() => go('buyers')} title={rail ? 'Скупщики' : undefined}>
+        <span class="ico"><Icon name="scale" size={19} />{#if rail && prices.pinned.size}<span class="dot-badge yellow"></span>{/if}</span>
+        {#if !rail}
+          <span class="label">Скупщики</span>
+          {#if prices.pinned.size}<span class="badge yellow" title="Окон с ценами на экране">{prices.pinned.size}</span>{/if}
+        {/if}
+      </button>
+    {/if}
   </div>
 
   <footer>
@@ -187,6 +199,8 @@
   .count { font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .item.active .count { color: var(--accent); }
   .badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--danger-line); color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; }
+  .badge.yellow { background: var(--accent-tint); color: var(--accent); }
+  .dot-badge.yellow { background: var(--accent); }
   .dot-badge { position: absolute; top: -2px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger-line); border: 2px solid var(--bg); }
 
   .sk-row { display: flex; align-items: center; gap: 11px; height: 42px; padding: 0 10px; }

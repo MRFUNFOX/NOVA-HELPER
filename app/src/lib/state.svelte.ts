@@ -11,6 +11,7 @@ export type View =
   /** Раздел меню: карточки его документов */
   | { kind: 'category'; section: Section; category: string }
   | { kind: 'changes' }
+  | { kind: 'buyers' }
   | { kind: 'settings' };
 
 /** Короткие подписи разделов в левом меню (полное название — в заголовке документа) */
@@ -175,7 +176,11 @@ class AppState {
   get aiEnabled() { return PUBLIC.ai || this.devMode; }
   /** Закрепление пунктов, редактор окон и прозрачный фон: открыто всем или режим разработчика */
   get pinsEnabled() { return PUBLIC.pins || this.devMode; }
-  isPinned(nodeId: string) { return this.pins.some((p) => p.nodeId === nodeId); }
+  /** Цены скупщиков: открыто всем или режим разработчика (нужны и окна поверх игры) */
+  get buyersEnabled() { return this.pinsEnabled && (PUBLIC.buyers || this.devMode); }
+  isPinned(nodeId: string) { return this.pins.some((p) => p.kind !== 'buyer' && p.nodeId === nodeId); }
+  /** Закреплённые пункты правил (без окон скупщика) */
+  get rulePins() { return this.pins.filter((p) => p.kind !== 'buyer'); }
 
   /** Булавка у пункта: закрепить поверх игры или открепить */
   /** Анонимная статистика — только с разрешения игрока (как track в stats.ts) */
@@ -193,8 +198,8 @@ class AppState {
       this.stat('pin_remove', { how: 'app', left: this.pins.length });
       return;
     }
-    if (this.pins.length >= PIN_LIMIT) {
-      this.stat('pin_limit', { count: this.pins.length });
+    if (this.rulePins.length >= PIN_LIMIT) {
+      this.stat('pin_limit', { count: this.rulePins.length });
       this.notify(`Можно закрепить не больше ${PIN_LIMIT} пунктов — открепите какой-нибудь`, 'error');
       return;
     }
@@ -210,10 +215,12 @@ class AppState {
 
   /** После обновления правил: тексты закреплённых пунктов — свежие, удалённые с форума — открепить */
   async reconcilePins() {
-    if (!this.pins.length) return;
+    if (!this.rulePins.length) return;
     const removed: Pin[] = [];
     const next: Pin[] = [];
     for (const p of this.pins) {
+      // Окна скупщика сверяет и обновляет prices.svelte.ts
+      if (p.kind === 'buyer') { next.push(p); continue; }
       const e = this.index.byId.get(p.nodeId);
       if (!e || e.doc.id !== p.docId) { removed.push(p); continue; }
       const fresh = pinFrom(e, shortTitle(e.doc.title));
@@ -286,7 +293,7 @@ class AppState {
     if (import.meta.env.DEV) {
       const p = new URLSearchParams(location.search);
       if (p.get('q')) this.query = p.get('q')!;
-      if (p.get('view') === 'changes' || p.get('view') === 'settings') this.view = { kind: p.get('view') as 'changes' };
+      if (p.get('view') === 'changes' || p.get('view') === 'settings' || p.get('view') === 'buyers') this.view = { kind: p.get('view') as 'changes' };
       if (p.get('doc')) { const d = this.db.docs.find((x) => x.title.includes(p.get('doc')!)); if (d) this.open(d.id, this.index.entries.find((e) => e.doc.id === d.id && e.node.number === p.get('focus'))?.node.id); }
       if (p.has('laws')) this.setSection('laws');
       if (p.has('ai')) this.aiOpen = true;

@@ -1,0 +1,18 @@
+name = "nova-prices"
+main = "src/worker.js"
+compatibility_date = "2026-11-01"
+
+# Проверка канала каждую минуту
+[triggers]
+crons = ["* * * * *"]
+
+[vars]
+CHANNEL_ID = "1567858939599654974"
+GITHUB_REPO = "MRFUNFOX/nova-prices"
+
+# Хранилище «последнее обработанное сообщение». id подставляется после создания KV.
+[[kv_namespaces]]
+binding = "STATE"
+id = "PUT_KV_ID_HERE"
+
+# Секреты (не в этом файле!): DISCORD_TOKEN, GITHUB_TOKEN — задаются в панели Cloudflare
