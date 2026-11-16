@@ -10,9 +10,9 @@
     const d = app.db.docs.find((x) => x.id === currentDoc);
     return d && docCategory(d);
   });
-  const sections: { id: Section; label: string; icon: 'book' | 'gavel' }[] = [
-    { id: 'project', label: 'Правила', icon: 'book' },
-    { id: 'laws', label: 'Законы', icon: 'gavel' },
+  const sections: { id: Section; label: string; icon: 'scroll' | 'scale' }[] = [
+    { id: 'project', label: 'Правила', icon: 'scroll' },
+    { id: 'laws', label: 'Законы', icon: 'scale' },
   ];
   const rail = $derived(app.sidebarCollapsed && !app.sidebarOpen);
 
@@ -91,7 +91,7 @@
     {#if app.buyersEnabled}
       {#if !rail}<p class="caption gap">Инструменты</p>{:else}<div class="divider"></div>{/if}
       <button class="item" class:active={app.view.kind === 'buyers'} onclick={() => go('buyers')} title={rail ? 'Скупщики' : undefined}>
-        <span class="ico"><Icon name="scale" size={19} />{#if rail && prices.pinned.size}<span class="dot-badge yellow"></span>{/if}</span>
+        <span class="ico"><Icon name="chartline" size={19} />{#if rail && prices.pinned.size}<span class="dot-badge yellow"></span>{/if}</span>
         {#if !rail}
           <span class="label">Скупщики</span>
           {#if prices.pinned.size}<span class="badge yellow" title="Окон с ценами на экране">{prices.pinned.size}</span>{/if}
