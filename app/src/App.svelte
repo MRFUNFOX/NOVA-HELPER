@@ -10,6 +10,7 @@
   import CategoryView from './lib/components/CategoryView.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
   import BuyersView from './lib/components/BuyersView.svelte';
+  import NewsBuyers from './lib/components/NewsBuyers.svelte';
   import { prices } from './lib/prices.svelte';
   import Wizard from './lib/components/Wizard.svelte';
   import UpdateDialog from './lib/components/UpdateDialog.svelte';
@@ -61,7 +62,17 @@
   // Новость «Пункты поверх игры» с гайдом — всем один раз, после остальных окон
   const NEWS = 'pins-0.6.0';
   let newsSeen = $state((() => { try { return localStorage.getItem('nova.news') === NEWS; } catch { return false; } })());
-  const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen));
+  // Новость 0.7.0 «Цены скупщиков» — всем один раз; новость про закрепки ждёт, пока её закроют
+  const NEWS_BUYERS = 'buyers-0.7.0';
+  let buyersSeen = $state((() => { try { return localStorage.getItem('nova.newsBuyers') === NEWS_BUYERS; } catch { return false; } })());
+  const buyersNewsOpen = $derived(started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.buyersEnabled && !buyersSeen && !app.guideOpen);
+  function closeBuyersNews(result: 'open' | 'later' | 'esc', moved: boolean) {
+    track('news_buyers', { result, moved: moved ? 1 : 0 });
+    buyersSeen = true;
+    try { localStorage.setItem('nova.newsBuyers', NEWS_BUYERS); } catch { /* покажем ещё раз — не страшно */ }
+    if (result === 'open') { app.query = ''; app.view = { kind: 'buyers' }; app.sidebarOpen = false; }
+  }
+  const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen && !buyersNewsOpen));
   function closeNews(result: string, step: number) {
     track('guide', { from: app.guideOpen ? 'settings' : 'auto', result, step });
     newsSeen = true;
@@ -198,6 +209,13 @@
       </div>
     </div>
   {/if}
+  {#if buyersNewsOpen}
+    <div class="backdrop" transition:fade={{ duration: ms(160) }}>
+      <div class="dialog news-buyers" role="dialog" aria-modal="true" aria-label="Новое: цены скупщиков" transition:scale={{ start: 0.96, duration: ms(220) }}>
+        <NewsBuyers onDone={closeBuyersNews} />
+      </div>
+    </div>
+  {/if}
   {#if newsOpen}
     <div class="backdrop" transition:fade={{ duration: ms(160) }}>
       <div class="dialog wide" role="dialog" aria-modal="true" aria-label="Новое: пункты поверх игры" transition:scale={{ start: 0.96, duration: ms(220) }}>
@@ -231,6 +249,7 @@
   .error { color: var(--danger); font-size: var(--fs-sm); margin-top: 12px !important; }
   .backdrop { position: absolute; inset: 0; z-index: 55; display: grid; place-items: center; padding: 16px; background: rgba(10, 10, 12, 0.66); overflow-y: auto; }
   .dialog.wide { max-width: 600px; padding: 22px 24px 20px; }
+  .dialog.news-buyers { max-width: 520px; padding: 20px 22px 18px; border-radius: 18px; }
   .dialog { width: 100%; max-width: 480px; padding: 24px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border-strong); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
   .toast {
     position: absolute;
