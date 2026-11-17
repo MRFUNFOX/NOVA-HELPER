@@ -111,7 +111,28 @@ export async function run(env) {
   const { history: _omit, ...small } = file;
   await ghWrite(env, 'prices.json', small, cur.sha, `Цены скупщиков: ${latest.time}`);
   await env.STATE.put('lastId', newest);
-  return { changed: true, time: latest.time, added: snaps.length };
+  // Задержка: сколько секунд прошло от публикации в Discord до записи на GitHub
+  const lag = Math.round((Date.now() - Date.parse(messages[messages.length - 1].timestamp)) / 1000);
+  return { changed: true, time: latest.time, added: snaps.length, lag };
+}
+
+/**
+ * Дежурство: цены публикуются в :05 каждого часа. В эту минуту не ждём следующего запуска,
+ * а заглядываем в Discord каждые 5 секунд, пока цены не появятся (до :05:45).
+ * Это только чтение Discord и KV — лимит записей KV не тратится.
+ */
+export const WATCH_MINUTE = 5;
+export const WATCH_EVERY = 5000;
+export async function watch(env, startedAt, sleep = (ms) => new Promise((r) => setTimeout(r, ms))) {
+  const end = startedAt + 45_000; // к :05:45 заканчиваем, чтобы не пересечься со следующим запуском
+  let r = await run(env);
+  let polls = 1;
+  while (!r.changed && Date.now() + WATCH_EVERY < end) {
+    await sleep(WATCH_EVERY);
+    r = await run(env);
+    polls++;
+  }
+  return { ...r, polls };
 }
 
 export default {
@@ -119,9 +140,11 @@ export default {
     // Бесплатный лимит KV — 1000 записей в сутки, а запуск каждую минуту = 1440.
     // Discord проверяем каждую минуту, а отметку «жив» пишем раз в 10 минут
     // и сразу — когда пришли цены (≈200 записей в сутки).
-    const tick = new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 0;
+    const at = event.scheduledTime || Date.now();
+    const minute = new Date(at).getUTCMinutes();
+    const tick = minute % 10 === 0;
     ctx.waitUntil(
-      run(env)
+      (minute === WATCH_MINUTE ? watch(env, at) : run(env))
         .then((r) => (r.changed || r.skipped || tick
           ? env.STATE.put('lastRun', JSON.stringify({ at: new Date().toISOString(), ...r }))
           : undefined))

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { parsePrices, messageText } from '../src/parse.js';
-import { run } from '../src/worker.js';
+import { run, watch } from '../src/worker.js';
 
 const N = ['Медь','Изумруд','Рубин','Алмаз','Бензин','Солярка','Керосин','Фальшивые деньги','Окунь','Карп','Форель','Лосось','Жемчуг','Шкура','Идеальное мясо','Хорошее мясо'];
 const H22 = [[[35,42],[131,157],[616,739],[3602,4322],[130,156],[96,115],[124,148],[5876,7051],[45,54],[364,436],[452,542],[3725,4470],[1341,1609],[789,946],[728,873],[355,426]],
@@ -77,3 +77,18 @@ assert.equal(prices.history, undefined);                          // истор�
 assert.equal(JSON.parse(files['history.json']).history.length, 2);
 assert.deepEqual(prices.rareFrom, {});                            // мало истории — редкие не считаем
 console.log('сборщик: ок', 'prices.json =', files['prices.json'].length, 'байт');
+
+// 3. Дежурство: цены появляются на 3-й проверке — сборщик ловит их, не дожидаясь следующей минуты
+let calls = 0;
+const fakeSleep = async () => {
+  calls++;
+  if (calls === 2) msgs.push({ id: '103', timestamp: new Date().toISOString(), content: msg('16.11.2026 23:05', H21, { 'Капуста': 700 }) });
+};
+r = await watch(env, Date.now(), fakeSleep);
+assert.equal(r.changed, true); assert.equal(r.polls, 3); assert.ok(r.lag >= 0);
+assert.equal(JSON.parse(files['prices.json']).time, '2026-11-16T23:05:00+03:00');
+// Цен нет — дежурство само заканчивается до конца минуты
+const t0 = Date.now() - 42_000;
+r = await watch(env, t0, fakeSleep);
+assert.equal(r.changed, false); assert.ok(r.polls <= 2);
+console.log('дежурство: ок');
