@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.17-0355",
- "generatedAt": "2026-11-17T03:55:40.014Z",
+ "dbVersion": "2026.11.17-1602",
+ "generatedAt": "2026-11-17T16:02:52.696Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -336,9 +336,9 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/406242/",
-   "sha256": "c40c194e75d510d2b08829c51b4f6413f88bcd812960f222a8eca9039979b94a",
-   "size": 99396,
-   "path": "docs/project_406242.9963c4474a4b.json",
+   "sha256": "02dcee77f62ace14b07b79b35162ac173190cdb96273ba7ceec9a58a6ab77d42",
+   "size": 100755,
+   "path": "docs/project_406242.1d5816bb5c88.json",
    "stats": {
     "nodes": 116,
     "punishments": 103,
@@ -426,9 +426,9 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407999/",
-   "sha256": "caa3c3b019e6b24f5e88ba44ddb9ca3f47820736c8a01ae6b98f3ca0fadf0471",
-   "size": 46631,
-   "path": "docs/project_407999.3269e6f6e073.json",
+   "sha256": "831e25c495d35481709de4a90fe9f8800da71d79fd7c42fd85db82f92ad17c2c",
+   "size": 46115,
+   "path": "docs/project_407999.7d2eae0d5689.json",
    "stats": {
     "nodes": 83,
     "punishments": 77,
@@ -1081,5 +1081,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.17-0355.json"
+ "changelog": "changelog/2026.11.17-1602.json"
 }
