@@ -116,12 +116,20 @@ export async function run(env) {
 
 export default {
   async scheduled(_event, env, ctx) {
+    // Бесплатный лимит KV — 1000 записей в сутки, а запуск каждую минуту = 1440.
+    // Поэтому пишем в KV только когда что-то изменилось (≈50 записей в сутки).
     ctx.waitUntil(
       run(env)
-        .then((r) => env.STATE.put('lastRun', JSON.stringify({ at: new Date().toISOString(), ...r })))
+        .then((r) => (r.changed || r.skipped
+          ? env.STATE.put('lastRun', JSON.stringify({ at: new Date().toISOString(), ...r }))
+          : undefined))
         .catch(async (e) => {
           console.error('prices:', e.message);
-          await env.STATE.put('lastError', JSON.stringify({ at: new Date().toISOString(), error: String(e.message).slice(0, 400) }));
+          const error = String(e.message).slice(0, 400);
+          const prev = JSON.parse((await env.STATE.get('lastError')) || 'null');
+          // Одинаковую ошибку записываем не чаще раза в час
+          if (prev && prev.error === error && Date.now() - Date.parse(prev.at) < 36e5) return;
+          await env.STATE.put('lastError', JSON.stringify({ at: new Date().toISOString(), error }));
         }),
     );
   },
