@@ -115,12 +115,14 @@ export async function run(env) {
 }
 
 export default {
-  async scheduled(_event, env, ctx) {
+  async scheduled(event, env, ctx) {
     // Бесплатный лимит KV — 1000 записей в сутки, а запуск каждую минуту = 1440.
-    // Поэтому пишем в KV только когда что-то изменилось (≈50 записей в сутки).
+    // Discord проверяем каждую минуту, а отметку «жив» пишем раз в 10 минут
+    // и сразу — когда пришли цены (≈200 записей в сутки).
+    const tick = new Date(event.scheduledTime || Date.now()).getUTCMinutes() % 10 === 0;
     ctx.waitUntil(
       run(env)
-        .then((r) => (r.changed || r.skipped
+        .then((r) => (r.changed || r.skipped || tick
           ? env.STATE.put('lastRun', JSON.stringify({ at: new Date().toISOString(), ...r }))
           : undefined))
         .catch(async (e) => {
