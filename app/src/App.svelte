@@ -10,6 +10,8 @@
   import CategoryView from './lib/components/CategoryView.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
   import BuyersView from './lib/components/BuyersView.svelte';
+  import AdminView from './lib/components/AdminView.svelte';
+  import { learn } from './lib/learn.svelte';
   import NewsBuyers from './lib/components/NewsBuyers.svelte';
   import { prices } from './lib/prices.svelte';
   import Wizard from './lib/components/Wizard.svelte';
@@ -37,6 +39,7 @@
         trackErrors();
         track('app_start', startProps());
         await ai.init();
+        learn.init();
         // Программа стояла до появления помощника: один раз предлагаем его настроить
         if (app.aiEnabled && app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;
         else if (ai.ready) app.markAiSetupDone();
@@ -165,6 +168,8 @@
                   <SearchResults bind:this={results} />
                 {:else if app.view.kind === 'settings'}
                   <SettingsView />
+                {:else if app.view.kind === 'admin' && learn.staff}
+                  <AdminView />
                 {:else if app.view.kind === 'buyers' && app.buyersEnabled}
                   <BuyersView />
                 {:else if app.view.kind === 'changes'}

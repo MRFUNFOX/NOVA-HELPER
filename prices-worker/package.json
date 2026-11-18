@@ -1,1 +1,1 @@
-{ "name": "nova-prices-worker", "private": true, "type": "module", "scripts": { "test": "node test/run.test.mjs" } }
+{ "name": "nova-prices-worker", "private": true, "type": "module", "scripts": { "test": "node test/run.test.mjs && node test/learn.test.mjs" } }

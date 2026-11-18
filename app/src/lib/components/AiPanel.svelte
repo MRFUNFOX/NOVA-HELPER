@@ -2,7 +2,7 @@
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import { app } from '../state.svelte';
-  import { ai, pieces, sourceLabel, SCOPES, type Source, type Turn } from '../ai.svelte';
+  import { ai, answerText, pieces, sourceLabel, SCOPES, type NoteSource, type Source, type Turn } from '../ai.svelte';
   import type { Section } from '../state.svelte';
   import ModelPicker from './ModelPicker.svelte';
   import { ease, ms } from '../motion';
@@ -60,9 +60,15 @@
 
   /** Источники, на которые ответ действительно сослался (их показываем под ответом) */
   function cited(t: Turn): Source[] {
-    const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' ? [p.n] : [])));
+    const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' && p.kind === 's' ? [p.n] : [])));
     return t.sources.filter((s) => used.has(s.n));
   }
+  /** Разъяснения, на которые сослался ответ */
+  function citedNotes(t: Turn): NoteSource[] {
+    const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' && p.kind === 'n' ? [p.n] : [])));
+    return (t.notes ?? []).filter((s) => used.has(s.n));
+  }
+  const short = (text: string, max = 60) => (text.length > max ? `${text.slice(0, max).replace(/\s+\S*$/, '')}…` : text);
 </script>
 
 <aside class="ai" transition:fly={{ x: 24, duration: ms(220), easing: ease }} aria-label="ИИ-помощник">
@@ -109,23 +115,37 @@
               <p class="wait-note">Бесплатные серверы Z.ai загружены — ответ может занять до минуты. Быстрее отвечает Groq, но он не работает в России и СНГ.</p>
             {/if}
           {:else}
+            {#if t.debate}<p class="kind"><Icon name="scale" size={13} />Разбор вашего довода</p>{/if}
             <p class="text selectable">
-              {#each pieces(t.a) as p, i (i)}
+              {#each pieces(answerText(t.a)) as p, i (i)}
                 {#if p.t === 'bold'}<b>{p.v}</b>
+                {:else if p.t === 'ref' && p.kind === 'n'}
+                  {@const ns = t.notes?.find((x) => x.n === p.n)}
+                  {#if ns}<span class="ref note" title={ns.note.text}>Разъяснение</span>{/if}
                 {:else if p.t === 'ref'}
                   {@const s = t.sources.find((x) => x.n === p.n)}
                   {#if s}<button class="ref" onclick={() => open(s)} title="{sourceLabel(s).doc}, {sourceLabel(s).num}">{sourceLabel(s).num}</button>{/if}
                 {:else}{p.v}{/if}
               {/each}
             </p>
-            {#if !t.pending && cited(t).length}
+            {#if !t.pending && (cited(t).length || citedNotes(t).length)}
               <div class="sources">
+                {#each citedNotes(t) as s (`n${s.n}`)}
+                  <p class="src note" title={s.note.text}><span class="num">Разъяснение</span><span class="doc">{short(s.note.text)}</span></p>
+                {/each}
                 {#each cited(t) as s (s.n)}
                   <button class="src" onclick={() => open(s)}>
                     <span class="num">{sourceLabel(s).num}</span><span class="doc">{sourceLabel(s).doc}</span><Icon name="chevron" size={13} />
                   </button>
                 {/each}
               </div>
+            {/if}
+            {#if t.learnState === 'checking'}
+              <p class="learn wait"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Сверяю довод с законом…</p>
+            {:else if t.learnState === 'sent'}
+              <p class="learn"><Icon name="check" size={14} />{t.verdict?.agree
+                ? 'Ваше толкование отправлено на проверку. Если его примут, помощник будет так отвечать всем игрокам.'
+                : 'Ваш довод передан на проверку команде. Если помощник ошибся, его поправят.'}</p>
             {/if}
             {#if app.devMode && !t.pending}
               <!-- Только в режиме разработчика: что выбрала нейросеть и что нашёл поиск -->
@@ -192,6 +212,15 @@
   .text b { color: var(--accent-soft); }
   .ref { display: inline-flex; align-items: center; height: 20px; margin: 0 2px; padding: 0 6px; vertical-align: 1px; border: 0; border-radius: 5px; background: var(--accent-tint); color: var(--accent); font-size: 11.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
   .ref:hover { background: var(--accent); color: var(--on-accent); }
+  .ref.note { background: var(--info-tint); color: var(--info); cursor: help; }
+  .kind { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 11.5px; font-weight: 800; color: var(--text-muted); }
+  .kind :global(svg) { color: var(--accent); }
+  .src.note { margin: 0 -8px; cursor: help; }
+  .src.note:hover { background: none; color: var(--text-dim); }
+  .src.note .num { background: var(--info-tint); color: var(--info); }
+  .learn { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--success-tint); color: var(--success); font-size: var(--fs-xs); line-height: 1.45; }
+  .learn :global(svg) { flex-shrink: 0; margin-top: 1px; }
+  .learn.wait { background: var(--surface-3); color: var(--text-muted); align-items: center; }
   .sources { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
   .src { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin: 0 -8px; border: 0; border-radius: var(--radius-sm); background: none; text-align: left; color: var(--text-dim); font-size: var(--fs-xs); }
   .src:hover { background: var(--surface-3); color: var(--text); }

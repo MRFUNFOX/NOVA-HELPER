@@ -2,6 +2,7 @@
   import Icon from './Icon.svelte';
   import { app, docCategory, formatDate, type Section } from '../state.svelte';
   import { prices } from '../prices.svelte';
+  import { learn } from '../learn.svelte';
 
   const currentDoc = $derived(app.view.kind === 'doc' ? app.view.docId : '');
   /** Подсвеченный раздел меню: открытый раздел или раздел открытого документа */
@@ -31,7 +32,7 @@
     return () => ro.disconnect();
   });
 
-  function go(view: 'changes' | 'settings' | 'buyers') {
+  function go(view: 'changes' | 'settings' | 'buyers' | 'admin') {
     app.view = { kind: view };
     app.sidebarOpen = false;
   }
@@ -121,6 +122,11 @@
     {:else}
       <button class="item" onclick={() => app.analyze(true)} disabled={app.checking} title="Анализ правил">
         <span class="ico" class:spin={app.checking}><Icon name="refresh" size={19} /></span>
+      </button>
+    {/if}
+    {#if learn.staff}
+      <button class="item" class:active={app.view.kind === 'admin'} onclick={() => go('admin')} title={rail ? 'Управление' : undefined}>
+        <span class="ico"><Icon name="shield" size={19} /></span>{#if !rail}<span class="label">Управление</span>{#if learn.pending}<span class="badge yellow" title="Доводов ждут проверки">{learn.pending}</span>{/if}{/if}
       </button>
     {/if}
     <button class="item" class:active={app.view.kind === 'settings'} onclick={() => go('settings')} title={rail ? 'Настройки' : undefined}>

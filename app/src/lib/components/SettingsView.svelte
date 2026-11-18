@@ -5,6 +5,7 @@
   import { backend, checkAppUpdate, type HintMode } from '../backend';
   import { ai } from '../ai.svelte';
   import { PUBLIC, checkDevCode } from '../features';
+  import { learn, LearnError } from '../learn.svelte';
 
   let autostart = $state<boolean | null>(null);
   let appCheck = $state<'idle' | 'checking' | 'latest' | 'error'>('idle');
@@ -25,23 +26,42 @@
     autostart = await backend.autostart(!autostart);
   }
 
-  // Режим разработчика: 7 нажатий по версии программы → поле для кода
+  // Скрытый вход: 7 нажатий по версии программы → поле для личного кода.
+  // Код разработчика включает режим разработчика и «Управление», код админа — только «Управление».
   let taps = 0;
   let devAsk = $state(false);
   let devCode = $state('');
   let devError = $state('');
+  let devBusy = $state(false);
   function tapVersion() {
-    if (app.devMode) return;
+    if (learn.staff) return;
     if (++taps >= 7) devAsk = true;
   }
   async function unlock() {
+    if (!devCode.trim() || devBusy) return;
     devError = '';
-    if (await checkDevCode(devCode)) {
-      await app.setDevMode(true);
-      devAsk = false;
-      devCode = '';
-      app.notify('Режим разработчика включён', 'ok');
-    } else devError = 'Код не подходит';
+    devBusy = true;
+    try {
+      const me = await learn.login(devCode);
+      if (me.role === 'dev') await app.setDevMode(true);
+      devAsk = false; devCode = ''; taps = 0;
+      app.notify(me.role === 'dev' ? 'Вход выполнен: Dev. Раздел «Управление» — в меню слева' : `Вход выполнен: ${me.name}. Раздел «Управление» — в меню слева`, 'ok');
+    } catch (e) {
+      if (e instanceof LearnError && e.code === 'network' && (await checkDevCode(devCode))) {
+        // Нет связи с сервером: режим разработчика всё равно включаем, «Управление» — когда появится связь
+        await app.setDevMode(true);
+        devAsk = false; devCode = '';
+        app.notify('Режим разработчика включён. «Управление» откроется, когда будет связь с сервером', 'ok');
+      } else if (e instanceof LearnError && e.status === 429) {
+        const until = typeof e.data.until === 'string' ? new Date(e.data.until).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : '';
+        devError = `Слишком много неверных попыток. Вход с этого компьютера закрыт${until ? ` до ${until}` : ''}.`;
+      } else if (e instanceof LearnError && e.status === 401) {
+        const left = Number(e.data.left);
+        devError = left > 0 ? `Код не подходит. Осталось попыток: ${left}, потом вход закроется на 15 минут.` : 'Код не подходит';
+      } else if (e instanceof LearnError && e.code === 'network') devError = 'Нет связи с сервером. Проверьте интернет.';
+      else devError = 'Сервер не ответил. Попробуйте ещё раз.';
+    }
+    devBusy = false;
   }
 
   async function checkProgram() {
@@ -154,16 +174,20 @@
       <h2>Режим разработчика</h2>
       <div class="row">
         <p class="hint">Включён: видны функции, которые игрокам ещё не показываются{PUBLIC.ai ? '' : ' (ИИ-помощник)'}.</p>
-        <button class="btn" onclick={() => app.setDevMode(false)}>Выключить</button>
+        <div class="dev-btns">
+          {#if !learn.staff && !devAsk}<button class="btn" onclick={() => (devAsk = true)}>Войти в «Управление»</button>{/if}
+          <button class="btn" onclick={() => app.setDevMode(false)}>Выключить</button>
+        </div>
       </div>
     </section>
-  {:else if devAsk}
+  {/if}
+  {#if devAsk && !learn.staff}
     <section class="dev">
-      <h2>Код разработчика</h2>
+      <h2>Вход</h2>
       <div class="row">
-        <input class="code" placeholder="NOVA-…" spellcheck="false" autocomplete="off" bind:value={devCode}
+        <input class="code" type="password" placeholder="NOVA-…" spellcheck="false" autocomplete="off" bind:value={devCode}
           onkeydown={(e) => { if (e.key === 'Enter') unlock(); }} />
-        <button class="btn primary" onclick={unlock}>Включить</button>
+        <button class="btn primary" onclick={unlock} disabled={devBusy || !devCode.trim()}>{devBusy ? 'Проверяю…' : 'Войти'}</button>
       </div>
       {#if devError}<p class="hint bad">{devError}</p>{/if}
     </section>
@@ -204,6 +228,7 @@
   .game p { margin: 0; }
   .game :global(svg) { flex-shrink: 0; margin-top: 2px; color: var(--accent); }
   .dev { border-color: var(--accent-line); }
+  .dev-btns { display: flex; gap: 8px; flex-wrap: wrap; }
   .code { flex: 1; min-width: 0; height: 36px; padding: 0 12px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font-family: ui-monospace, Consolas, monospace; }
   .code:focus { outline: 0; border-color: var(--accent-line); }
   .bad { color: var(--danger); margin-top: 8px; }

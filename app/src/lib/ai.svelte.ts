@@ -9,8 +9,11 @@ import { app, sectionOf, shortTitle, type Section } from './state.svelte';
 import { nodeBadge, rank, type Entry } from './search';
 import { slang } from './slang';
 import { errorKind, track } from './stats';
+import { learn, type Note } from './learn.svelte';
 
 export interface Source { n: number; entry: Entry }
+/** Принятое разъяснение в ответе: ссылка [N1] */
+export interface NoteSource { n: number; note: Note }
 export interface Turn {
   id: string;
   q: string;
@@ -26,7 +29,17 @@ export interface Turn {
   time?: { plan?: number; first?: number; total?: number; start?: number };
   /** Какая модель отвечала */
   model?: string;
+  /** Разъяснения, которые видела нейросеть */
+  notes?: NoteSource[];
+  /** Игрок спорит с прошлым ответом — нейросеть разбирает его довод */
+  debate?: boolean;
+  /** Итог разбора: согласилась ли нейросеть и какое правило из этого следует */
+  verdict?: Verdict;
+  /** Отправка довода на проверку команде */
+  learnState?: 'checking' | 'sent' | 'off' | 'error';
 }
+
+export interface Verdict { agree: boolean; refs: string; note: string; keywords: string[] }
 
 /** Инструкция для ответа. Отдельная часть — для правил проекта и для законов штата */
 function system(scope: Section) {
@@ -41,11 +54,14 @@ ${where}
 
 Как отвечать:
 - Коротко и простыми словами, как опытный игрок другу: 2–4 коротких предложения, не больше 60 слов.
-- Первое предложение — прямой ответ: «Да, можно», «Нет, это нарушение», «Нарушил грабитель, а не охранник» и т. п.
+- Первое предложение — прямой ответ на вопрос. На вопросы «можно ли», «нарушение ли», «накажут ли» начинай с «Да» или «Нет»: «Да, можно», «Нет, это нарушение», «Нарушил грабитель, а не охранник».
+  На вопросы «зачем», «почему», «что даёт», «как», «что такое» отвечай по сути, без «Да» и «Нет» в начале.
 - Дальше одно-два предложения: какой пункт нарушен и какое наказание. Упоминай только 1–2 самых важных пункта, остальные не пересказывай.
 - Термины поясняй в скобках: DM (убийство без причины), PG (действия, невозможные в реальной жизни).
 - Без списков, нумерации, заголовков и таблиц. Самое главное выдели **жирным** — одно-два места.
-- После утверждения ставь ссылку на фрагмент: [S2]. Только номера из списка фрагментов.
+- После утверждения ставь ссылку на фрагмент в квадратных скобках: [S2]. Только номера из списка фрагментов.
+- Фрагменты [N1], [N2] — проверенные разъяснения команды программы: как правильно толковать пункты. Если разъяснение относится к вопросу, опирайся на него и ставь ссылку [N1].
+- Не путай понятия: например, оружие и спецсредства (бронежилет, тайзер, дубинка, наручники) — разные вещи, правило для одного не переноси на другое.
 - Сленг: «растулил», «завалил», «положил» = убил; «коп» = сотрудник полиции; «РП» = RolePlay.
 - Читай пункт внимательно и не приписывай ему то, чего в нём нет. Если прямого пункта нет — ответь по близкому и скажи «скорее всего».
 - Если во фрагментах ничего по теме — скажи «${nothing}» и что стоит уточнить. Ничего не выдумывай.`;
@@ -56,7 +72,45 @@ const PLAN = `Игрок GTA 5 RP-проекта NOVA RP задаёт вопро
 1. Выбери 1–4 документа, в которых, скорее всего, есть ответ. Если речь о нарушении правил проекта (DM, NonRP, PG, MG и т. п.), общие правила проекта подходят почти всегда.
 2. Составь 5–12 слов для поиска по тексту: официальные термины и сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC, ограбление, похищение, задержание),
    как это пишется в документах (например «растулил»/«завалил» → «убийство», «коп» → «сотрудник полиции LSPD»), номера пунктов и статей из вопроса.
-Ответ строго в JSON: {"docs": ["D3", "D12"], "keywords": ["…"]}`;
+3. "dispute": true, если игрок не согласен с прошлым ответом помощника или приводит довод, что тот ошибся («но ведь…», «там не сказано…», «ты не прав»); иначе false.
+Ответ строго в JSON: {"docs": ["D3", "D12"], "keywords": ["…"], "dispute": false}`;
+
+/** Игрок спорит с прошлым ответом: честная проверка довода по тексту */
+function debateSystem(scope: Section) {
+  const where = scope === 'laws' ? 'законам штата' : 'правилам проекта NOVA RP';
+  return `Ты — помощник программы NOVA HELPER для игроков GTA 5 RP-проекта NOVA RP (сервер Horizon). Отвечаешь по ${where}.
+Игрок не согласен с твоим прошлым ответом и приводит довод. Проверь довод честно, только по тексту фрагментов:
+1. Что именно запрещает или разрешает пункт, на который ссылаются. Если наказание — за «незаконное» действие, найди, какая норма делает его незаконным. Нет такой нормы — значит, действие не запрещено.
+2. Есть ли во фрагментах пункт, который прямо делает это действие нарушением.
+3. Не путаются ли понятия (например, оружие и спецсредство) и нет ли исключений.
+Соглашайся только если довод подтверждается текстом. Уверенный тон игрока — не аргумент. Если довод неверен — назови пункт, который ему противоречит.
+Если твой прошлый ответ был неверным — прямо скажи об этом.
+
+Как отвечать:
+- Первое предложение: «Вы правы.», «Вы не правы.» или «Отчасти правы.»
+- Затем 3–6 коротких предложений объяснения простыми словами, не больше 120 слов. Без списков и заголовков. Главное выдели **жирным**.
+- После утверждения ставь ссылку в квадратных скобках: [S2] или [N1]. Только номера из списка фрагментов.
+- В самом конце, с новой строки, служебная строка (игрок её не увидит), строго в таком виде:
+ИТОГ: {"agree": true, "refs": "ст. 4 ч. 1, ст. 11", "note": "…", "keywords": ["…"]}
+  agree — прав ли игрок; refs — номера пунктов, на которых держится вывод; note — правильное толкование общим правилом в 1–3 предложениях, без «вы», с номерами пунктов и названием документа; keywords — 3–8 слов, по которым это правило искать (разные формы и сленг).`;
+}
+
+/** Повторная проверка толкования перед отправкой команде */
+const VERIFY = `Ты проверяешь толкование правил GTA 5 RP-проекта. Ниже фрагменты правил или законов и предложенное толкование.
+Подтверждается ли толкование текстом фрагментов? Будь строгим: «да» — только если вывод прямо следует из текста, без домыслов.
+Ответ строго в JSON: {"ok": true, "refs": "номера пунктов, на которых держится вывод или которым он противоречит", "reason": "одно короткое предложение"}`;
+
+/** Похоже на спор с прошлым ответом */
+const DISPUTE = /^(но(?=[\s,.!?]|$)|а\s+(вот|ведь|как\s+же|разве)|нет[,.!\s]|ведь|однако|не\s+так|неправ|ты\s+(не\s+прав|ошиб))|не\s+(сказано|написано|указано)|нигде\s+не|ошибаешься|ошибся|неверно|неправильно|не\s+прав|не\s+соглас|где\s+(это\s+)?(написано|сказано)|с\s+чего\s+ты\s+взял|там\s+(же\s+)?(про|о|об|только)(?=\s|$)/i;
+export const looksLikeDispute = (q: string) => DISPUTE.test(q.trim());
+
+/** Номера статей и пунктов из текста игрока: «ст. 12.8 ч. 2», «статья 15», «п. 2.4» */
+export function refsIn(text: string): { num: string; part?: string }[] {
+  const out: { num: string; part?: string }[] = [];
+  for (const m of text.matchAll(/(?<![а-яё])(?:ст(?:атья|атье|атьи|\.)?|пункт|п\.)\s*(\d+(?:\.\d+)*)(?:\s*,?\s*(?:ч(?:асть|асти|\.)?)\s*(\d+))?/gi)) out.push({ num: m[1]!, part: m[2] });
+  for (const m of text.matchAll(/(?<![а-яё])(?:ч(?:асть|асти|\.)?)\s*(\d+)\s*(?:ст(?:атьи|\.)?)\s*(\d+(?:\.\d+)*)/gi)) out.push({ num: m[2]!, part: m[1] });
+  return out;
+}
 
 export const SCOPES: Record<Section, { label: string; hint: string }> = {
   project: { label: 'Правила проекта', hint: 'Накажет ли администрация: JAIL, WARN, BAN' },
@@ -145,7 +199,8 @@ class Assistant {
           { role: 'system', content: PLAN },
           { role: 'user', content: `Документы (${SCOPES[scope].label.toLowerCase()}):\n${catalog}\n\n${prev ? `Предыдущий вопрос: ${prev}\n` : ''}Вопрос: ${q}` },
         ]);
-        const plan = JSON.parse(raw) as { docs?: unknown; keywords?: unknown };
+        const plan = JSON.parse(raw) as { docs?: unknown; keywords?: unknown; dispute?: unknown };
+        if (plan.dispute === true && before.length) t.debate = true;
         if (Array.isArray(plan.keywords)) extra += ' ' + plan.keywords.filter((x) => typeof x === 'string').join(' ');
         if (Array.isArray(plan.docs)) {
           for (const id of plan.docs) {
@@ -157,25 +212,42 @@ class Assistant {
       if (!fast) t.time.plan = sec();
       t.plan = { docs: [...boost].map((id) => shortTitle(app.doc(id)?.title ?? id)), keywords: extra.trim() };
 
-      // 2. Подбор пунктов только в выбранном разделе: по вопросу, словам-подсказкам и прошлому вопросу
-      const entries = rank(app.index, `${q} ${extra} ${prev}`, fast ? 10 : 14, inScope, boost);
+      if (before.length && looksLikeDispute(q)) t.debate = true;
+      const last = before.at(-1);
+
+      // 2. Подбор пунктов только в выбранном разделе: по вопросу, словам-подсказкам и прошлому вопросу.
+      //    В споре — ещё пункты, названные игроком, пункты прошлого ответа и их документы целиком.
+      const entries = t.debate && last
+        ? debateEntries(q, extra, last, inScope, boost)
+        : rank(app.index, `${q} ${extra} ${prev}`, fast ? 10 : 14, inScope, boost);
       t.sources = entries.map((entry, n) => ({ n: n + 1, entry }));
+      t.notes = learn.relevant(`${q} ${prev} ${extra}`, scope).map((note, n) => ({ n: n + 1, note }));
 
       // 3. Ответ: пункты + последние пару вопросов-ответов того же раздела
       const history: ChatMsg[] = before.slice(-2).flatMap((x) => [
         { role: 'user' as const, content: x.q },
-        { role: 'assistant' as const, content: x.a.replace(/\s*\[S\d+(?:\s*,\s*S\d+)*\]/g, '') },
+        { role: 'assistant' as const, content: answerText(x.a).replace(/\s*[[(](?:[SN]\d+(?:\s*[,;]\s*)?)+[\])]/g, '') },
       ]);
-      const context = t.sources.length
-        ? t.sources.map((s) => fragment(s, fast ? 420 : 550)).join('\n\n')
-        : '(подходящих фрагментов не найдено)';
+      const parts = [
+        ...(t.notes ?? []).map((s) => `[N${s.n}] Разъяснение команды NOVA HELPER\n${s.note.text}`),
+        ...t.sources.map((s) => fragment(s, t.debate ? 450 : fast ? 420 : 550)),
+      ];
+      const context = parts.length ? parts.join('\n\n') : '(подходящих фрагментов не найдено)';
+      const ask = t.debate
+        ? `Фрагменты:\n\n${context}\n\nДовод игрока: ${q}\n\n(Разбери довод по фрагментам и не забудь служебную строку ИТОГ в конце.)`
+        : `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.)`;
       await backend.aiChat(t.id, [
-        { role: 'system', content: system(scope) },
+        { role: 'system', content: t.debate ? debateSystem(scope) : system(scope) },
         ...history,
-        { role: 'user', content: `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.)` },
+        { role: 'user', content: ask },
       ]).then((r) => { if (!t.a) t.a = r.text; t.model = r.model; });
       t.time.total = sec();
-      track('ai_answer', { provider: this.provider, scope, model: t.model ?? '', first: t.time.first ?? t.time.total, total: t.time.total, sources: t.sources.length });
+      if (t.debate) {
+        t.verdict = parseVerdict(t.a) ?? undefined;
+        t.a = answerText(t.a);
+        if (t.verdict && last) void this.report(t, last, context);
+      }
+      track('ai_answer', { provider: this.provider, scope, model: t.model ?? '', first: t.time.first ?? t.time.total, total: t.time.total, sources: t.sources.length, debate: t.debate ? 1 : 0, agree: t.verdict ? (t.verdict.agree ? 1 : 0) : -1, notes: t.notes?.length ?? 0 });
     } catch (e) {
       t.error = String(e);
       track('ai_error', { provider: this.provider, scope, kind: errorKind(t.error) });
@@ -184,6 +256,95 @@ class Assistant {
       this.busy = false;
     }
   }
+
+  /** Довод игрока → ещё одна проверка по тексту → на проверку команде (если приём включён) */
+  private async report(t: Turn, last: Turn, context: string) {
+    const v = t.verdict!;
+    if (!learn.learning || !v.note) return;
+    t.learnState = 'checking';
+    let verdict = { ok: false, refs: v.refs, reason: 'Помощник не согласился с доводом' };
+    if (v.agree) {
+      try {
+        const raw = await backend.aiComplete([
+          { role: 'system', content: VERIFY },
+          { role: 'user', content: `Фрагменты:\n\n${context}\n\nТолкование: ${v.note}` },
+        ]);
+        const j = JSON.parse(raw) as { ok?: unknown; refs?: unknown; reason?: unknown };
+        verdict = { ok: j.ok === true, refs: typeof j.refs === 'string' ? j.refs : v.refs, reason: typeof j.reason === 'string' ? j.reason : '' };
+      } catch { verdict = { ok: false, refs: v.refs, reason: 'Повторная проверка не удалась' }; }
+    }
+    t.learnState = await learn.submit({
+      scope: t.scope!, q: last.q, before: plainAnswer(last), arg: t.q, answer: plainAnswer(t), verdict,
+      note: { text: v.note, keywords: v.keywords }, app: app.version,
+    });
+    track('ai_dispute', { scope: t.scope!, agree: v.agree ? 1 : 0, confirmed: verdict.ok ? 1 : 0, sent: t.learnState });
+  }
+}
+
+/** Подбор пунктов для спора: названные игроком → из прошлого ответа → поиск → документы целиком */
+function debateEntries(q: string, extra: string, last: Turn, inScope: (d: RuleDocument) => boolean, boost: Set<string>): Entry[] {
+  const BUDGET = 9000; // знаков: бесплатные лимиты Groq не любят длинные запросы
+  const out: Entry[] = [];
+  const seen = new Set<string>();
+  let size = 0;
+  const add = (e: Entry | undefined, force = false) => {
+    if (!e || seen.has(e.node.id) || !inScope(e.doc)) return;
+    const len = Math.min(e.node.text.length, 450) + 80;
+    if (!force && size + len > BUDGET) return;
+    seen.add(e.node.id); out.push(e); size += len;
+  };
+  const all = app.index.entries;
+  // Пункты, которые назвал игрок
+  for (const r of refsIn(q)) {
+    for (const e of all) {
+      if (!inScope(e.doc)) continue;
+      const law = e.doc.scope === 'server';
+      const hit = law
+        ? (e.article === r.num && (!r.part || e.node.number === r.part)) || (!e.article && e.node.number === r.num && e.node.kind === 'article')
+        : e.node.number === r.num;
+      if (hit) add(e, true);
+    }
+  }
+  // На что сослался прошлый ответ
+  const used = new Set(pieces(last.a).flatMap((p) => (p.t === 'ref' && p.kind === 's' ? [p.n] : [])));
+  for (const s of last.sources) if (used.has(s.n)) add(s.entry, true);
+  // Поиск по доводу
+  for (const e of rank(app.index, `${q} ${extra} ${last.q}`, 8, inScope, boost)) add(e);
+  // Документы спорных пунктов — целиком, сколько влезет
+  const docs = [...new Set(out.slice(0, 6).map((e) => e.doc.id))].slice(0, 2);
+  for (const id of docs) for (const e of all) if (e.doc.id === id) add(e);
+  return out;
+}
+
+/** Ответ для команды: без разметки, ссылки [S1] — номерами пунктов, [N1] — словом «разъяснение» */
+export function plainAnswer(t: Turn) {
+  return pieces(answerText(t.a)).map((p) => {
+    if (p.t !== 'ref') return p.v;
+    if (p.kind === 'n') return '(разъяснение)';
+    const s = t.sources.find((x) => x.n === p.n);
+    return s ? `(${sourceLabel(s).num})` : '';
+  }).join('').replace(/ +([.,])/g, '$1');
+}
+
+/** Служебная строка «ИТОГ: {…}» в конце разбора */
+export function parseVerdict(text: string): Verdict | null {
+  const m = /ИТОГ\s*:?\s*(\{[\s\S]*\})/.exec(text);
+  if (!m) return null;
+  try {
+    const j = JSON.parse(m[1]!) as Record<string, unknown>;
+    return {
+      agree: j.agree === true,
+      refs: typeof j.refs === 'string' ? j.refs : '',
+      note: typeof j.note === 'string' ? j.note.trim() : '',
+      keywords: Array.isArray(j.keywords) ? j.keywords.filter((x): x is string => typeof x === 'string').slice(0, 10) : [],
+    };
+  } catch { return null; }
+}
+
+/** Текст ответа без служебной строки (пока ответ печатается — тоже) */
+export function answerText(text: string) {
+  const i = text.search(/\n?[ \t*_`]*ИТОГ\s*:/);
+  return (i >= 0 ? text.slice(0, i) : text).trimEnd();
 }
 
 /** Фрагмент для нейросети: откуда пункт, номер, текст, наказание, примечания */
@@ -212,16 +373,19 @@ export function sourceLabel(s: Source) {
   return { num: num || '§', doc: shortTitle(e.doc.title) };
 }
 
-/** Ответ на кусочки: текст, **жирное** и ссылки [S3] / [S1, S4] */
-export type Piece = { t: 'text' | 'bold'; v: string } | { t: 'ref'; n: number };
+/** Ответ на кусочки: текст, **жирное** и ссылки [S3] / [S1, N2] / (S7) — нейросеть иногда ставит круглые скобки */
+export type Piece = { t: 'text' | 'bold'; v: string } | { t: 'ref'; n: number; kind: 's' | 'n' };
 export function pieces(text: string): Piece[] {
   const out: Piece[] = [];
-  const re = /\*\*(.+?)\*\*|\[(S\d+(?:\s*[,;]\s*S\d+)*)\]/g;
+  const re = /\*\*(.+?)\*\*|\[\s*([SN]\d+(?:\s*[,;]\s*[SN]\d+)*)\s*\]|\(\s*([SN]\d+(?:\s*[,;]\s*[SN]\d+)*)\s*\)/g;
   let last = 0;
   for (const m of text.matchAll(re)) {
     if (m.index! > last) out.push({ t: 'text', v: text.slice(last, m.index) });
     if (m[1]) out.push({ t: 'bold', v: m[1] });
-    else for (const r of m[2]!.split(/[,;]/)) out.push({ t: 'ref', n: Number(r.trim().slice(1)) });
+    else for (const r of (m[2] ?? m[3])!.split(/[,;]/)) {
+      const x = r.trim();
+      out.push({ t: 'ref', n: Number(x.slice(1)), kind: x[0] === 'N' ? 'n' : 's' });
+    }
     last = m.index! + m[0].length;
   }
   if (last < text.length) out.push({ t: 'text', v: text.slice(last) });

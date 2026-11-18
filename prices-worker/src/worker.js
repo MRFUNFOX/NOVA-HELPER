@@ -16,6 +16,7 @@
  */
 import { messageText, parsePrices } from './parse.js';
 import { addToHistory, buildFile, HISTORY_DAYS } from './history.js';
+import { handleLearn } from './learn.js';
 
 const DISCORD = 'https://discord.com/api/v10';
 const GITHUB = 'https://api.github.com';
@@ -160,6 +161,9 @@ export default {
   },
   // Проверка в браузере: адрес воркера/status — когда цены обработаны последний раз (без секретов)
   async fetch(req, env) {
+    // Обучение ИИ-помощника: /learn/…
+    const learn = await handleLearn(req, env);
+    if (learn) return learn;
     const url = new URL(req.url);
     if (url.pathname === '/status') {
       const j = async (k) => { const v = await env.STATE.get(k); return v ? JSON.parse(v) : null; };

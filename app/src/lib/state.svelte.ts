@@ -12,7 +12,9 @@ export type View =
   | { kind: 'category'; section: Section; category: string }
   | { kind: 'changes' }
   | { kind: 'buyers' }
-  | { kind: 'settings' };
+  | { kind: 'settings' }
+  /** «Управление»: доводы игроков, разъяснения, команда — только после скрытого входа */
+  | { kind: 'admin' };
 
 /** Короткие подписи разделов в левом меню (полное название — в заголовке документа) */
 const CATEGORY_ORDER: [string, string, IconName][] = [
@@ -293,7 +295,7 @@ class AppState {
     if (import.meta.env.DEV) {
       const p = new URLSearchParams(location.search);
       if (p.get('q')) this.query = p.get('q')!;
-      if (p.get('view') === 'changes' || p.get('view') === 'settings' || p.get('view') === 'buyers') this.view = { kind: p.get('view') as 'changes' };
+      if (p.get('view') === 'changes' || p.get('view') === 'settings' || p.get('view') === 'buyers' || p.get('view') === 'admin') this.view = { kind: p.get('view') as 'changes' };
       if (p.get('doc')) { const d = this.db.docs.find((x) => x.title.includes(p.get('doc')!)); if (d) this.open(d.id, this.index.entries.find((e) => e.doc.id === d.id && e.node.number === p.get('focus'))?.node.id); }
       if (p.has('laws')) this.setSection('laws');
       if (p.has('ai')) this.aiOpen = true;
