@@ -79,7 +79,7 @@
   .find { display: flex; align-items: center; gap: 8px; margin: 10px; height: 38px; padding: 0 10px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--text-muted); }
   .find input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font: inherit; font-size: 13px; }
   .list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 8px 10px; display: flex; flex-direction: column; gap: 1px; }
-  .cat, .doc { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+  .cat, .doc { flex-shrink: 0; display: flex; align-items: center; gap: 10px; width: 100%; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
   .cat { min-height: 36px; padding: 0 10px; font-size: 13px; font-weight: 700; }
   .cat b { margin-left: auto; font-size: 12px; color: var(--text-muted); }
   .doc { min-height: 32px; padding: 7px 10px 7px 36px; margin: 1px 0; font-size: 12.5px; font-weight: 600; color: var(--text-dim); line-height: 1.3; }
