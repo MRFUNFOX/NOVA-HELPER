@@ -6,7 +6,7 @@
 //! фокус возвращается в игру. Раскладка (где меню, где и какого размера окна, прозрачность)
 //! хранится в gamemenu.json рядом с настройками.
 //!
-//! Пока функция в разработке — только в режиме разработчика.
+//! Открыто всем с 0.7.2.
 
 use crate::settings;
 use serde_json::Value;
@@ -16,7 +16,7 @@ use std::sync::atomic::{AtomicIsize, Ordering};
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 /// Открыто ли всем игрокам. Пока `false` — только в режиме разработчика.
-pub const PUBLIC: bool = false;
+pub const PUBLIC: bool = true;
 const LABEL: &str = "game";
 /// Окно, активное до открытия меню (игра), — вернём ему фокус
 static PREVIOUS: AtomicIsize = AtomicIsize::new(0);
