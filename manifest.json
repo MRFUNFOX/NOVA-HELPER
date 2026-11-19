@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.17-1602",
- "generatedAt": "2026-11-17T16:02:52.696Z",
+ "dbVersion": "2026.11.19-1142",
+ "generatedAt": "2026-11-19T11:42:32.384Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -1007,9 +1007,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411159/",
-   "sha256": "eb8d03e219ad32c372acfaf0164dd8a7f86769e4376d91dbe97495910f09083c",
-   "size": 73909,
-   "path": "docs/server_horizon_411159.28e194b08c98.json",
+   "sha256": "51e00558aa98b9bb410f8b5c1c392b77614b79f3f495ead9499a6b1b6b0148eb",
+   "size": 73781,
+   "path": "docs/server_horizon_411159.8423cf7c1337.json",
    "stats": {
     "nodes": 95,
     "punishments": 0,
@@ -1081,5 +1081,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.17-1602.json"
+ "changelog": "changelog/2026.11.19-1142.json"
 }
