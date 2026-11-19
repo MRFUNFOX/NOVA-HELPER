@@ -1,5 +1,6 @@
 mod ai;
 mod game;
+mod gamemenu;
 mod stats;
 mod overlay;
 mod pins;
@@ -39,6 +40,10 @@ fn save_settings(app: AppHandle, new: Settings) -> Result<Settings, String> {
     let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), window: old.window.clone(), hint_pos: old.hint_pos, ..new };
     settings::save(&app, &merged)?;
     let _ = app.emit("settings-changed", merged.clone());
+    // Режим разработчика включили или выключили — меню поверх игры появляется или пропадает
+    if old.dev_mode != merged.dev_mode {
+        gamemenu::prepare(&app);
+    }
     Ok(merged)
 }
 
@@ -185,6 +190,9 @@ pub fn run() {
             pins::pins_editor,
             pins::pins_sync,
             game::game_state,
+            gamemenu::game_menu_layout,
+            gamemenu::game_menu_save,
+            gamemenu::game_menu_hide,
             pins::set_editor_hotkey,
             pins::suspend_editor_hotkey,
             overlay::hint_move,
@@ -224,6 +232,8 @@ pub fn run() {
             pins::sync(&handle);
             // Следим, в игре ли игрок (тоже пока только в режиме разработчика)
             game::watch(handle.clone());
+            // Меню поверх игры (пока только в режиме разработчика): слой готовим заранее
+            gamemenu::prepare(&handle);
             let minimized = std::env::args().any(|a| a == "--minimized");
             if minimized && s.first_run_done {
                 overlay::show_hint(&handle);

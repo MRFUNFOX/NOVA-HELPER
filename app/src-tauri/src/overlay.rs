@@ -132,6 +132,11 @@ pub fn hide_main(app: &AppHandle) {
 }
 
 pub fn toggle(app: &AppHandle) {
+    // В игре — меню поверх игры; вне игры — обычное окно программы
+    if crate::gamemenu::enabled(app) && (crate::game::in_game() || crate::gamemenu::visible(app)) {
+        crate::gamemenu::toggle(app);
+        return;
+    }
     let Some(win) = main_window(app) else { return };
     let visible = win.is_visible().unwrap_or(false) && !win.is_minimized().unwrap_or(false);
     if visible {

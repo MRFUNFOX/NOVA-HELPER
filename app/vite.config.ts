@@ -2,8 +2,8 @@ import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
 
-// Три окна: основное (index.html), подсказка о клавише в углу экрана (hint.html)
-// и слой закреплённых пунктов поверх игры (pins.html)
+// Окна: основное (index.html), подсказка о клавише в углу экрана (hint.html),
+// слой закреплённых пунктов поверх игры (pins.html) и меню поверх игры (game.html)
 export default defineConfig({
   plugins: [svelte()],
   clearScreen: false,
@@ -22,6 +22,7 @@ export default defineConfig({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         hint: fileURLToPath(new URL('./hint.html', import.meta.url)),
         pins: fileURLToPath(new URL('./pins.html', import.meta.url)),
+        game: fileURLToPath(new URL('./game.html', import.meta.url)),
       },
     },
   },

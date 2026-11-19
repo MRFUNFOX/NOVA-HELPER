@@ -5,7 +5,8 @@
   "windows": [
     "main",
     "hint",
-    "pins"
+    "pins",
+    "game"
   ],
   "permissions": [
     "core:default",

@@ -144,10 +144,13 @@ class AppState {
   /** Название сервера для подписи раздела законов */
   serverName = $derived(this.db.manifest?.servers?.find((s) => !s.archived)?.name ?? 'сервера');
 
-  categories = $derived.by(() => {
+  categories = $derived.by(() => this.categoriesOf(this.section));
+
+  /** Разделы меню для правил или законов (меню в игре показывает оба сразу, в разных окнах) */
+  categoriesOf(section: Section) {
     const groups = new Map<string, RuleDocument[]>();
     for (const d of this.db.docs) {
-      if (sectionOf(d) !== this.section) continue;
+      if (sectionOf(d) !== section) continue;
       const c = docCategory(d);
       const list = groups.get(c) ?? [];
       list.push(d);
@@ -159,11 +162,11 @@ class AppState {
       return i >= 0 ? i : j >= 0 ? j : 99;
     };
     // Внутри групп законов — по алфавиту короткого названия
-    if (this.section === 'laws') for (const list of groups.values()) list.sort((a, b) => shortTitle(a.title).localeCompare(shortTitle(b.title), 'ru'));
+    if (section === 'laws') for (const list of groups.values()) list.sort((a, b) => shortTitle(a.title).localeCompare(shortTitle(b.title), 'ru'));
     return [...groups.entries()]
       .sort((a, b) => order(a[0]) - order(b[0]))
       .map(([category, docs]) => ({ category, label: categoryLabel(category), icon: categoryIcon(category), docs }));
-  });
+  }
 
   /** Сколько пунктов изменилось в последнем обновлении — бейдж «Что изменилось» */
   recentChanges = $derived(
@@ -271,14 +274,15 @@ class AppState {
     this.loaded = true;
   }
 
-  async start() {
+  /** quiet — для меню поверх игры: без проверки обновлений (её делает основное окно) */
+  async start(quiet = false) {
     const [settings, db, version] = await Promise.all([backend.getSettings(), backend.loadDb(), backend.version()]);
     this.settings = settings;
     this.version = version;
     this.setDb(db);
     if (this.ready && this.view.kind === 'home') this.open(this.mainDocId());
     backend.on('overlay-shown', () => focusSearch());
-    backend.on('check-updates', () => this.analyze(true));
+    if (!quiet) backend.on('check-updates', () => this.analyze(true));
     backend.on('settings-changed', (s) => { this.settings = s as Settings; if (this.settings?.editorHotkey) this.editorKey = this.settings.editorHotkey; });
     // Слой окон сообщает об откреплении крестиком
     backend.on('pins-changed', (p) => { if (this.pinsEnabled) this.pins = p as Pin[]; });
@@ -287,7 +291,7 @@ class AppState {
     backend.gameState().then((g) => (this.gameFullscreen = g.fullscreen)).catch(() => {});
     backend.on('game-fullscreen', (f) => { this.gameFullscreen = !!f; });
     // Мастер первого запуска сам скачает базу; иначе — тихая проверка при старте
-    if (settings.firstRunDone) {
+    if (settings.firstRunDone && !quiet) {
       this.analyze(false);
       checkAppUpdate().then((u) => { if (u) { this.appUpdate = u; this.appUpdateDialog = true; } }).catch(() => {});
     }

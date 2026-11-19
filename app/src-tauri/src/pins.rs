@@ -110,7 +110,7 @@ pub fn raise_window(w: &WebviewWindow) {
     win::raise(hwnd_of(w));
 }
 
-fn hwnd_of(w: &WebviewWindow) -> isize {
+pub fn hwnd_of(w: &WebviewWindow) -> isize {
     #[cfg(windows)]
     {
         w.hwnd().map(|h| h.0 as isize).unwrap_or(0)
@@ -137,7 +137,7 @@ pub fn game_monitor(w: &WebviewWindow) -> Option<tauri::Monitor> {
     on_game.or_else(|| w.primary_monitor().ok().flatten())
 }
 
-fn cover(w: &WebviewWindow) {
+pub fn cover(w: &WebviewWindow) {
     if let Some(m) = game_monitor(w) {
         let p = m.position();
         let s = m.size();
@@ -351,6 +351,7 @@ pub async fn pins_layout(app: AppHandle, layout: Vec<Value>) -> Result<(), Strin
     store(&app, &pins)?;
     // Главному окну раскладка не нужна, но список держим одинаковым
     let _ = app.emit_to("main", "pins-changed", &pins);
+    let _ = app.emit_to("game", "pins-changed", &pins);
     Ok(())
 }
 

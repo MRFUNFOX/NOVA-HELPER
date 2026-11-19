@@ -89,6 +89,10 @@ export const backend = {
   hintMove: (pos: HintSpot | null) => invoke<void>('hint_move', { pos }),
   /** В игре ли игрок и не в полноэкранном ли режиме игра */
   gameState: () => invoke<{ inGame: boolean; fullscreen: boolean }>('game_state'),
+  /** Меню поверх игры: раскладка (меню, окна, прозрачность) и «спрятать» */
+  gameMenuLayout: () => invoke<unknown>('game_menu_layout'),
+  gameMenuSave: (layout: unknown) => invoke<void>('game_menu_save', { layout }),
+  gameMenuHide: () => invoke<void>('game_menu_hide'),
   finishFirstRun: () => invoke<void>('finish_first_run'),
   hide: () => invoke<void>('hide_main'),
   minimize: () => invoke<void>('minimize_main'),
@@ -343,6 +347,9 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { ...mockState.settings };
     case 'suspend_editor_hotkey':
       return;
+    case 'game_menu_layout': { try { return JSON.parse(localStorage.getItem('mock.gamemenu') ?? 'null'); } catch { return null; } }
+    case 'game_menu_save': { try { localStorage.setItem('mock.gamemenu', JSON.stringify(args?.layout)); } catch { /* браузер без хранилища */ } return; }
+    case 'game_menu_hide': return;
     case 'game_state':
       return { inGame: params.has('ingame'), fullscreen: params.has('fullscreen') };
     case 'window_glass':

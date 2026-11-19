@@ -44,6 +44,8 @@ class Prices {
   private reached = new Set<string>();
   private seeded = false;
   private audio: AudioContext | null = null;
+  /** Меню поверх игры — второе окно программы: звук цели играет только основное окно */
+  quiet = false;
 
   /** Включить (раздел открыт для игрока): скачать цены и проверять каждый час */
   start() {
@@ -177,7 +179,7 @@ class Prices {
     this.reached = now;
     // Первый подсчёт после запуска — без звука: цели могли сработать, пока программа была закрыта
     if (!this.seeded) { this.seeded = true; return; }
-    if (fresh.length && this.sound) this.chime();
+    if (fresh.length && this.sound && !this.quiet) this.chime();
   }
 
   /** Короткий сигнал из двух нот. Без файлов — звук рисуется прямо в программе. */
