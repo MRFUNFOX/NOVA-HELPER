@@ -22,6 +22,8 @@ export interface Layout {
   /** Общая прозрачность, 0–80 % */
   glass: number;
   wins: Partial<Record<WinId, WinGeo>>;
+  /** Закреплено (булавка): клавиша, Esc и клик в пустое место не прячут меню, а отпускают мышь в игру */
+  pinned?: boolean;
 }
 
 const GAP = 16;
@@ -53,6 +55,7 @@ class GameMenu {
           bar: { dock: 'bottom', cx: 0, cy: 0, ...(l.bar ?? {}) },
           glass: typeof l.glass === 'number' ? Math.max(0, Math.min(80, l.glass)) : 15,
           wins: l.wins ?? {},
+          pinned: !!l.pinned,
         };
       }
     } catch { /* первая раскладка — по умолчанию */ }
@@ -62,6 +65,16 @@ class GameMenu {
   save() {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => { void backend.gameMenuSave($state.snapshot(this.layout)).catch(() => {}); }, 500);
+  }
+
+  /** Закреплённое меню сейчас «отпущено»: видно, но мышь и клавиатура — у игры */
+  passive = $state(false);
+
+  /** Булавка: сохраняем сразу — по ней решает программа, прятать ли меню */
+  setPinned(on: boolean) {
+    this.layout.pinned = on;
+    clearTimeout(this.timer);
+    void backend.gameMenuSave($state.snapshot(this.layout)).catch(() => {});
   }
 
   geo(id: WinId): WinGeo {

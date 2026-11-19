@@ -31,7 +31,9 @@
     // Открыли меню — свежие закрепки и вход в «Управление» (могли поменяться в основном окне)
     let off: (() => void) | undefined;
     void backend.on('game-menu-shown', () => { void app.loadPins(); void learn.checkSession(); }).then((f) => (off = f));
-    return () => { window.removeEventListener('resize', resize); off?.(); };
+    let offPassive: (() => void) | undefined;
+    void backend.on('game-menu-passive', (on) => { gm.passive = !!on; }).then((f) => (offPassive = f));
+    return () => { window.removeEventListener('resize', resize); off?.(); offPassive?.(); };
   });
   $effect(() => {
     if (started && app.buyersEnabled) untrack(() => prices.start());
@@ -112,6 +114,8 @@
     return 'padding: 16px 16px 100px; justify-content: center; align-items: flex-end;';
   });
   const isOpen = (id: WinId) => gm.open.includes(id);
+  const pinLabel = $derived(gm.layout.pinned ? 'Закреплено. Нажмите, чтобы меню снова пряталось' : 'Закрепить: меню и окна останутся на экране, пока вы играете');
+  const hotkey = $derived(app.settings?.hotkey ?? 'Alt+Q');
 
   function setGlass(e: Event) {
     gm.layout.glass = Number((e.currentTarget as HTMLInputElement).value);
@@ -122,7 +126,7 @@
 <svelte:window onkeydown={onKey} />
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="layer" style={glassVars(gm.layout.glass)} onpointerdown={onRoot}>
+<div class="layer" class:passive={gm.passive} style={glassVars(gm.layout.glass)} onpointerdown={onRoot}>
   <div class="wins" style={winBox} onpointerdown={onRoot}>
     {#if isOpen('rules')}
       <GameWindow id="rules" title="Правила проекта" icon="scroll"><GameDocs section="project" /></GameWindow>
@@ -168,6 +172,10 @@
       </svg>
       <span class="tip">Зажмите и перетащите меню.<br />К левому или правому краю — станет вертикальным.<br />Двойной клик — вернуть вниз.</span>
     </button>
+    <button class="pinb" class:on={gm.layout.pinned} aria-pressed={!!gm.layout.pinned} aria-label={pinLabel} onclick={() => gm.setPinned(!gm.layout.pinned)}>
+      <Icon name="pin" size={13} />
+      <span class="tip">{pinLabel}</span>
+    </button>
     {#if learn.staff}<span class="role" class:dev={learn.isDev}>{learn.isDev ? 'Dev' : 'Admin'}</span>{/if}
     {#each items as it, i (i)}
       {#if 'sep' in it}
@@ -202,6 +210,10 @@
     {#key app.toast}
       <div class="toast" class:error={app.toast.tone === 'error'} role="status"><Icon name={app.toast.tone === 'error' ? 'alert' : 'check'} size={16} />{app.toast.text}</div>
     {/key}
+  {/if}
+
+  {#if gm.passive}
+    <span class="passive-tip"><Icon name="pin" size={13} /><kbd>{hotkey}</kbd>меню</span>
   {/if}
 
   {#if drag}
@@ -269,6 +281,17 @@
   .toast :global(svg) { flex-shrink: 0; color: var(--success); }
   .toast.error { background: #3a2224; color: var(--danger); }
   .toast.error :global(svg) { color: var(--danger); }
+  .pinb { position: relative; width: 20px; height: 48px; margin-right: 2px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #55585f; display: grid; place-items: center; cursor: pointer; }
+  .pinb:hover { color: var(--text-dim); background: #232428; }
+  .pinb.on { color: var(--accent); }
+  .pinb:hover .tip, .pinb:focus-visible .tip { opacity: 1; }
+  .pinb .tip { left: 0; transform: none; }
+  .bar.v .pinb { width: 48px; height: 20px; margin: 0 0 2px; }
+  .bar.v .pinb .tip { top: 0; transform: none; }
+  .layer.passive .tip { display: none; }
+  .passive-tip { position: absolute; right: 24px; bottom: 18px; z-index: 59; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(20, 21, 24, 0.8); color: #d5d7dc; font-size: 12.5px; font-weight: 700; pointer-events: none; }
+  .passive-tip :global(svg) { color: var(--accent); }
+  .passive-tip kbd { padding: 3px 7px; border-radius: 6px; background: #313238; color: var(--text); font: inherit; font-size: 12px; font-weight: 800; }
   .zone { position: absolute; top: 16px; bottom: 16px; width: 6px; border-radius: 3px; z-index: 55; pointer-events: none; background: rgba(255, 195, 0, 0.28); }
   .zone.l { left: 6px; }
   .zone.r { right: 6px; }

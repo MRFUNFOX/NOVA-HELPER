@@ -156,10 +156,8 @@ fn apply(app: &AppHandle) {
     if let Some(m) = app.get_webview_window("main") {
         let _ = m.set_always_on_top(game || !aware(app));
     }
-    // Ушли из игры в другую программу — меню поверх игры прячем
-    if !game {
-        crate::gamemenu::hide(app);
-    }
+    // Ушли из игры — меню поверх игры прячем; закреплённое вернётся, когда игрок вернётся
+    crate::gamemenu::game_changed(app, game);
     crate::pins::sync(app);
     crate::overlay::show_hint_if_hidden(app);
     let _ = app.emit("game-state", json_state());

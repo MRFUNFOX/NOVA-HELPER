@@ -7,12 +7,16 @@
 //! хранится в gamemenu.json рядом с настройками.
 //!
 //! Открыто всем с 0.7.2.
+//!
+//! «Закрепить» (булавка рядом с точками меню, с 0.7.3): клавиша, Esc и клик в пустое место
+//! не прячут меню, а «отпускают» мышь и клавиатуру в игру — меню и окна остаются на экране,
+//! клики проходят сквозь них. Снова управлять меню — клавиша вызова.
 
 use crate::settings;
 use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicIsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 /// Открыто ли всем игрокам. Пока `false` — только в режиме разработчика.
@@ -20,6 +24,10 @@ pub const PUBLIC: bool = true;
 const LABEL: &str = "game";
 /// Окно, активное до открытия меню (игра), — вернём ему фокус
 static PREVIOUS: AtomicIsize = AtomicIsize::new(0);
+/// Меню закреплено и сейчас «отпущено»: видно, но клики проходят в игру
+static PASSIVE: AtomicBool = AtomicBool::new(false);
+/// Закреплённое меню спрятали, потому что игрок ушёл из игры, — вернуть, когда он вернётся
+static RESTORE: AtomicBool = AtomicBool::new(false);
 
 pub fn enabled(app: &AppHandle) -> bool {
     PUBLIC || settings::load(app).dev_mode
@@ -43,6 +51,15 @@ mod win {
             }
         }
     }
+    /// Показать, не забирая фокус у игры
+    pub fn show_quiet(h: isize) {
+        use windows::Win32::UI::WindowsAndMessaging::{ShowWindow, SW_SHOWNOACTIVATE};
+        if h != 0 {
+            unsafe {
+                let _ = ShowWindow(HWND(h as *mut core::ffi::c_void), SW_SHOWNOACTIVATE);
+            }
+        }
+    }
 }
 
 #[cfg(not(windows))]
@@ -51,6 +68,12 @@ mod win {
         0
     }
     pub fn activate(_h: isize) {}
+    pub fn show_quiet(_h: isize) {}
+}
+
+/// Закреплено ли меню (булавка) — хранится в раскладке gamemenu.json
+fn pinned(app: &AppHandle) -> bool {
+    game_menu_layout(app.clone())["pinned"].as_bool().unwrap_or(false)
 }
 
 fn layer(app: &AppHandle) -> Option<WebviewWindow> {
@@ -85,33 +108,88 @@ pub fn visible(app: &AppHandle) -> bool {
     app.get_webview_window(LABEL).is_some_and(|w| w.is_visible().unwrap_or(false))
 }
 
+fn set_passive(app: &AppHandle, w: &WebviewWindow, on: bool) {
+    PASSIVE.store(on, Ordering::Relaxed);
+    let _ = w.set_ignore_cursor_events(on);
+    let _ = app.emit_to(LABEL, "game-menu-passive", on);
+}
+
+/// Открыть меню и дать им управлять (мышь и клавиатура — у меню)
 pub fn show(app: &AppHandle) {
     let Some(w) = layer(app) else { return };
     let fg = win::foreground();
     if fg != 0 && fg != crate::pins::hwnd_of(&w) {
         PREVIOUS.store(fg, Ordering::Relaxed);
     }
-    crate::pins::cover(&w);
+    RESTORE.store(false, Ordering::Relaxed);
+    if !w.is_visible().unwrap_or(false) {
+        crate::pins::cover(&w);
+    }
+    set_passive(app, &w, false);
     let _ = w.show();
     // Выше слоя закреплённых окон и подсказки
     crate::pins::raise_window(&w);
     let _ = w.set_focus();
+    // Подсказка в углу не нужна, пока меню на экране (у закреплённого меню — своя)
+    crate::overlay::hide_hint(app);
     let _ = w.emit("game-menu-shown", ());
 }
 
+/// Закреплённое меню: оставить на экране, а мышь и клавиатуру вернуть в игру
+fn release(app: &AppHandle, w: &WebviewWindow) {
+    set_passive(app, w, true);
+    win::activate(PREVIOUS.load(Ordering::Relaxed));
+}
+
+/// Спрятать совсем (и закреплённое — тоже)
 pub fn hide(app: &AppHandle) {
     let Some(w) = app.get_webview_window(LABEL) else { return };
     if !w.is_visible().unwrap_or(false) {
         return;
     }
+    let was_active = !PASSIVE.load(Ordering::Relaxed);
     let _ = w.hide();
-    win::activate(PREVIOUS.swap(0, Ordering::Relaxed));
+    set_passive(app, &w, false);
+    if was_active {
+        win::activate(PREVIOUS.swap(0, Ordering::Relaxed));
+    }
+    crate::overlay::show_hint_if_hidden(app);
 }
 
-/// Клавиша вызова в игре: открыть или спрятать меню
+/// Меню просят убрать (клавиша, Esc, клик в пустое место): закреплено — отпустить в игру, иначе спрятать
+fn dismiss(app: &AppHandle) {
+    let Some(w) = app.get_webview_window(LABEL) else { return };
+    if pinned(app) {
+        release(app, &w);
+    } else {
+        hide(app);
+    }
+}
+
+/// Игрок ушёл из игры или вернулся в неё
+pub fn game_changed(app: &AppHandle, in_game: bool) {
+    if !in_game {
+        // Закреплённое меню вернём, когда игрок вернётся в игру
+        RESTORE.store(visible(app) && pinned(app), Ordering::Relaxed);
+        hide(app);
+    } else if RESTORE.swap(false, Ordering::Relaxed) {
+        let Some(w) = layer(app) else { return };
+        crate::pins::cover(&w);
+        set_passive(app, &w, true);
+        win::show_quiet(crate::pins::hwnd_of(&w));
+        crate::pins::raise_window(&w);
+        crate::overlay::hide_hint(app);
+    }
+}
+
+/// Клавиша вызова в игре: открыть меню, убрать его или (закреплённое) снова дать управлять
 pub fn toggle(app: &AppHandle) {
     if visible(app) {
-        hide(app);
+        if PASSIVE.load(Ordering::Relaxed) {
+            show(app);
+        } else {
+            dismiss(app);
+        }
     } else {
         // Обычное окно программы поверх игры не нужно, когда открыто меню
         if let Some(m) = app.get_webview_window("main").filter(|m| m.is_visible().unwrap_or(false)) {
@@ -144,7 +222,8 @@ pub fn game_menu_save(app: AppHandle, layout: Value) -> Result<(), String> {
     fs::rename(&tmp, &p).map_err(|e| e.to_string())
 }
 
+/// Esc или клик в пустое место экрана
 #[tauri::command]
 pub fn game_menu_hide(app: AppHandle) {
-    hide(&app);
+    dismiss(&app);
 }
