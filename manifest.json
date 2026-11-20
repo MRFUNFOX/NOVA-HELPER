@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.19-1142",
- "generatedAt": "2026-11-19T11:42:32.384Z",
+ "dbVersion": "2026.11.20-0220",
+ "generatedAt": "2026-11-20T02:20:48.361Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -21,13 +21,13 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406248/",
-   "sha256": "79be39b17cb24c9fdf42a26a7ea88f9932828e4ee8d37cb9160521aec6cf1f74",
-   "size": 19959,
-   "path": "docs/project_406248.58a72e7f44a5.json",
+   "sha256": "567e113191287ed8e76e95ec0e1a08751c1a891f155e347d3e68761e49113b63",
+   "size": 20140,
+   "path": "docs/project_406248.3861bcba1572.json",
    "stats": {
-    "nodes": 24,
+    "nodes": 23,
     "punishments": 19,
-    "images": 16
+    "images": 0
    }
   },
   {
@@ -231,9 +231,9 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/409353/",
-   "sha256": "e2b9ad807e0fbfef873701e9e1f0e6f389ef302854e30ce08966a6c36bd2e929",
-   "size": 30464,
-   "path": "docs/project_409353.25225621445b.json",
+   "sha256": "ff5b0e12d27f3c4e25e240e6e0f5f183d2dd544d3add651f1938dae1d78c1a6f",
+   "size": 32598,
+   "path": "docs/project_409353.ee6a9518ebba.json",
    "stats": {
     "nodes": 49,
     "punishments": 40,
@@ -336,9 +336,9 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/406242/",
-   "sha256": "02dcee77f62ace14b07b79b35162ac173190cdb96273ba7ceec9a58a6ab77d42",
-   "size": 100755,
-   "path": "docs/project_406242.1d5816bb5c88.json",
+   "sha256": "72e31446e15db0a4d85e6e1548c7f7b453785e083fc293f5e046f3fbd0c85e41",
+   "size": 88405,
+   "path": "docs/project_406242.1ee9f3e9e55b.json",
    "stats": {
     "nodes": 116,
     "punishments": 103,
@@ -486,11 +486,11 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/406244/",
-   "sha256": "8c4c4ded0d0e3aeb392267b705bbe8841f716648d5a62ec2777d6d1d8d184b8e",
-   "size": 56033,
-   "path": "docs/project_406244.e79f5899d0d5.json",
+   "sha256": "5553b9cb98f7b04dc37a6ccf612c71ab414d83f4274652a3024012ab258dbc1b",
+   "size": 56111,
+   "path": "docs/project_406244.8e4bccfc4135.json",
    "stats": {
-    "nodes": 92,
+    "nodes": 91,
     "punishments": 52,
     "images": 2
    }
@@ -1081,5 +1081,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.19-1142.json"
+ "changelog": "changelog/2026.11.20-0220.json"
 }
