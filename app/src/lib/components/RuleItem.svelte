@@ -113,6 +113,18 @@
   {/each}
 {/snippet}
 
+<!-- Картинки с форума: у пунктов, а также у заголовков и описаний разделов (карты зон, схемы мероприятий) -->
+{#snippet pictures()}
+  {#each node.images as img (img.src)}
+    <figure class="sk still">
+      <img src={img.url ?? img.src} alt={img.alt ?? 'Иллюстрация к пункту'} loading="lazy"
+        onload={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('ready')}
+        onerror={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('broken')} />
+      <figcaption><button class="link" onclick={() => app.openLink(img.src)}>Картинка не загрузилась — открыть на форуме</button></figcaption>
+    </figure>
+  {/each}
+{/snippet}
+
 {#if shown}
   {#if structural && depth === 0}
     <!-- Раздел: карточка -->
@@ -132,6 +144,7 @@
         <div class="sec-body" transition:slide={fold}>
           {#if restText}<div class="intro selectable"><RichText text={restText} /></div>{/if}
           {@render annotations(node.annotations)}
+          {#if node.images.length}<div class="pics">{@render pictures()}</div>{/if}
           {#each children as child, i (child.id)}
             <!-- Большие разделы достраиваются по главам, чтобы не подвешивать окно -->
             <Lazy eager={i < 3 || contains(child, focusId)} estimate={estimate([child])} bare>
@@ -151,6 +164,7 @@
       </h3>
       {#if restText}<div class="intro selectable"><RichText text={restText} /></div>{/if}
       {@render annotations(node.annotations)}
+      {#if node.images.length}<div class="pics">{@render pictures()}</div>{/if}
       {#each children as child (child.id)}
         <RuleItem node={child} {doc} depth={depth + 1} {law} />
       {/each}
@@ -190,14 +204,7 @@
 
         {@render annotations(node.annotations)}
 
-        {#each node.images as img (img.src)}
-          <figure class="sk still">
-            <img src={img.url ?? img.src} alt={img.alt ?? 'Иллюстрация к пункту'} loading="lazy"
-              onload={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('ready')}
-              onerror={(e) => (e.currentTarget as HTMLImageElement).closest('figure')!.classList.add('broken')} />
-            <figcaption><button class="link" onclick={() => app.openLink(img.src)}>Картинка не загрузилась — открыть на форуме</button></figcaption>
-          </figure>
-        {/each}
+        {@render pictures()}
 
         {#if node.punishments.length}<Punishments items={node.punishments} />{/if}
 
@@ -270,6 +277,7 @@
   .sec-body { padding: 4px 16px 10px; }
 
   .intro { color: var(--text-dim); font-size: var(--fs-sm); margin: 10px 0 4px; }
+  .pics { margin: 0 0 12px; }
 
   /* ── Параграф ── */
   .para { margin-top: 6px; }

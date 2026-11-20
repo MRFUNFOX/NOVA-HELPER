@@ -30,7 +30,7 @@
     window.addEventListener('resize', resize);
     // Открыли меню — свежие закрепки и вход в «Управление» (могли поменяться в основном окне)
     let off: (() => void) | undefined;
-    void backend.on('game-menu-shown', () => { void app.loadPins(); void learn.checkSession(); }).then((f) => (off = f));
+    void backend.on('game-menu-shown', () => { void app.reloadDbIfChanged(); void app.loadPins(); void learn.checkSession(); }).then((f) => (off = f));
     let offPassive: (() => void) | undefined;
     void backend.on('game-menu-passive', (on) => { gm.passive = !!on; }).then((f) => (offPassive = f));
     return () => { window.removeEventListener('resize', resize); off?.(); offPassive?.(); };

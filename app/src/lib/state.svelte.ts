@@ -274,6 +274,20 @@ class AppState {
     this.loaded = true;
   }
 
+  /** Меню поверх игры — отдельное окно: правила могли скачаться или обновиться в основном окне.
+   *  Перечитать с диска и заменить, только если они правда изменились. */
+  async reloadDbIfChanged() {
+    try {
+      const db = await backend.loadDb();
+      const was = this.db.manifest?.generatedAt ?? '';
+      const now = db.manifest?.generatedAt ?? '';
+      if (now && (now !== was || !this.ready)) {
+        // Закрепки после обновления правил поправляет основное окно — здесь только показываем
+        this.setDb(db);
+      }
+    } catch { /* оставляем то, что есть */ }
+  }
+
   /** quiet — для меню поверх игры: без проверки обновлений (её делает основное окно) */
   async start(quiet = false) {
     const [settings, db, version] = await Promise.all([backend.getSettings(), backend.loadDb(), backend.version()]);
