@@ -30,8 +30,8 @@
     <ul>
       {#each app.pins as p (p.key)}
         <li>
-          <span class="badge" class:law={p.law} class:buy={p.kind === 'buyer'}>{#if p.kind === 'buyer'}<Icon name="chartline" size={14} />{:else}{p.badge}{/if}</span>
-          <span class="t"><b>{p.kind === 'buyer' ? p.buyer?.item ?? p.badge : p.text.split('\n')[0]}</b><small>{p.doc}</small></span>
+          <span class="badge" class:law={p.law} class:buy={!!p.kind}>{#if p.kind === 'buyer'}<Icon name="chartline" size={14} />{:else if p.kind === 'calc'}<Icon name="calc" size={14} />{:else}{p.badge}{/if}</span>
+          <span class="t"><b>{p.kind === 'buyer' ? p.buyer?.item ?? p.badge : p.kind === 'calc' ? p.badge : p.text.split('\n')[0]}</b><small>{p.doc}</small></span>
           <button class="x" aria-label="Открепить" title="Открепить" onclick={() => remove(p.key)}><Icon name="close" size={14} /></button>
         </li>
       {/each}

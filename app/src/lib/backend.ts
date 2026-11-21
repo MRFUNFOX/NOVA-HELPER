@@ -307,6 +307,16 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
     }
     case 'pins_get': {
       if (params.has('sample') && !mockState.pins.length) mockState.pins = SAMPLE_PINS.map((p) => ({ ...p }));
+      // ?calcpins — окна калькулятора первого профиля (для проверки слоя окон в браузере)
+      if (params.has('calcpins') && !mockState.pins.some((p) => p.kind === 'calc')) {
+        try {
+          const prof = (JSON.parse(localStorage.getItem('nova.calc') ?? '[]') as { id: string }[])[0];
+          if (prof) for (const type of ['sum', 'list', 'chart', 'cats'] as const) {
+            const calc = { type, prof: prof.id, period: 'week' as const };
+            mockState.pins.push({ key: `calc:${type}:${prof.id}:week`, docId: '', nodeId: '', badge: type, doc: 'Калькулятор', law: false, text: '', punish: [], kind: 'calc', calc, x: 40, y: 40 + 175 * ['sum', 'list', 'chart', 'cats'].indexOf(type) });
+          }
+        } catch { /* нет данных */ }
+      }
       if (params.has('editor')) mockState.editor = true;
       const enabled = !!mockState.settings.devMode || params.has('sample');
       return { enabled, pins: mockState.pins, editorKey: mockState.settings.editorHotkey ?? 'Alt+Shift+Z', editor: mockState.editor,

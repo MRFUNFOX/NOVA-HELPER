@@ -2,6 +2,8 @@
   // Калькулятор прибыли: список профилей → профиль (сводка, записи, категории, график) → новая запись.
   // Утверждённый дизайн — прототип «Калькулятор прибыли» в Claude Design. Пока виден только в режиме разработчика.
   import { app } from '../state.svelte';
+  import { backend } from '../backend';
+  import { CALC_LIMIT, calcPinKey, type CalcPinData, type Pin } from '../pins';
   import { calc } from '../calc.svelte';
   import {
     CATS, MAX_PROFILES, balanceOf, daysAgo, byCat, byDay, catOf, dateOfAgo, dayMonth, dayName, digits, groupDigits, hhmm, inPeriod,
@@ -31,6 +33,43 @@
   const days = $derived(byDay(list, now));
   const PERIODS: [Period, string][] = [['day', 'Сегодня'], ['week', 'Неделя'], ['month', 'Месяц'], ['all', 'Всё время']];
   const WORDS: Record<Period, string> = { day: 'за сегодня', week: 'за 7 дней', month: 'за 30 дней', all: 'за всё время' };
+
+  // ── Закрепить поверх игры: итог и каждая вкладка — отдельным окном ──
+  type PinType = CalcPinData['type'];
+  const PIN_NAME: Record<PinType, string> = { sum: 'Итог', list: 'Записи', cats: 'По категориям', chart: 'График' };
+  const tabPin = $derived<PinType>(tab === 'list' ? 'list' : tab === 'cats' ? 'cats' : 'chart');
+  const pinData = (type: PinType): CalcPinData | null => (prof ? { type, prof: prof.id, period } : null);
+  function isPinnedCalc(type: PinType) { const d = pinData(type); return !!d && app.pins.some((p) => p.key === calcPinKey(d)); }
+  async function togglePin(type: PinType) {
+    const d = pinData(type);
+    if (!d || !prof) return;
+    const key = calcPinKey(d);
+    const was = app.pins.find((p) => p.key === key);
+    if (was) {
+      await backend.pinsRemove(key).catch(() => {});
+      app.pins = app.pins.filter((p) => p !== was);
+      app.notify('Окно откреплено');
+      return;
+    }
+    if (app.pins.filter((p) => p.kind === 'calc').length >= CALC_LIMIT) {
+      app.notify(`Можно закрепить не больше ${CALC_LIMIT} окон калькулятора — открепите какое-нибудь`, 'error');
+      return;
+    }
+    const pin: Pin = { key, docId: '', nodeId: '', badge: PIN_NAME[type], doc: `Калькулятор · ${prof.name}`, law: false, text: '', punish: [], kind: 'calc', calc: d };
+    const next = [...app.pins, pin];
+    try {
+      await backend.pinsSet(next);
+      app.pins = next;
+      app.notify(`${PIN_NAME[type]} — поверх игры. Двигать окна — ${app.editorKey.replaceAll('+', ' + ')}`);
+    } catch (err) { app.notify(String(err), 'error'); }
+  }
+  /** Профиль удалён — его окна поверх игры убираем */
+  async function unpinProfile(id: string) {
+    const next = app.pins.filter((p) => !(p.kind === 'calc' && p.calc?.prof === id));
+    if (next.length === app.pins.length) return;
+    await backend.pinsSet(next).catch(() => {});
+    app.pins = next;
+  }
 
   // ── График ──
   const H = 206;
@@ -100,6 +139,7 @@
   function doDelete() {
     if (!dlgP) return;
     const name = dlgP.name;
+    void unpinProfile(dlgP.id);
     calc.remove(dlgP.id); dlg = null;
     app.notify(`Профиль «${name}» удалён`);
   }
@@ -146,7 +186,12 @@
       </div>
       <div class="sum">
         <div class="grow">
-          <div class="cap">Прибыль {WORDS[period]}</div>
+          <div class="cap">Прибыль {WORDS[period]}
+            {#if app.pinsEnabled}
+              {@const on = isPinnedCalc('sum')}
+              <button class="pinb" class:on aria-pressed={on} title={on ? 'Открепить итог' : 'Закрепить итог поверх игры'} aria-label={on ? 'Открепить итог' : 'Закрепить итог поверх игры'} onclick={() => togglePin('sum')}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3zM12 14v7" /></svg></button>
+            {/if}
+          </div>
           <div class="net" style="color: {tone(sum.net)}">{signed(sum.net)}</div>
         </div>
         <div class="ie">
@@ -165,6 +210,11 @@
         {#each [['list', 'Записи'], ['cats', 'По категориям'], ['chart', 'График']] as [id, label] (id)}
           <button class="tab" class:on={tab === id} role="tab" aria-selected={tab === id} onclick={() => (tab = id as typeof tab)}>{label}</button>
         {/each}
+        {#if app.pinsEnabled}
+          {@const on = isPinnedCalc(tabPin)}
+          {@const tip = (on ? 'Открепить: ' : 'Закрепить поверх игры: ') + PIN_NAME[tabPin].toLowerCase()}
+          <button class="pinb tabpin" class:on aria-pressed={on} title={tip} aria-label={tip} onclick={() => togglePin(tabPin)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3zM12 14v7" /></svg></button>
+        {/if}
       </div>
     </div>
 
@@ -414,7 +464,11 @@
   .chip { height: 30px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text-dim); font-size: 12.5px; font-weight: 700; cursor: pointer; }
   .chip.on { background: var(--surface-3); color: var(--text); }
   .sum { display: flex; align-items: flex-end; gap: 16px; margin-top: 14px; }
-  .cap { font-size: 12px; font-weight: 800; color: var(--text-dim); }
+  .cap { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; color: var(--text-dim); }
+  .pinb { width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 7px; background: transparent; color: #6c7078; display: inline-grid; place-items: center; cursor: pointer; }
+  .pinb:hover { background: var(--surface-2); color: #d5d7dc; }
+  .pinb.on { color: var(--accent); background: rgba(255, 195, 0, 0.12); }
+  .tabpin { align-self: center; margin-left: 4px; }
   .net { font-size: 40px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; font-variant-numeric: tabular-nums; }
   .ie { display: flex; flex-direction: column; gap: 3px; text-align: right; font-size: 13px; padding-bottom: 6px; color: var(--text-muted); }
   .bal { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.3); font-size: 13px; color: var(--text-muted); }

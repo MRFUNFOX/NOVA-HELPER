@@ -186,9 +186,9 @@ class AppState {
   get buyersEnabled() { return this.pinsEnabled && (PUBLIC.buyers || this.devMode); }
   /** Калькулятор прибыли (экспериментально): открыт всем или режим разработчика */
   get calcEnabled() { return PUBLIC.calc || this.devMode; }
-  isPinned(nodeId: string) { return this.pins.some((p) => p.kind !== 'buyer' && p.nodeId === nodeId); }
-  /** Закреплённые пункты правил (без окон скупщика) */
-  get rulePins() { return this.pins.filter((p) => p.kind !== 'buyer'); }
+  isPinned(nodeId: string) { return this.pins.some((p) => !p.kind && p.nodeId === nodeId); }
+  /** Закреплённые пункты правил (без окон скупщика и калькулятора) */
+  get rulePins() { return this.pins.filter((p) => !p.kind); }
 
   /** Булавка у пункта: закрепить поверх игры или открепить */
   /** Анонимная статистика — только с разрешения игрока (как track в stats.ts) */
@@ -199,7 +199,7 @@ class AppState {
   async togglePin(nodeId: string) {
     const e = this.index.byId.get(nodeId);
     if (!e) return;
-    const was = this.pins.find((p) => p.nodeId === nodeId);
+    const was = this.pins.find((p) => !p.kind && p.nodeId === nodeId);
     if (was) {
       await backend.pinsRemove(was.key).catch(() => {});
       this.pins = this.pins.filter((p) => p !== was);
@@ -227,8 +227,8 @@ class AppState {
     const removed: Pin[] = [];
     const next: Pin[] = [];
     for (const p of this.pins) {
-      // Окна скупщика сверяет и обновляет prices.svelte.ts
-      if (p.kind === 'buyer') { next.push(p); continue; }
+      // Окна скупщика сверяет и обновляет prices.svelte.ts, окна калькулятора берут данные сами
+      if (p.kind) { next.push(p); continue; }
       const e = this.index.byId.get(p.nodeId);
       if (!e || e.doc.id !== p.docId) { removed.push(p); continue; }
       const fresh = pinFrom(e, shortTitle(e.doc.title));

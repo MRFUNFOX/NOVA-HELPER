@@ -6,7 +6,8 @@
    */
   import { backend, type HintInfo } from './lib/backend';
   import { keys } from './lib/hotkey';
-  import { BUYER_W, PIN_BG_DEFAULT, PIN_FONT, PIN_W, type Pin } from './lib/pins';
+  import { BUYER_W, CALC_W, PIN_BG_DEFAULT, PIN_FONT, PIN_W, type Pin } from './lib/pins';
+  import CalcPin from './lib/components/CalcPin.svelte';
   import { fmtPrice, minutesLeft, timeLabel } from './lib/prices';
   import Icon from './lib/components/Icon.svelte';
 
@@ -26,6 +27,7 @@
   const W = (p: Pin) => {
     // Окно продуктов узкое — по содержимому, пока игрок сам не поменял ширину
     if (p.kind === 'buyer' && p.w === undefined) return p.buyer?.group === 'products' ? 0 : BUYER_W;
+    if (p.kind === 'calc' && p.w === undefined) return CALC_W;
     return Math.min(PIN_W.max, Math.max(p.kind === 'buyer' ? BUYER_MIN : PIN_W.min, p.w ?? PIN_W.default));
   };
   /** Окна скупщика можно сделать уже, чем пункты правил */
@@ -311,6 +313,8 @@
             <span>цель {fmtPrice(b.goal)}</span>
           </div>
         {/if}
+      {:else if p.kind === 'calc' && p.calc}
+        <CalcPin d={p.calc} />
       {:else}
         <div class="h"><span class="badge">{p.badge}</span><span class="doc">{p.doc}</span></div>
         <p class="text">{p.text}</p>

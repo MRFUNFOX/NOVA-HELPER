@@ -5,6 +5,7 @@
 import type { RuleNode } from '@shared/types';
 import type { Entry } from './search';
 import type { BuyerPinData } from './prices';
+import type { Period } from './calc';
 import { nodeBadge } from './search';
 
 export interface Pin {
@@ -20,9 +21,10 @@ export interface Pin {
   /** Текст пункта; подпункты — отдельными строками */
   text: string;
   punish: string[];
-  /** Окно скупщика (цены товара) — вместо пункта правил */
-  kind?: 'buyer';
+  /** Окно скупщика (цены товара) или калькулятора — вместо пункта правил */
+  kind?: 'buyer' | 'calc';
   buyer?: BuyerPinData;
+  calc?: CalcPinData;
   // ── раскладка ──
   x?: number;
   y?: number;
@@ -35,7 +37,18 @@ export interface Pin {
   locked?: boolean;
 }
 
+/** Окно калькулятора: что показывать, из какого профиля и за какой период (данные окно берёт само) */
+export interface CalcPinData {
+  type: 'sum' | 'list' | 'cats' | 'chart';
+  prof: string;
+  period: Period;
+}
+
 export const PIN_LIMIT = 8;
+/** Окон калькулятора — отдельно от правил и скупщиков */
+export const CALC_LIMIT = 8;
+export const CALC_W = 320;
+export const calcPinKey = (d: CalcPinData) => `calc:${d.type}:${d.prof}:${d.type === 'list' ? '' : d.period}`;
 /** Окон скупщика — отдельно от пунктов правил */
 export const BUYER_LIMIT = 8;
 /** Ширина окна скупщика по умолчанию (продукты — по содержимому) */
