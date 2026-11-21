@@ -94,7 +94,7 @@
     const w = pinW(p.w), QW = 460;
     const h = Math.min(720, gm.vh - 32);
     const x = p.x! + w + 12 + QW <= gm.vw - 8 ? p.x! + w + 12 : Math.max(8, p.x! - QW - 12);
-    quick = { key: p.key, prof: p.calc!.prof, x, y: Math.max(16, Math.min(p.y! - 34, gm.vh - h - 16)), h };
+    quick = { key: p.key, prof: p.calc!.prof, x, y: Math.max(16, Math.min(p.y!, gm.vh - h - 16)), h };
   }
   $effect(() => { if (gm.passive) quick = null; });
   $effect(() => { if (quick && !sumPins.some((p) => p.key === quick!.key)) quick = null; });
@@ -174,8 +174,8 @@
     {/if}
     {#if !gm.passive}
       {#each sumPins as p (p.key)}
-        <button class="qadd" class:on={quick?.key === p.key} style="left: {p.x! + pinW(p.w)}px; top: {p.y! - 34}px" title="Записать доход или расход в «{p.doc.replace('Калькулятор · ', '')}»" aria-expanded={quick?.key === p.key} onclick={() => openQuick(p)}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Записать
+        <button class="qadd" class:on={quick?.key === p.key} style="left: {p.x! + pinW(p.w) - 8}px; top: {p.y! + 8}px" title="Записать доход или расход" aria-label="Записать доход или расход в «{p.doc.replace('Калькулятор · ', '')}»" aria-expanded={quick?.key === p.key} onclick={() => openQuick(p)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       {/each}
       {#if quick}<CalcQuick prof={quick.prof} x={quick.x} y={quick.y} h={quick.h} onclose={() => (quick = null)} />{/if}
@@ -357,11 +357,9 @@
   .bar.v .pinb .tip { top: 0; transform: none; }
   .layer.passive .tip { display: none; }
   /* «+» у закреплённого итога калькулятора */
-  /* Как кнопки над окнами в редакторе окон: тёмная плашка над правым верхним углом */
-  .qadd { position: absolute; z-index: 7; transform: translateX(-100%); display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px 0 9px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-dim); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; pointer-events: auto; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); white-space: nowrap; }
-  .qadd svg { color: var(--accent); }
-  .qadd:hover { color: var(--text); border-color: var(--accent-line); }
-  .qadd.on { color: var(--text); border-color: var(--accent-line); background: var(--accent-tint); }
+  /* Маленькая кнопка в правом верхнем углу самого окна — как кнопки в редакторе окон, места не занимает */
+  .qadd { position: absolute; z-index: 7; transform: translateX(-100%); display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-radius: 6px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--accent); cursor: pointer; pointer-events: auto; }
+  .qadd:hover, .qadd.on { border-color: var(--accent-line); background: var(--accent-tint); }
   /* «Заработок» со списком */
   .grp { position: relative; }
   .nb.on:not(.open)::after { display: none; }
