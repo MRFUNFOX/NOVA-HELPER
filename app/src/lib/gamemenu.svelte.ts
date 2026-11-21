@@ -2,7 +2,7 @@
 // Утверждённый дизайн — claude/game-menu-spec.md в проекте, образец — прототип в Claude Design.
 import { backend } from './backend';
 
-export type WinId = 'rules' | 'laws' | 'buyers' | 'ai' | 'pins' | 'settings' | 'admin';
+export type WinId = 'rules' | 'laws' | 'buyers' | 'calc' | 'ai' | 'pins' | 'settings' | 'admin';
 export type Dock = 'bottom' | 'free' | 'left' | 'right';
 
 /** Обычный размер окна и меньше чего оно не сжимается (подобрано по содержимому). h = 0 — высота по содержимому. */
@@ -10,6 +10,7 @@ export const WIN: Record<WinId, { w: number; h: number; minW: number; minH: numb
   rules: { w: 820, h: 680, minW: 640, minH: 420 },
   laws: { w: 820, h: 680, minW: 660, minH: 420 },
   buyers: { w: 840, h: 680, minW: 800, minH: 440 },
+  calc: { w: 580, h: 760, minW: 480, minH: 520 },
   ai: { w: 440, h: 640, minW: 400, minH: 420 },
   pins: { w: 440, h: 0, minW: 420, minH: 0 },
   settings: { w: 820, h: 680, minW: 700, minH: 420 },

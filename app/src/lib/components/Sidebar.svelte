@@ -32,7 +32,7 @@
     return () => ro.disconnect();
   });
 
-  function go(view: 'changes' | 'settings' | 'buyers' | 'admin') {
+  function go(view: 'changes' | 'settings' | 'buyers' | 'calc' | 'admin') {
     app.view = { kind: view };
     app.sidebarOpen = false;
   }
@@ -89,14 +89,22 @@
       {/if}
     </button>
 
-    {#if app.buyersEnabled}
+    {#if app.buyersEnabled || app.calcEnabled}
       {#if !rail}<p class="caption gap">Инструменты</p>{:else}<div class="divider"></div>{/if}
+    {/if}
+    {#if app.buyersEnabled}
       <button class="item" class:active={app.view.kind === 'buyers'} onclick={() => go('buyers')} title={rail ? 'Скупщики' : undefined}>
         <span class="ico"><Icon name="chartline" size={19} />{#if rail && prices.pinned.size}<span class="dot-badge yellow"></span>{/if}</span>
         {#if !rail}
           <span class="label">Скупщики</span>
           {#if prices.pinned.size}<span class="badge yellow" title="Окон с ценами на экране">{prices.pinned.size}</span>{/if}
         {/if}
+      </button>
+    {/if}
+    {#if app.calcEnabled}
+      <button class="item" class:active={app.view.kind === 'calc'} onclick={() => go('calc')} title={rail ? 'Калькулятор прибыли' : undefined}>
+        <span class="ico"><Icon name="calc" size={19} /></span>
+        {#if !rail}<span class="label">Калькулятор</span><span class="badge yellow" title="Экспериментально: функция в разработке">β</span>{/if}
       </button>
     {/if}
   </div>

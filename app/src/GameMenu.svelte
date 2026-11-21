@@ -7,6 +7,7 @@
   import GameDocs from './lib/components/game/GameDocs.svelte';
   import GamePins from './lib/components/game/GamePins.svelte';
   import BuyersView from './lib/components/BuyersView.svelte';
+  import CalcView from './lib/components/CalcView.svelte';
   import AiPanel from './lib/components/AiPanel.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
   import AdminView from './lib/components/AdminView.svelte';
@@ -49,11 +50,18 @@
   }
 
   // ── Кнопки меню ──
-  type Item = { sep: true } | { id: WinId; label: string; icon: IconName; badge?: number; yellow?: boolean; iconOnly?: boolean };
+  type Kid = { id: WinId; label: string; sub: string; icon: IconName };
+  type Item = { sep: true } | { group: true; label: string; icon: IconName; kids: Kid[] } | { id: WinId; label: string; icon: IconName; badge?: number; yellow?: boolean; iconOnly?: boolean };
   const items = $derived.by<Item[]>(() => {
     const out: Item[] = [{ id: 'rules', label: 'Правила', icon: 'scroll' }];
     if (app.hasLaws) out.push({ id: 'laws', label: 'Законы', icon: 'scale' });
-    if (app.buyersEnabled) out.push({ sep: true }, { id: 'buyers', label: 'Скупщики', icon: 'chartline' });
+    // «Заработок»: скупщики и калькулятор под одной кнопкой (пока калькулятор — только в режиме разработчика)
+    if (app.calcEnabled) {
+      const kids: Kid[] = [];
+      if (app.buyersEnabled) kids.push({ id: 'buyers', label: 'Скупщики', sub: 'Цены скупщиков за час', icon: 'chartline' });
+      kids.push({ id: 'calc', label: 'Калькулятор', sub: 'Доходы и расходы', icon: 'calc' });
+      out.push({ sep: true }, { group: true, label: 'Заработок', icon: 'coin', kids });
+    } else if (app.buyersEnabled) out.push({ sep: true }, { id: 'buyers', label: 'Скупщики', icon: 'chartline' });
     if (app.aiEnabled) out.push({ sep: true }, { id: 'ai', label: 'ИИ-помощник', icon: 'chat', iconOnly: true });
     out.push({ sep: true });
     if (app.pinsEnabled) out.push({ id: 'pins', label: 'Мои окна поверх игры', icon: 'layers', badge: app.pins.length || undefined, iconOnly: true });
@@ -63,6 +71,16 @@
   });
   // Управление закрыто для игрока — его окно не держим открытым
   $effect(() => { if (!learn.staff && gm.open.includes('admin')) untrack(() => gm.close('admin')); });
+  $effect(() => { if (!app.calcEnabled && gm.open.includes('calc')) untrack(() => gm.close('calc')); });
+
+  // ── Выпадающий список «Заработок»: открывается при наведении, закрывается чуть позже, чем ушла мышь ──
+  let dd = $state(false);
+  let ddTimer: ReturnType<typeof setTimeout> | undefined;
+  const ddEnter = () => { clearTimeout(ddTimer); dd = true; };
+  const ddLeave = () => { clearTimeout(ddTimer); ddTimer = setTimeout(() => (dd = false), 300); };
+  const ddClick = () => { clearTimeout(ddTimer); dd = !dd; };
+  function ddPick(id: WinId) { clearTimeout(ddTimer); dd = false; gm.toggle(id); }
+  $effect(() => { if (drag || gm.passive) dd = false; });
 
   // ── Перетаскивание меню за ручку ──
   let bar: HTMLElement | undefined = $state();
@@ -137,6 +155,9 @@
     {#if isOpen('buyers')}
       <GameWindow id="buyers" title="Скупщики" icon="chartline"><div class="pad"><BuyersView /></div></GameWindow>
     {/if}
+    {#if isOpen('calc') && app.calcEnabled}
+      <GameWindow id="calc" title="Калькулятор прибыли" icon="calc" badge="Экспериментально"><CalcView /></GameWindow>
+    {/if}
     {#if isOpen('ai')}
       <GameWindow id="ai" title="ИИ-помощник" icon="spark">
         {#snippet tools()}
@@ -180,6 +201,27 @@
     {#each items as it, i (i)}
       {#if 'sep' in it}
         <span class="sep" aria-hidden="true"></span>
+      {:else if 'group' in it}
+        {@const anyOpen = it.kids.some((k) => isOpen(k.id))}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="grp" onmouseenter={ddEnter} onmouseleave={ddLeave}>
+          <button class="nb" class:icon={vertical} class:on={anyOpen || dd} class:open={anyOpen} aria-label={it.label} aria-haspopup="menu" aria-expanded={dd} onclick={ddClick}>
+            <Icon name={it.icon} size={18} />
+            {#if !vertical}<span>{it.label}</span><span class="chev" class:up={!dd === !barTop}><Icon name="chevron" size={13} /></span>{/if}
+          </button>
+          {#if dd}
+            <span class="bridge" aria-hidden="true"></span>
+            <div class="menu" role="menu" aria-label={it.label}>
+              {#each it.kids as k (k.id)}
+                <button class="mi" class:on={isOpen(k.id)} role="menuitemcheckbox" aria-checked={isOpen(k.id)} onclick={() => ddPick(k.id)}>
+                  <span class="mico"><Icon name={k.icon} size={17} /></span>
+                  <span class="mt"><b>{k.label}{#if k.id === 'calc'}<em>β</em>{/if}</b><span>{isOpen(k.id) ? 'Открыто — нажмите, чтобы закрыть' : k.sub}</span></span>
+                  {#if isOpen(k.id)}<span class="mdot"></span>{/if}
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
       {:else}
         {@const icon = vertical || it.iconOnly}
         <button class="nb" class:icon class:on={isOpen(it.id)} class:ai={it.id === 'ai'} aria-label={it.label} aria-pressed={isOpen(it.id)} onclick={() => gm.toggle(it.id)}>
@@ -289,6 +331,29 @@
   .bar.v .pinb { width: 48px; height: 20px; margin: 0 0 2px; }
   .bar.v .pinb .tip { top: 0; transform: none; }
   .layer.passive .tip { display: none; }
+  /* «Заработок» со списком */
+  .grp { position: relative; }
+  .nb.on:not(.open)::after { display: none; }
+  .chev { display: grid; margin-left: -2px; opacity: 0.7; transform: rotate(90deg); transition: transform 0.12s; }
+  .chev.up { transform: rotate(-90deg); }
+  .bridge { position: absolute; left: -10px; right: -10px; bottom: 44px; height: 22px; }
+  .menu { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); z-index: 3; width: 280px; padding: 6px; box-sizing: border-box; border-radius: 14px; background: #212226; border: 1px solid #3a3c42; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55); }
+  .bar.top .bridge { bottom: auto; top: 44px; }
+  .bar.top .menu { bottom: auto; top: 60px; }
+  .bar.v .bridge { left: 44px; top: -10px; bottom: -10px; width: 22px; height: auto; right: auto; }
+  .bar.v .menu { left: 60px; top: 50%; bottom: auto; transform: translateY(-50%); }
+  .bar.v.right .bridge { left: auto; right: 44px; }
+  .bar.v.right .menu { left: auto; right: 60px; }
+  .mi { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+  .mi:hover { background: #2a2b30; }
+  .mi.on { background: rgba(255, 195, 0, 0.08); }
+  .mico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: #2c2d32; color: #c8cad0; }
+  .mi.on .mico { background: rgba(255, 195, 0, 0.16); color: var(--accent); }
+  .mt { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .mt b { font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
+  .mt em { font-style: normal; padding: 0 5px; border-radius: 5px; font-size: 10.5px; font-weight: 800; background: var(--accent); color: var(--on-accent); }
+  .mt span { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+  .mdot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
   .passive-tip { position: absolute; right: 24px; bottom: 18px; z-index: 59; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(20, 21, 24, 0.8); color: #d5d7dc; font-size: 12.5px; font-weight: 700; pointer-events: none; }
   .passive-tip :global(svg) { color: var(--accent); }
   .passive-tip kbd { padding: 3px 7px; border-radius: 6px; background: #313238; color: var(--text); font: inherit; font-size: 12px; font-weight: 800; }

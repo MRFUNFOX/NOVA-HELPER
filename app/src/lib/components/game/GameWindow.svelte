@@ -5,8 +5,8 @@
   import Icon, { type IconName } from '../Icon.svelte';
   import { gm, glassVars, WIN, type WinId } from '../../gamemenu.svelte';
 
-  let { id, title, icon, tools, children, ownGlass = true }: {
-    id: WinId; title: string; icon: IconName; tools?: Snippet; children: Snippet; ownGlass?: boolean;
+  let { id, title, icon, tools, children, ownGlass = true, badge = '' }: {
+    id: WinId; title: string; icon: IconName; tools?: Snippet; children: Snippet; ownGlass?: boolean; badge?: string;
   } = $props();
 
   let sec: HTMLElement | undefined = $state();
@@ -96,6 +96,7 @@
   <header onpointerdown={dragStart} onpointermove={dragMove} onpointerup={dragEnd} onpointercancel={dragEnd} ondblclick={home}>
     <Icon name={icon} size={17} />
     <h2>{title}</h2>
+    {#if badge}<span class="xb" title="Функция в разработке: может меняться">{badge}</span><span class="fill"></span>{/if}
     <span class="tools">{@render tools?.()}</span>
     {#if ownGlass}
       <button class="ib" class:own class:open={glassOpen} aria-label="Прозрачность этого окна" aria-expanded={glassOpen} title="Прозрачность этого окна" onclick={() => (glassOpen = !glassOpen)}><Icon name="contrast" size={16} /></button>
@@ -120,6 +121,9 @@
   .gw { pointer-events: auto; display: flex; flex-direction: column; box-sizing: border-box; max-height: 100%; border-radius: var(--radius-lg); background: var(--bg); border: 1px solid var(--border); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); overflow: hidden; color: var(--text); }
   header { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; cursor: grab; user-select: none; touch-action: none; }
   header > :global(svg) { color: var(--accent); flex-shrink: 0; }
+  .xb { padding: 3px 7px; border-radius: 6px; font-size: 11px; font-weight: 800; background: var(--accent); color: var(--on-accent); white-space: nowrap; flex-shrink: 0; }
+  .fill { flex: 1; }
+  h2:has(+ .xb) { flex: 0 1 auto; }
   h2 { margin: 0; flex: 1; min-width: 0; font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tools { display: flex; align-items: center; gap: 4px; }
   .ib { width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-dim); display: grid; place-items: center; cursor: pointer; }

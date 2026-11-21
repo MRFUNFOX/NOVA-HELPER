@@ -12,6 +12,7 @@ export type View =
   | { kind: 'category'; section: Section; category: string }
   | { kind: 'changes' }
   | { kind: 'buyers' }
+  | { kind: 'calc' }
   | { kind: 'settings' }
   /** «Управление»: доводы игроков, разъяснения, команда — только после скрытого входа */
   | { kind: 'admin' };
@@ -183,6 +184,8 @@ class AppState {
   get pinsEnabled() { return PUBLIC.pins || this.devMode; }
   /** Цены скупщиков: открыто всем или режим разработчика (нужны и окна поверх игры) */
   get buyersEnabled() { return this.pinsEnabled && (PUBLIC.buyers || this.devMode); }
+  /** Калькулятор прибыли (экспериментально): открыт всем или режим разработчика */
+  get calcEnabled() { return PUBLIC.calc || this.devMode; }
   isPinned(nodeId: string) { return this.pins.some((p) => p.kind !== 'buyer' && p.nodeId === nodeId); }
   /** Закреплённые пункты правил (без окон скупщика) */
   get rulePins() { return this.pins.filter((p) => p.kind !== 'buyer'); }

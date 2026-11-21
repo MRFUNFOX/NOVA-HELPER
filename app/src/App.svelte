@@ -10,6 +10,7 @@
   import CategoryView from './lib/components/CategoryView.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
   import BuyersView from './lib/components/BuyersView.svelte';
+  import CalcView from './lib/components/CalcView.svelte';
   import AdminView from './lib/components/AdminView.svelte';
   import { learn } from './lib/learn.svelte';
   import NewsBuyers from './lib/components/NewsBuyers.svelte';
@@ -172,6 +173,8 @@
                   <AdminView />
                 {:else if app.view.kind === 'buyers' && app.buyersEnabled}
                   <BuyersView />
+                {:else if app.view.kind === 'calc' && app.calcEnabled}
+                  <CalcView page />
                 {:else if app.view.kind === 'changes'}
                   <Changes />
                 {:else if app.view.kind === 'category'}
