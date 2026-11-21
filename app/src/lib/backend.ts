@@ -313,7 +313,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
           const prof = (JSON.parse(localStorage.getItem('nova.calc') ?? '[]') as { id: string }[])[0];
           if (prof) for (const type of ['sum', 'list', 'chart', 'cats'] as const) {
             const calc = { type, prof: prof.id, period: 'week' as const };
-            mockState.pins.push({ key: `calc:${type}:${prof.id}:week`, docId: '', nodeId: '', badge: type, doc: 'Калькулятор', law: false, text: '', punish: [], kind: 'calc', calc, x: 40, y: 40 + 175 * ['sum', 'list', 'chart', 'cats'].indexOf(type) });
+            mockState.pins.push({ key: `calc:${type}:${prof.id}:week`, docId: '', nodeId: '', badge: type, doc: 'Калькулятор', law: false, text: '', punish: [], kind: 'calc', calc, w: Number(params.get('calcw')) || undefined, font: Number(params.get('calcfont')) || undefined, bg: 100, x: 40, y: 40 + 175 * ['sum', 'list', 'chart', 'cats'].indexOf(type) });
           }
         } catch { /* нет данных */ }
       }

@@ -82,9 +82,10 @@
   .doc { min-width: 0; font-size: 0.82em; color: rgba(255, 255, 255, 0.65); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .none { margin: 0; font-size: 0.9em; color: rgba(255, 255, 255, 0.65); }
   b, span, small { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
-  .sum { display: flex; align-items: flex-end; gap: 12px; }
-  .net { flex: 1; font-size: 2em; line-height: 1.1; letter-spacing: -0.5px; white-space: nowrap; }
-  .ie { display: flex; flex-direction: column; gap: 2px; text-align: right; font-size: 0.86em; white-space: nowrap; color: rgba(255, 255, 255, 0.7); }
+  /* Узкое окно или крупный шрифт: «Заработал/Потратил» переносится под сумму, а не вылезает за край */
+  .sum { display: flex; flex-wrap: wrap; align-items: flex-end; column-gap: 12px; row-gap: 4px; }
+  .net { flex: 1 1 auto; min-width: 0; font-size: 2em; line-height: 1.1; letter-spacing: -0.5px; white-space: nowrap; }
+  .ie { display: flex; flex-direction: column; gap: 2px; margin-left: auto; text-align: right; font-size: 0.86em; white-space: nowrap; color: rgba(255, 255, 255, 0.7); }
   .row { display: flex; align-items: center; gap: 9px; padding: 0.28em 0; }
   .row i { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; flex-shrink: 0; }
   .row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.93em; }
@@ -97,8 +98,9 @@
   .bar { position: absolute; left: 0; right: 0; border-radius: 3px 3px 0 0; background: #6fdc9a; }
   .bar.neg { border-radius: 0 0 3px 3px; background: #ff8a8a; }
   .lbl { position: absolute; left: -4px; right: -4px; text-align: center; font-size: 10.5px; color: rgba(255, 255, 255, 0.55); }
-  .crow { display: grid; grid-template-columns: 6em 1fr 6.6em; align-items: center; gap: 8px; padding: 0.2em 0; font-size: 0.9em; }
-  .crow b { white-space: nowrap; text-align: right; }
+  .crow { display: grid; grid-template-columns: minmax(0, 6em) minmax(20px, 1fr) auto; align-items: center; gap: 8px; padding: 0.2em 0; font-size: 0.9em; }
+  .crow > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .crow b { white-space: nowrap; text-align: right; min-width: 5.6em; }
   .track { height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
   .track span { display: block; height: 100%; border-radius: 4px; }
 </style>
