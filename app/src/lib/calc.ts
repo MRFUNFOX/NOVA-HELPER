@@ -14,11 +14,15 @@ export interface Entry {
   note?: string;
 }
 
+/** Цель профиля: «хочу, чтобы было» (баланс) или «хочу заработать ещё» (с момента создания) */
+export interface Goal { kind: 'bal' | 'earn'; sum: number }
+
 export interface Profile {
   id: string;
   name: string;
   /** Баланс, с которого начали считать */
   start: number;
+  goal?: Goal | null;
   created: number;
   /** Записи, свежие первыми */
   entries: Entry[];
@@ -85,6 +89,15 @@ export function totals(entries: Entry[]) {
 }
 
 export const balanceOf = (p: Profile) => p.start + p.entries.reduce((a, e) => a + val(e), 0);
+
+/** Сколько пройдено к цели: cur — баланс («накопить») или заработанное с начала профиля («заработать») */
+export function goalOf(p: Profile | undefined) {
+  if (!p?.goal) return null;
+  const bal = balanceOf(p);
+  const cur = p.goal.kind === 'bal' ? bal : bal - p.start;
+  const pct = Math.max(0, Math.min(100, Math.floor((cur / p.goal.sum) * 100)));
+  return { kind: p.goal.kind, sum: p.goal.sum, cur, pct, done: cur >= p.goal.sum, left: Math.max(0, p.goal.sum - cur) };
+}
 
 /** Записи по дням: свежие дни первыми, внутри дня — свежие первыми */
 export function byDay(entries: Entry[], now: number) {
@@ -164,7 +177,9 @@ export function sanitize(raw: unknown): Profile[] {
       const x = e as Record<string, unknown>;
       return !!x && typeof x.id === 'string' && typeof x.at === 'number' && (x.k === 'inc' || x.k === 'exp') && typeof x.cat === 'string' && typeof x.sum === 'number' && Number.isFinite(x.sum) && x.sum > 0;
     });
-    out.push({ id: o.id, name: o.name.slice(0, 40), start: o.start, created: typeof o.created === 'number' ? o.created : 0, entries });
+    const g = o.goal as Record<string, unknown> | null | undefined;
+    const goal: Goal | null = g && (g.kind === 'bal' || g.kind === 'earn') && typeof g.sum === 'number' && g.sum > 0 ? { kind: g.kind, sum: g.sum } : null;
+    out.push({ id: o.id, name: o.name.slice(0, 40), start: o.start, goal, created: typeof o.created === 'number' ? o.created : 0, entries });
     if (out.length >= MAX_PROFILES) break;
   }
   return out;

@@ -6,7 +6,7 @@
   import { CALC_LIMIT, calcPinKey, type CalcPinData, type Pin } from '../pins';
   import { calc } from '../calc.svelte';
   import {
-    CATS, MAX_PROFILES, balanceOf, daysAgo, byCat, byDay, catOf, dateOfAgo, dayMonth, dayName, digits, groupDigits, hhmm, inPeriod,
+    CATS, MAX_PROFILES, balanceOf, daysAgo, goalOf, byCat, byDay, catOf, dateOfAgo, dayMonth, dayName, digits, groupDigits, hhmm, inPeriod,
     money, perDay, recWord, short, signed, totals, val, weekdayFull, weekdayShort, type Kind, type Period, type Profile,
   } from '../calc';
 
@@ -125,15 +125,29 @@
   let pName = $state('');
   let pStart = $state('');
   let menu = $state('');
-  let dlg = $state<{ mode: 'ren' | 'del'; id: string } | null>(null);
+  let dlg = $state<{ mode: 'ren' | 'del' | 'goal'; id: string } | null>(null);
+  // Цель: включена ли, что значит сумма («чтобы было» / «заработать ещё»), сумма
+  let gOn = $state(false);
+  let gKind = $state<'bal' | 'earn'>('bal');
+  let gSum = $state('');
+  const gNum = $derived(digits(gSum));
+  const goalNow = $derived(gOn && gNum ? { kind: gKind, sum: gNum } : null);
+  const goalOk = $derived(!gOn || gNum > 0);
+  const pg = $derived(goalOf(prof));
   let rName = $state('');
   const startOk = $derived(/\d/.test(pStart));
   const dlgP = $derived(dlg ? calc.profiles.find((p) => p.id === dlg!.id) : undefined);
   const defName = $derived(`Профиль ${calc.profiles.length + 1}`);
-  function openCreate() { if (calc.atLimit) return; creating = true; pName = ''; pStart = ''; menu = ''; }
+  function openCreate() { if (calc.atLimit) return; creating = true; pName = ''; pStart = ''; menu = ''; gOn = false; gKind = 'bal'; gSum = ''; }
   function create() {
-    if (!startOk) return;
-    if (calc.create(pName, digits(pStart))) { creating = false; tab = 'list'; sel = 0; app.notify('Профиль создан'); }
+    if (!startOk || !goalOk) return;
+    if (calc.create(pName, digits(pStart), goalNow)) { creating = false; tab = 'list'; sel = 0; app.notify('Профиль создан'); }
+  }
+  function openGoal(p: Profile) { menu = ''; gOn = !!p.goal; gKind = p.goal?.kind ?? 'bal'; gSum = p.goal ? groupDigits(p.goal.sum) : ''; dlg = { mode: 'goal', id: p.id }; }
+  function doGoal() {
+    if (!dlgP || !goalOk) return;
+    calc.setGoal(dlgP.id, goalNow); dlg = null;
+    app.notify(goalNow ? 'Цель сохранена' : 'Цель убрана');
   }
   function openProfile(id: string) { calc.open(id); tab = 'list'; sel = 0; menu = ''; }
   function doDelete() {
@@ -155,11 +169,42 @@
     if (dlg) dlg = null; else if (menu) menu = ''; else if (adding) adding = false; else if (creating && calc.profiles.length) creating = false; else return;
     e.preventDefault(); e.stopPropagation();
   }
+  const YEL = '#ffc300';
   const fmtInput = (e: Event) => groupDigits(digits((e.currentTarget as HTMLInputElement).value));
 </script>
 
 {#snippet ico(path: string, size = 18)}
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={path} /></svg>
+{/snippet}
+
+{#snippet goalForm(base: number, step: boolean)}
+  <section class="gsec" class:step>
+    <button class="gtop" role="switch" aria-checked={gOn} onclick={() => (gOn = !gOn)}>
+      <span class="gico2" class:on={gOn}>{@render ico('M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM12 11.4v1.2', 17)}</span>
+      <span class="gtx"><b>Цель</b><span>{gOn ? 'Выключите, если цель не нужна' : 'Необязательно — например, накопить на дом'}</span></span>
+      <span class="tgl" class:on={gOn}><i></i></span>
+    </button>
+    {#if gOn}
+      <div class="lbl"><span>Какая сумма?</span></div>
+      <div class="mbox sm">
+        <span class="dollar" style="color: {gNum ? YEL : '#55585f'}">$</span>
+        <input type="text" inputmode="numeric" placeholder="0" value={gSum} oninput={(e) => (gSum = fmtInput(e))} aria-label="Сумма цели" />
+      </div>
+      <div class="lbl"><span>Что для вас значит эта сумма?</span></div>
+      <div class="gopts" role="radiogroup" aria-label="Что значит сумма цели">
+        <button class:on={gKind === 'bal'} role="radio" aria-checked={gKind === 'bal'} onclick={() => (gKind = 'bal')}>
+          <span class="rd"><i></i></span>
+          <span class="tx"><b>Хочу, чтобы у меня было {gNum ? money(gNum) : '$…'}</b>
+            <span>{!gNum ? 'Например, копите на дом, машину или бизнес.' : base >= gNum ? `У вас уже есть ${money(base)} — цель будет выполнена сразу.` : `Сейчас ${money(base)} — осталось заработать ${money(gNum - base)}.`}</span></span>
+        </button>
+        <button class:on={gKind === 'earn'} role="radio" aria-checked={gKind === 'earn'} onclick={() => (gKind = 'earn')}>
+          <span class="rd"><i></i></span>
+          <span class="tx"><b>Хочу заработать ещё {gNum ? money(gNum) : '$…'}</b>
+            <span>{!gNum ? 'Считается только то, что заработаете дальше.' : step ? `Сейчас ${money(base)} — в итоге будет ${money(base + gNum)}.` : 'Считается всё, что заработано с создания профиля.'}</span></span>
+        </button>
+      </div>
+    {/if}
+  </section>
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -192,7 +237,7 @@
               <button class="pinb" class:on aria-pressed={on} title={on ? 'Открепить итог' : 'Закрепить итог поверх игры'} aria-label={on ? 'Открепить итог' : 'Закрепить итог поверх игры'} onclick={() => togglePin('sum')}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3zM12 14v7" /></svg></button>
             {/if}
           </div>
-          <div class="net" style="color: {tone(sum.net)}">{signed(sum.net)}</div>
+          <div class="net" style="color: {pg?.done ? YEL : tone(sum.net)}">{signed(sum.net)}</div>
         </div>
         <div class="ie">
           <span>Заработал <b class="g">{money(sum.inc)}</b></span>
@@ -205,6 +250,20 @@
         <span class="grow"></span>
         <span>начинали с {money(prof.start)}</span>
       </div>
+      {#if pg}
+        <div class="goal" class:done={pg.done}>
+          <div class="grow-row">
+            <span class="gico">{@render ico('M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM12 11.4v1.2', 16)}</span>
+            <b class="grow">{pg.kind === 'bal' ? 'Цель: накопить ' : 'Цель: заработать '}{money(pg.sum)}</b>
+            <b class="gpct">{pg.done ? 'Достигнута!' : `${pg.pct}%`}</b>
+          </div>
+          <div class="gtrack"><span style="width: {pg.pct}%"></span></div>
+          <div class="gline">
+            {#if pg.done}{pg.kind === 'bal' ? 'На руках' : 'Заработано'} {money(pg.cur)} — цель выполнена. Новую можно поставить в списке профилей (кнопка «⋯»).
+            {:else}{pg.kind === 'bal' ? 'На руках' : 'Заработано'} {money(Math.max(0, pg.cur))} из {money(pg.sum)} · осталось {money(pg.left)}{/if}
+          </div>
+        </div>
+      {/if}
       <button class="add" onclick={openAdd}>{@render ico('M12 5v14M5 12h14', 16)}Добавить доход или расход</button>
       <div class="tabs" role="tablist">
         {#each [['list', 'Записи'], ['cats', 'По категориям'], ['chart', 'График']] as [id, label] (id)}
@@ -307,10 +366,11 @@
       <div class="scroll col">
         {#each calc.profiles as p (p.id)}
           {@const w = weekOf(p)}
+          {@const g = goalOf(p)}
           <div class="pcard">
             <button class="pmain" onclick={() => openProfile(p.id)}>
               <span class="av lg" style={tint(avColor(p), '26')}>{p.name.charAt(0).toUpperCase()}</span>
-              <span class="t"><b>{p.name}</b><span>{recWord(p.entries.length)} · {lastOf(p)}</span></span>
+              <span class="t"><b>{p.name}</b><span>{#if g}<em class="gmini" class:done={g.done}>{g.done ? 'цель достигнута' : `цель ${g.pct}%`}</em> · {/if}{recWord(p.entries.length)} · {lastOf(p)}</span></span>
               <span class="pr"><b>{money(balanceOf(p))}</b><span style="color: {w > 0 ? GREEN : w < 0 ? RED : 'var(--text-muted)'}">{w ? signed(w) + ' за неделю' : 'за неделю без изменений'}</span></span>
             </button>
             <button class="ib" aria-label="Действия с профилем" title="Переименовать или удалить" aria-expanded={menu === p.id} onclick={() => (menu = menu === p.id ? '' : p.id)}>
@@ -319,6 +379,7 @@
             {#if menu === p.id}
               <div class="pop" role="menu">
                 <button role="menuitem" onclick={() => { menu = ''; rName = p.name; dlg = { mode: 'ren', id: p.id }; }}>{@render ico('M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4', 15)}Переименовать</button>
+                <button role="menuitem" onclick={() => openGoal(p)}>{@render ico('M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17zM12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM12 11.4v1.2', 15)}{p.goal ? 'Изменить цель' : 'Задать цель'}</button>
                 <button role="menuitem" class="danger" onclick={() => { menu = ''; dlg = { mode: 'del', id: p.id }; }}>{@render ico('M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13', 15)}Удалить</button>
               </div>
             {/if}
@@ -395,32 +456,41 @@
         <b>Новый профиль</b>
       </div>
       <div class="scroll pad">
-        <p class="pnote" style="margin: 0; padding: 0;">Профиль — отдельный счёт со своими записями. Например, один для обычной игры, другой — чтобы копить на дом или вести перепродажу.</p>
-        <div class="lbl" style="margin-top: 22px;"><span>Сколько у вас денег сейчас?</span></div>
-        <div class="mbox">
-          <span class="dollar" style="color: {startOk ? 'var(--accent)' : '#55585f'}">$</span>
-          <!-- svelte-ignore a11y_autofocus -->
-          <input type="text" inputmode="numeric" placeholder="0" value={pStart} oninput={(e) => { const v = (e.currentTarget as HTMLInputElement).value.replace(/[^\d]/g, ''); pStart = v === '' ? '' : Number(v).toLocaleString('ru-RU'); }} onkeydown={(e) => { if (e.key === 'Enter') create(); }} aria-label="Сколько денег сейчас" autofocus />
-        </div>
-        <p class="hint">Наличные и банк вместе — посмотрите в игре. С этой суммы начнём считать, дальше баланс будет меняться от ваших записей.</p>
-        <div class="lbl" style="margin-top: 22px;"><span>Название <span class="muted">— необязательно</span></span></div>
-        <input class="txt" type="text" maxlength="40" placeholder={defName} bind:value={pName} aria-label="Название профиля" />
-        <div class="sugg">
-          {#each ['Основной', 'Коплю на дом', 'Перепродажа авто', 'Второй персонаж'] as g (g)}<button onclick={() => (pName = g)}>{g}</button>{/each}
-        </div>
+        <p class="pnote" style="margin: 0 2px 2px; padding: 0;">Отдельный счёт со своими записями — например, для обычной игры или чтобы копить на дом.</p>
+        <section class="step">
+          <div class="sh"><span class="num">1</span><b>Сколько у вас денег сейчас?</b></div>
+          <div class="mbox">
+            <span class="dollar" style="color: {startOk ? 'var(--accent)' : '#55585f'}">$</span>
+            <!-- svelte-ignore a11y_autofocus -->
+            <input type="text" inputmode="numeric" placeholder="0" value={pStart} oninput={(e) => { const v = (e.currentTarget as HTMLInputElement).value.replace(/[^\d]/g, ''); pStart = v === '' ? '' : Number(v).toLocaleString('ru-RU'); }} onkeydown={(e) => { if (e.key === 'Enter') create(); }} aria-label="Сколько денег сейчас" autofocus />
+          </div>
+          <p class="hint">Наличные и банк вместе — посмотрите в игре. Дальше баланс будет меняться от ваших записей.</p>
+        </section>
+        <section class="step">
+          <div class="sh"><span class="num">2</span><b>Как назовём?</b><span class="opt">можно пропустить</span></div>
+          <input class="txt" type="text" maxlength="40" placeholder={defName} bind:value={pName} aria-label="Название профиля" />
+          <div class="sugg">
+            {#each ['Основной', 'Коплю на дом', 'Перепродажа авто', 'Второй персонаж'] as g (g)}<button class:on={pName === g} onclick={() => (pName = g)}>{g}</button>{/each}
+          </div>
+        </section>
+        {@render goalForm(digits(pStart), true)}
       </div>
-      <div class="foot"><button class="go" disabled={!startOk || calc.atLimit} onclick={create}>{startOk ? `Создать профиль · баланс ${money(digits(pStart))}` : 'Введите, сколько у вас денег'}</button></div>
+      <div class="foot"><button class="go" disabled={!startOk || !goalOk || calc.atLimit} onclick={create}>{!startOk ? 'Введите, сколько у вас денег' : !goalOk ? 'Введите сумму цели' : 'Создать профиль'}</button></div>
     </div>
   {/if}
 
   <!-- Переименовать / удалить -->
   {#if dlg && dlgP}
     <div class="dim">
-      <div class="dlg" role="dialog" aria-modal="true" aria-label={dlg.mode === 'del' ? 'Удалить профиль' : 'Переименовать профиль'}>
+      <div class="dlg" role="dialog" aria-modal="true" aria-label={dlg.mode === 'del' ? 'Удалить профиль' : dlg.mode === 'goal' ? 'Цель профиля' : 'Переименовать профиль'}>
         {#if dlg.mode === 'del'}
           <b>Удалить профиль «{dlgP.name}»?</b>
           <p>{dlgP.entries.length ? `Вместе с ним удалятся ${recWord(dlgP.entries.length)} и вся история. ` : ''}Вернуть профиль будет нельзя.</p>
           <div class="btns"><button class="ghost" onclick={() => (dlg = null)}>Отмена</button><button class="red" onclick={doDelete}>Удалить</button></div>
+        {:else if dlg.mode === 'goal'}
+          <b>Цель профиля «{dlgP.name}»</b>
+          <div class="dgoal">{@render goalForm(balanceOf(dlgP), false)}</div>
+          <div class="btns"><button class="ghost" onclick={() => (dlg = null)}>Отмена</button><button class="go" disabled={!goalOk} onclick={doGoal}>Сохранить</button></div>
         {:else}
           <b>Переименовать профиль</b>
           <!-- svelte-ignore a11y_autofocus -->
@@ -591,6 +661,47 @@
   .go:disabled, .ghost:disabled { opacity: 0.35; cursor: default; }
   .ghost { height: 50px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 12px; background: transparent; color: #d5d7dc; font-size: 13.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .red { flex: 1; height: 46px; border: 0; border-radius: 12px; background: #e5484d; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; }
+
+  /* Цель */
+  .goal { margin-top: 8px; padding: 11px 12px; border-radius: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border); }
+  .goal.done { background: rgba(255, 195, 0, 0.1); border-color: rgba(255, 195, 0, 0.55); }
+  .grow-row { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+  .gico { display: grid; color: var(--text-dim); }
+  .goal.done .gico, .goal.done .gpct { color: var(--accent); }
+  .gtrack { height: 8px; margin-top: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .gtrack span { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+  .gline { margin-top: 6px; font-size: 12.5px; color: var(--text-muted); }
+  .gmini { font-style: normal; color: var(--text-dim); }
+  .gmini.done { color: var(--accent); font-weight: 700; }
+  .step { margin-top: 10px; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); }
+  .sh { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+  .sh b { font-size: 14px; }
+  .sh .opt { margin-left: auto; font-size: 12px; font-weight: 600; color: #6c7078; }
+  .num { width: 22px; height: 22px; border-radius: 50%; background: var(--surface-3); color: #d5d7dc; font-size: 12px; font-weight: 800; display: grid; place-items: center; flex-shrink: 0; }
+  .sugg button.on { border-color: var(--accent); color: var(--accent-soft); }
+  .gsec { padding: 12px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); }
+  .dgoal { margin-top: 14px; }
+  .gtop { display: flex; align-items: center; gap: 10px; width: 100%; padding: 2px 0; border: 0; background: transparent; color: var(--text); cursor: pointer; text-align: left; }
+  .gico2 { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; background: #2c2d32; color: var(--text-dim); }
+  .gico2.on { background: rgba(255, 195, 0, 0.16); color: var(--accent); }
+  .gtx { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .gtx b { font-size: 14px; }
+  .gtx span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .tgl { width: 42px; height: 24px; border-radius: 12px; background: #3a3c42; position: relative; flex-shrink: 0; transition: background 0.15s; }
+  .tgl i { position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #c8cad0; transition: left 0.15s; }
+  .tgl.on { background: var(--accent); }
+  .tgl.on i { left: 21px; background: var(--on-accent); }
+  .mbox.sm { height: 58px; }
+  .mbox.sm input, .mbox.sm .dollar { font-size: 26px; }
+  .gopts { display: flex; flex-direction: column; gap: 6px; }
+  .gopts button { display: flex; align-items: flex-start; gap: 11px; padding: 11px 12px; border: 1px solid #2f3035; border-radius: 12px; background: #1a1b1e; color: #d5d7dc; cursor: pointer; text-align: left; }
+  .gopts button.on { border-color: var(--accent); background: rgba(255, 195, 0, 0.07); color: var(--text); }
+  .rd { width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; border: 2px solid #55585f; display: grid; place-items: center; flex-shrink: 0; box-sizing: border-box; }
+  .gopts .on .rd { border-color: var(--accent); }
+  .gopts .on .rd i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .tx { display: flex; flex-direction: column; gap: 3px; }
+  .tx b { font-size: 13.5px; }
+  .tx span { font-size: 12px; color: var(--text-muted); font-weight: 600; line-height: 1.4; }
 
   .dim { position: absolute; inset: 0; z-index: 9; display: grid; place-items: center; padding: 20px; background: rgba(12, 13, 15, 0.7); }
   .dlg { width: 100%; max-width: 400px; box-sizing: border-box; padding: 20px; border-radius: 16px; background: #212226; border: 1px solid var(--border-strong); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); }

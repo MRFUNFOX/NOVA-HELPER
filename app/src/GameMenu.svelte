@@ -8,6 +8,8 @@
   import GamePins from './lib/components/game/GamePins.svelte';
   import BuyersView from './lib/components/BuyersView.svelte';
   import CalcView from './lib/components/CalcView.svelte';
+  import CalcQuick from './lib/components/game/CalcQuick.svelte';
+  import { CALC_W, PIN_W } from './lib/pins';
   import AiPanel from './lib/components/AiPanel.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
   import AdminView from './lib/components/AdminView.svelte';
@@ -82,6 +84,19 @@
   function ddPick(id: WinId) { clearTimeout(ddTimer); dd = false; gm.toggle(id); }
   $effect(() => { if (drag || gm.passive) dd = false; });
 
+  // ── «+» у закреплённых окон «Итог» калькулятора: слой окон пропускает мышь в игру, поэтому кнопку рисует меню ──
+  const sumPins = $derived(app.calcEnabled ? app.pins.filter((p) => p.kind === 'calc' && p.calc?.type === 'sum' && p.x !== undefined && p.y !== undefined) : []);
+  const pinW = (w?: number) => (w === undefined ? CALC_W : Math.min(PIN_W.max, Math.max(PIN_W.min, w)));
+  let quick = $state<{ key: string; prof: string; x: number; y: number } | null>(null);
+  function openQuick(p: (typeof sumPins)[number]) {
+    if (quick?.key === p.key) { quick = null; return; }
+    const w = pinW(p.w);
+    const x = p.x! + w + 12 + 330 <= gm.vw ? p.x! + w + 12 : Math.max(8, p.x! - 342);
+    quick = { key: p.key, prof: p.calc!.prof, x, y: Math.max(8, Math.min(p.y!, gm.vh - 330)) };
+  }
+  $effect(() => { if (gm.passive) quick = null; });
+  $effect(() => { if (quick && !sumPins.some((p) => p.key === quick!.key)) quick = null; });
+
   // ── Перетаскивание меню за ручку ──
   let bar: HTMLElement | undefined = $state();
   let drag = $state<{ x: number; y: number } | null>(null);
@@ -154,6 +169,14 @@
     {/if}
     {#if isOpen('buyers')}
       <GameWindow id="buyers" title="Скупщики" icon="chartline"><div class="pad"><BuyersView /></div></GameWindow>
+    {/if}
+    {#if !gm.passive}
+      {#each sumPins as p (p.key)}
+        <button class="qplus" class:on={quick?.key === p.key} style="left: {p.x! + pinW(p.w) - 16}px; top: {p.y! - 12}px" title="Записать доход или расход" aria-label="Записать доход или расход" onclick={() => openQuick(p)}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
+      {/each}
+      {#if quick}<CalcQuick prof={quick.prof} x={quick.x} y={quick.y} onclose={() => (quick = null)} />{/if}
     {/if}
     {#if isOpen('calc') && app.calcEnabled}
       <GameWindow id="calc" title="Калькулятор прибыли" icon="calc" badge="Экспериментально"><CalcView /></GameWindow>
@@ -331,6 +354,9 @@
   .bar.v .pinb { width: 48px; height: 20px; margin: 0 0 2px; }
   .bar.v .pinb .tip { top: 0; transform: none; }
   .layer.passive .tip { display: none; }
+  /* «+» у закреплённого итога калькулятора */
+  .qplus { position: absolute; z-index: 7; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid #141518; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; cursor: pointer; pointer-events: auto; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45); }
+  .qplus:hover, .qplus.on { background: var(--accent-soft); }
   /* «Заработок» со списком */
   .grp { position: relative; }
   .nb.on:not(.open)::after { display: none; }

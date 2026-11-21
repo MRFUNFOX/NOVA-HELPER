@@ -54,3 +54,19 @@ describe('калькулятор прибыли', () => {
     expect(sanitize('мусор')).toEqual([]);
   });
 });
+
+import { goalOf } from '../src/lib/calc';
+describe('цель профиля', () => {
+  const base = { id: 'p', name: 'П', start: 1_000_000, created: 0, entries: [{ id: 'a', at: 1, k: 'inc' as const, cat: 'Работа', sum: 3_000_000 }] };
+  it('«хочу, чтобы было» — считает баланс', () => {
+    expect(goalOf({ ...base, goal: { kind: 'bal', sum: 5_000_000 } })).toMatchObject({ cur: 4_000_000, pct: 80, done: false, left: 1_000_000 });
+  });
+  it('«хочу заработать ещё» — считает только заработанное', () => {
+    expect(goalOf({ ...base, goal: { kind: 'earn', sum: 3_000_000 } })).toMatchObject({ cur: 3_000_000, pct: 100, done: true, left: 0 });
+  });
+  it('без цели — null; битая цель отбрасывается', () => {
+    expect(goalOf(base)).toBeNull();
+    expect(sanitize([{ ...base, goal: { kind: 'x', sum: 5 } }])[0]!.goal).toBeNull();
+    expect(sanitize([{ ...base, goal: { kind: 'earn', sum: 5 } }])[0]!.goal).toEqual({ kind: 'earn', sum: 5 });
+  });
+});

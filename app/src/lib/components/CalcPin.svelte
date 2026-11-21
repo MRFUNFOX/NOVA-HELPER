@@ -2,7 +2,7 @@
   // Окно калькулятора поверх игры: итог, последние записи, график или категории одного профиля.
   // Данные берёт само из калькулятора (общее хранилище программы) — обновляется, как только игрок что-то записал.
   import { calc } from '../calc.svelte';
-  import { byCat, catOf, dateOfAgo, daysAgo, dayName, hhmm, inPeriod, money, perDay, signed, totals, weekdayShort, type Period } from '../calc';
+  import { byCat, catOf, dateOfAgo, daysAgo, dayName, goalOf, hhmm, inPeriod, money, perDay, signed, totals, weekdayShort, type Period } from '../calc';
   import type { CalcPinData } from '../pins';
 
   let { d }: { d: CalcPinData } = $props();
@@ -18,6 +18,7 @@
   const prof = $derived(calc.profiles.find((p) => p.id === d.prof));
   const list = $derived(prof ? inPeriod(prof.entries, d.period, now) : []);
   const sum = $derived(totals(list));
+  const goal = $derived(goalOf(prof));
   const recent = $derived(prof ? [...prof.entries].sort((a, b) => b.at - a.at).slice(0, 5) : []);
   const cats = $derived([...byCat(list, 'inc').slice(0, 3).map((c) => ({ ...c, k: 'inc' as const })), ...byCat(list, 'exp').slice(0, 3).map((c) => ({ ...c, k: 'exp' as const }))]);
   const catTop = $derived(Math.max(1, ...cats.map((c) => c.sum)));
@@ -36,9 +37,12 @@
   <p class="none">Этот профиль удалили в калькуляторе — окно можно открепить.</p>
 {:else if d.type === 'sum'}
   <div class="sum">
-    <b class="net" style="color: {sum.net > 0 ? GREEN : sum.net < 0 ? RED : '#fff'}">{signed(sum.net)}</b>
+    <b class="net" style="color: {goal?.done ? 'var(--accent)' : sum.net > 0 ? GREEN : sum.net < 0 ? RED : '#fff'}">{signed(sum.net)}</b>
     <span class="ie"><span>Заработал <b style="color: {GREEN}">{money(sum.inc)}</b></span><span>Потратил <b style="color: {RED}">{money(sum.exp)}</b></span></span>
   </div>
+  {#if goal}
+    <div class="goal"><span class="gt"><span style="width: {goal.pct}%"></span></span><b class:done={goal.done}>{goal.done ? 'Цель достигнута' : `${goal.pct}% цели`}</b></div>
+  {/if}
 {:else if d.type === 'list'}
   {#each recent as e (e.id)}
     {@const c = catOf(e.k, e.cat)}
@@ -86,6 +90,11 @@
   .sum { display: flex; flex-wrap: wrap; align-items: flex-end; column-gap: 12px; row-gap: 4px; }
   .net { flex: 1 1 auto; min-width: 0; font-size: 2em; line-height: 1.1; letter-spacing: -0.5px; white-space: nowrap; }
   .ie { display: flex; flex-direction: column; gap: 2px; margin-left: auto; text-align: right; font-size: 0.86em; white-space: nowrap; color: rgba(255, 255, 255, 0.7); }
+  .goal { display: flex; align-items: center; gap: 8px; margin-top: 0.6em; font-size: 0.82em; color: rgba(255, 255, 255, 0.75); }
+  .gt { flex: 1; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+  .gt span { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+  .goal b { white-space: nowrap; }
+  .goal b.done { color: var(--accent); }
   .row { display: flex; align-items: center; gap: 9px; padding: 0.28em 0; }
   .row i { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; flex-shrink: 0; }
   .row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.93em; }

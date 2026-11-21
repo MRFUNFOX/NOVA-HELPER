@@ -1,6 +1,6 @@
 // Калькулятор прибыли: профили и записи игрока. Хранятся на компьютере (localStorage),
 // общие для большого окна и меню в игре — второе окно подхватывает изменения само.
-import { MAX_PROFILES, sanitize, type Entry, type Kind, type Profile } from './calc';
+import { MAX_PROFILES, sanitize, type Entry, type Goal, type Kind, type Profile } from './calc';
 
 const KEY = 'nova.calc';
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -40,10 +40,10 @@ class Calc {
   toList() { this.cur = ''; }
 
   /** Новый профиль с текущим балансом игрока. null — лимит */
-  create(name: string, start: number): string | null {
+  create(name: string, start: number, goal: Goal | null = null): string | null {
     if (this.atLimit) return null;
     const id = uid();
-    this.profiles = [...this.profiles, { id, name: name.trim().slice(0, 40) || `Профиль ${this.profiles.length + 1}`, start: Math.max(0, Math.round(start)), created: Date.now(), entries: [] }];
+    this.profiles = [...this.profiles, { id, name: name.trim().slice(0, 40) || `Профиль ${this.profiles.length + 1}`, start: Math.max(0, Math.round(start)), goal, created: Date.now(), entries: [] }];
     this.save();
     this.cur = id;
     return id;
@@ -56,14 +56,20 @@ class Calc {
     this.save();
   }
 
+  setGoal(id: string, goal: Goal | null) {
+    this.profiles = this.profiles.map((p) => (p.id === id ? { ...p, goal } : p));
+    this.save();
+  }
+
   remove(id: string) {
     this.profiles = this.profiles.filter((p) => p.id !== id);
     if (this.cur === id) this.cur = '';
     this.save();
   }
 
-  add(e: { at: number; k: Kind; cat: string; sum: number; note?: string }) {
-    const p = this.profile;
+  /** Запись в открытый профиль или в указанный (быстрая запись у закреплённого итога) */
+  add(e: { at: number; k: Kind; cat: string; sum: number; note?: string }, profId?: string) {
+    const p = profId ? this.profiles.find((x) => x.id === profId) : this.profile;
     if (!p || !(e.sum > 0)) return;
     const entry: Entry = { id: uid(), at: e.at, k: e.k, cat: e.cat, sum: Math.round(e.sum), ...(e.note?.trim() ? { note: e.note.trim().slice(0, 80) } : {}) };
     this.profiles = this.profiles.map((x) => (x.id === p.id ? { ...x, entries: [entry, ...x.entries] } : x));
