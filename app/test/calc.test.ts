@@ -70,3 +70,12 @@ describe('цель профиля', () => {
     expect(sanitize([{ ...base, goal: { kind: 'earn', sum: 5 } }])[0]!.goal).toEqual({ kind: 'earn', sum: 5 });
   });
 });
+
+import { isMandatory } from '../src/lib/backend';
+describe('обязательное обновление', () => {
+  it('метка «[обязательное]» в описании выпуска', () => {
+    expect(isMandatory('Исправлены цены скупщиков.\n\n[обязательное]\n\nСкачайте файл…')).toBe(true);
+    expect(isMandatory('Исправлены цены скупщиков.')).toBe(false);
+    expect(isMandatory(undefined)).toBe(false);
+  });
+});

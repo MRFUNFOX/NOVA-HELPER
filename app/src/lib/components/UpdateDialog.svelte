@@ -8,7 +8,7 @@
 
   const c = $derived(app.check);
   // В описании релиза первый абзац — «что нового», дальше инструкция для скачивания с сайта
-  const whatsNew = $derived(app.appUpdate?.notes?.trim().split(/\n\s*\n/)[0]?.replace(/^Скачайте[\s\S]*/, '').trim() ?? '');
+  const whatsNew = $derived(app.appUpdate?.notes?.replace(/\[обязательное\]/gi, '').trim().split(/\n\s*\n/)[0]?.replace(/^Скачайте[\s\S]*/, '').trim() ?? '');
   const total = $derived((c?.changedDocs ?? 0) + (c?.addedDocs ?? 0) + (c?.removedDocs ?? 0));
 
   function plural(n: number, one: string, few: string, many: string) {

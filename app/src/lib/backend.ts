@@ -155,6 +155,9 @@ export const backend = {
 // ── Обновление самой программы (плагин updater) ──
 export interface AppUpdate { version: string; notes?: string; install: (onProgress: (p: number) => void) => Promise<void> }
 
+/** Обязательное обновление: в описании выпуска отдельной строкой «[обязательное]» (игроки её не видят — окно показывает первый абзац) */
+export const isMandatory = (notes?: string) => /\[обязательное\]/i.test(notes ?? '');
+
 export async function checkAppUpdate(): Promise<AppUpdate | null> {
   if (!isTauri) return null;
   const { check } = await import('@tauri-apps/plugin-updater');

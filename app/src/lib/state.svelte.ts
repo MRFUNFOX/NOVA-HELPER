@@ -1,5 +1,5 @@
 import type { RuleDocument } from '@shared/types';
-import { backend, checkAppUpdate, type AppUpdate, type CheckResult, type Db, type Settings } from './backend';
+import { backend, checkAppUpdate, isMandatory, type AppUpdate, type CheckResult, type Db, type Settings } from './backend';
 import { buildIndex, search, type Hit, type Index } from './search';
 import type { IconName } from './components/Icon.svelte';
 import { PUBLIC } from './features';
@@ -310,7 +310,9 @@ class AppState {
     // Мастер первого запуска сам скачает базу; иначе — тихая проверка при старте
     if (settings.firstRunDone && !quiet) {
       this.analyze(false);
-      checkAppUpdate().then((u) => { if (u) { this.appUpdate = u; this.appUpdateDialog = true; } }).catch(() => {});
+      checkAppUpdate().then((u) => this.offerAppUpdate(u)).catch(() => {});
+      // Программа часто неделями висит в трее — проверять новую версию и дальше, раз в 30 минут
+      setInterval(() => { checkAppUpdate().then((u) => this.offerAppUpdate(u, true)).catch(() => {}); }, 30 * 60e3);
     }
     // Только для разработки в браузере: открыть нужный экран по адресу (?q=дм, ?view=changes, ?ai)
     if (import.meta.env.DEV) {
@@ -398,6 +400,22 @@ class AppState {
     } finally {
       this.updating = false;
     }
+  }
+
+  /** Новая версия программы: обычная — окно с «Обновить / Позже» (при повторной проверке не надоедаем),
+   *  обязательная (в описании выпуска отдельной строкой «[обязательное]») — ставится сразу сама. */
+  private offerAppUpdate(u: AppUpdate | null, periodic = false) {
+    if (!u || this.appUpdateProgress !== null) return;
+    if (isMandatory(u.notes)) {
+      this.appUpdate = u;
+      this.appUpdateDialog = true;
+      this.notify(`Обязательное обновление ${u.version}: программа обновится и перезапустится сама`);
+      void this.installAppUpdate();
+      return;
+    }
+    if (periodic && this.appUpdate?.version === u.version) return;
+    this.appUpdate = u;
+    this.appUpdateDialog = true;
   }
 
   async installAppUpdate() {
