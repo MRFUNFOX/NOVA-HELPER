@@ -67,7 +67,7 @@
   async function checkProgram() {
     appCheck = 'checking';
     try {
-      const u = await checkAppUpdate();
+      const u = await checkAppUpdate(learn.staff);
       if (u) { app.appUpdate = u; app.appUpdateDialog = true; appCheck = 'idle'; }
       else appCheck = 'latest';
     } catch { appCheck = 'error'; }

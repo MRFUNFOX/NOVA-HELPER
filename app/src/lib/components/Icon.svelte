@@ -2,7 +2,7 @@
   export type IconName =
     | 'search' | 'close' | 'minus' | 'square' | 'squares' | 'settings' | 'spark' | 'menu' | 'book' | 'history'
     | 'refresh' | 'external' | 'copy' | 'check' | 'chevron' | 'alert' | 'keyboard' | 'download' | 'window' | 'shield'
-    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast' | 'scale' | 'scroll' | 'chartline' | 'calc' | 'coin';
+    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast' | 'scale' | 'scroll' | 'chartline' | 'calc' | 'coin' | 'upload';
 </script>
 
 <script lang="ts">
@@ -37,6 +37,7 @@
   {:else if name === 'chevron'}<path d="m8 5 5 5-5 5" />
   {:else if name === 'alert'}<path d="M10 3.5 17.5 16.5h-15L10 3.5Z" /><path d="M10 8.5v3.5M10 14.3v.2" />
   {:else if name === 'keyboard'}<rect x="2.5" y="5" width="15" height="10" rx="1.5" /><path d="M5.5 8h1M8.5 8h1M11.5 8h1M14.5 8h0M6 12h8" />
+  {:else if name === 'upload'}<path d="M10 12.5v-9M6.5 7 10 3.5 13.5 7" /><path d="M4 15.5h12" />
   {:else if name === 'download'}<path d="M10 3.5v9M6.5 9 10 12.5 13.5 9" /><path d="M4 15.5h12" />
   {:else if name === 'window'}<rect x="3" y="4" width="14" height="12" rx="1.5" /><path d="M3 7.5h14" />
   {:else if name === 'shield'}<path d="M10 2.8 16 5v4.6c0 3.6-2.5 6.3-6 7.6-3.5-1.3-6-4-6-7.6V5l6-2.2Z" /><path d="m7.3 10 1.9 1.9 3.6-3.8" />

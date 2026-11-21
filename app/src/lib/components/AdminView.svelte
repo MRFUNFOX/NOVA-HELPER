@@ -2,12 +2,13 @@
   import Icon from './Icon.svelte';
   import { app } from '../state.svelte';
   import { learn, LearnError, type FullNote, type LogEntry, type Member, type QueueItem } from '../learn.svelte';
+  import { releases, cmpVersion, CHANNEL_REPO } from '../releases.svelte';
 
-  type Tab = 'queue' | 'notes' | 'team' | 'log';
+  type Tab = 'queue' | 'notes' | 'rel' | 'team' | 'log';
   let tab = $state<Tab>('queue');
   const tabs = $derived<[Tab, string][]>(learn.isDev
-    ? [['queue', 'Проверка'], ['notes', 'Принятые'], ['team', 'Команда'], ['log', 'Журнал']]
-    : [['queue', 'Проверка'], ['notes', 'Принятые']]);
+    ? [['queue', 'Проверка'], ['notes', 'Принятые'], ['rel', 'Выпуски'], ['team', 'Команда'], ['log', 'Журнал']]
+    : [['queue', 'Проверка'], ['notes', 'Принятые'], ['rel', 'Выпуски']]);
 
   let items = $state<QueueItem[] | null>(null);
   let notes = $state<FullNote[] | null>(null);
@@ -33,6 +34,7 @@
       if (which === 'queue') { items = await learn.queue(); learn.pending = items.length; }
       else if (which === 'notes') notes = (await learn.allNotes()).slice().reverse();
       else if (which === 'team') members = (await learn.team()).users;
+      else if (which === 'rel') await releases.load();
       else journal = await learn.journal(7);
     } catch (e) { error = why(e); }
   }
@@ -118,6 +120,36 @@
     const date = diff === 0 ? 'Сегодня' : diff === 1 ? 'Вчера' : `${d.getDate()} ${MONTHS[d.getMonth()]}`;
     return withTime ? `${date} ${t}` : date;
   }
+  // ── Выпуски ──
+  const pend = $derived(releases.pending);
+  const mineOk = $derived(!!pend && !!app.version && cmpVersion(app.version, pend.version) >= 0);
+  const liveInfo = $derived(releases.channel?.public && releases.channel.public.version === releases.live ? releases.channel.public : null);
+  let mand = $state(false);
+  let confirmPub = $state(false);
+  let keyInput = $state('');
+  let keyHelp = $state(false);
+  async function publishNow() {
+    if (!pend || busy) return;
+    busy = true; error = '';
+    try {
+      await releases.publish(pend.version, mand, learn.me?.name ?? 'Команда');
+      app.notify(`Версия ${pend.version} открыта игрокам${mand ? ' — обязательное обновление' : ''}`, 'ok');
+      confirmPub = false; mand = false;
+      await releases.load();
+    } catch (e) {
+      const m = String((e as Error).message);
+      error = m === 'badkey' ? 'Ключ публикации не подходит или истёк. Вставьте новый ниже.' : m === 'conflict' ? 'Кто-то из команды опубликовал одновременно с вами. Список обновлён — проверьте и нажмите ещё раз.' : 'Не получилось опубликовать: ' + m;
+      if (m === 'badkey') releases.setKey('');
+    }
+    busy = false;
+  }
+  const relStatus = (v: string, test: boolean, at: string) => {
+    const h = releases.channel?.history.find((x) => x.version === v);
+    if (h) return `${when(h.at)} · опубликовал(а) ${h.by === learn.me?.name ? 'вы' : h.by}${h.mandatory ? ' · обязательное' : ''}`;
+    if (!test) return `${when(at)} · обычный выпуск — сразу всем`;
+    return `${when(at, false)} · не публиковалась — вошла в следующую`;
+  };
+
   const scopeName = (s: string) => (s === 'project' ? 'правила проекта' : 'законы штата');
   const toggleOpen = (id: string) => { const s = new Set(opened); if (s.has(id)) s.delete(id); else s.add(id); opened = s; };
 </script>
@@ -236,6 +268,86 @@
       {/each}
     {/if}
 
+  {:else if tab === 'rel'}
+    {#if releases.error}<p class="err"><Icon name="alert" size={15} />{releases.error}</p>{/if}
+    {#if releases.builds === null}{#if !releases.error}<p class="empty">Загружаю…</p>{/if}
+    {:else}
+      <div class="live">
+        <span class="ldot" aria-hidden="true"></span>
+        <span class="lt">У игроков сейчас <b>{releases.live || '—'}</b></span>
+        <span class="lm">{liveInfo ? `опубликовал(а) ${liveInfo.by === learn.me?.name ? 'вы' : liveInfo.by} · ${when(liveInfo.at).toLowerCase()}` : 'обычный выпуск'}</span>
+      </div>
+
+      {#if pend}
+        <section class="rel">
+          <div class="rtop">
+            <span class="badge">Ждёт публикации</span>
+            <b>Версия {pend.version}</b>
+            <span class="meta">собрана {when(pend.at).toLowerCase()}</span>
+          </div>
+          {#if pend.notes}<p class="rnotes">{pend.notes}</p>{/if}
+          <div class="mine" class:ok={mineOk}>
+            {#if mineOk}
+              <Icon name="check" size={15} /><span>У вас стоит {app.version} — можно проверять.</span>
+            {:else}
+              <span>У вас {app.version || 'старая версия'}. Сначала обновитесь сами и проверьте, что всё работает.</span>
+              <button class="btn sm" onclick={() => app.checkTestUpdate()}><Icon name="download" size={14} />Обновить у себя</button>
+            {/if}
+          </div>
+          {#if releases.key}
+            <label class="toggle mand">
+              <input type="checkbox" bind:checked={mand} />
+              <span><b>Обязательное обновление</b><small>У игроков обновится само, без кнопки «Позже». Только для важных исправлений.</small></span>
+            </label>
+            {#if confirmPub}
+              <div class="confirm">
+                <p>Игроки увидят окно «Обновить» в течение получаса{mand ? ', а программа обновится сама' : ''}. Опубликовать {pend.version} для всех?</p>
+                <div class="btns">
+                  <button class="btn primary" disabled={busy} onclick={publishNow}>{busy ? 'Публикую…' : 'Да, опубликовать'}</button>
+                  <button class="btn" disabled={busy} onclick={() => (confirmPub = false)}>Отмена</button>
+                </div>
+              </div>
+            {:else}
+              <button class="btn primary pub" onclick={() => (confirmPub = true)}><Icon name="upload" size={16} />Опубликовать для всех</button>
+            {/if}
+          {:else}
+            <div class="keybox">
+              <b>Чтобы публиковать, нужен ключ публикации</b>
+              <small>Его создаёт Dev один раз и передаёт команде. Ключ умеет менять только номер версии для игроков — больше ничего.</small>
+              <div class="krow">
+                <input type="password" placeholder="github_pat_…" bind:value={keyInput} aria-label="Ключ публикации" />
+                <button class="btn" disabled={!keyInput.trim()} onclick={() => { releases.setKey(keyInput); keyInput = ''; }}>Сохранить</button>
+              </div>
+              <button class="link" onclick={() => (keyHelp = !keyHelp)}>{keyHelp ? 'Скрыть' : 'Где взять ключ?'}</button>
+              {#if keyHelp}
+                <ol class="howto">
+                  <li>GitHub → ваш аватар → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token.</li>
+                  <li>Repository access: <b>Only select repositories</b> → <b>{CHANNEL_REPO}</b>.</li>
+                  <li>Permissions → Repository permissions → <b>Contents: Read and write</b>. Остальное не трогать.</li>
+                  <li>Generate token → скопировать ключ и вставить сюда.</li>
+                </ol>
+              {/if}
+            </div>
+          {/if}
+        </section>
+      {:else}
+        <p class="empty">Новых версий нет — у игроков самая свежая. Как только я соберу новую, она появится здесь, а у команды — окно «Обновить».</p>
+      {/if}
+
+      <h2 class="rh">Раньше</h2>
+      <div class="rlist">
+        {#each (releases.builds ?? []).filter((b) => b.version !== pend?.version).sort((a, b) => cmpVersion(b.version, a.version)).slice(0, 8) as b (b.version)}
+          <div class="rrow">
+            <b>{b.version}</b>
+            {#if b.version === releases.live}<span class="chip on">у игроков</span>{/if}
+            <span class="rs">{relStatus(b.version, b.test, b.at)}</span>
+          </div>
+        {/each}
+      </div>
+      {#if releases.key}
+        <p class="keyline">Ключ публикации сохранён на этом компьютере. <button class="link" onclick={() => releases.setKey('')}>Удалить</button></p>
+      {/if}
+    {/if}
   {:else if tab === 'team' && learn.isDev}
     {#if issued}
       <div class="issued">
@@ -396,6 +508,38 @@
   .issued .small { color: var(--accent-soft); opacity: 0.85; margin: 8px 0 10px; }
   .coderow { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
   .issued code { padding: 6px 10px; border-radius: 6px; background: var(--bg); color: var(--text); font-family: inherit; font-weight: 800; font-size: 14px; letter-spacing: 0.04em; }
+
+  /* Выпуски */
+  .live { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 10px; font-size: 13.5px; }
+  .ldot { width: 9px; height: 9px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px rgba(111, 220, 154, 0.15); flex-shrink: 0; }
+  .lt b { font-size: 15px; }
+  .lm { margin-left: auto; font-size: 12px; color: var(--text-muted); text-align: right; }
+  .rel { padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--accent-line); margin-bottom: 18px; }
+  .rtop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rtop b { font-size: 16px; }
+  .badge { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: var(--accent); color: var(--on-accent); }
+  .rnotes { margin: 10px 0 0; font-size: 13px; line-height: 1.55; color: var(--text-dim); white-space: pre-wrap; }
+  .mine { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 12.5px; color: var(--text-dim); }
+  .mine span { flex: 1; }
+  .mine.ok { background: rgba(111, 220, 154, 0.1); color: var(--success); font-weight: 700; }
+  .mand { margin: 12px 0 0; background: var(--bg); }
+  .pub { width: 100%; justify-content: center; height: 46px; margin-top: 12px; font-size: 14px; }
+  .confirm { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--accent-tint); border: 1px solid var(--accent-line); }
+  .confirm p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text); }
+  .keybox { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 1px dashed var(--border-strong); }
+  .keybox b { font-size: 13px; }
+  .keybox small { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
+  .krow { display: flex; gap: 8px; margin-top: 4px; }
+  .krow input { flex: 1; height: 34px; padding: 0 10px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border-strong); color: var(--text); font: inherit; font-size: 12.5px; }
+  .krow input:focus { outline: 0; border-color: var(--accent-line); }
+  .keybox .link { align-self: flex-start; }
+  .howto { margin: 4px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.6; color: var(--text-dim); }
+  .rh { margin-top: 6px; }
+  .rrow { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .rrow b { width: 52px; font-size: 13.5px; }
+  .rrow .chip { height: 22px; display: inline-flex; align-items: center; }
+  .rs { color: var(--text-muted); }
+  .keyline { margin: 12px 2px 0; font-size: 12px; color: var(--text-muted); }
 
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
   .stats div { padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }

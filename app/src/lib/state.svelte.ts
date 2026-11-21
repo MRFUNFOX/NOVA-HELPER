@@ -1,8 +1,9 @@
 import type { RuleDocument } from '@shared/types';
-import { backend, checkAppUpdate, isMandatory, type AppUpdate, type CheckResult, type Db, type Settings } from './backend';
+import { backend, checkAppUpdate, type AppUpdate, type CheckResult, type Db, type Settings } from './backend';
 import { buildIndex, search, type Hit, type Index } from './search';
 import type { IconName } from './components/Icon.svelte';
 import { PUBLIC } from './features';
+import { learn } from './learn.svelte';
 import { PIN_LIMIT, pinFrom, sameContent, type Pin } from './pins';
 
 export type View =
@@ -310,9 +311,10 @@ class AppState {
     // Мастер первого запуска сам скачает базу; иначе — тихая проверка при старте
     if (settings.firstRunDone && !quiet) {
       this.analyze(false);
-      checkAppUpdate().then((u) => this.offerAppUpdate(u)).catch(() => {});
-      // Программа часто неделями висит в трее — проверять новую версию и дальше, раз в 30 минут
-      setInterval(() => { checkAppUpdate().then((u) => this.offerAppUpdate(u, true)).catch(() => {}); }, 30 * 60e3);
+      checkAppUpdate(learn.staffHere).then((u) => this.offerAppUpdate(u)).catch(() => {});
+      // Программа часто неделями висит в трее — проверять новую версию и дальше, раз в 30 минут.
+      // Команде (Dev/Admin) приходят и тестовые сборки — до того, как их опубликуют игрокам.
+      setInterval(() => { checkAppUpdate(learn.staffHere).then((u) => this.offerAppUpdate(u, true)).catch(() => {}); }, 30 * 60e3);
     }
     // Только для разработки в браузере: открыть нужный экран по адресу (?q=дм, ?view=changes, ?ai)
     if (import.meta.env.DEV) {
@@ -403,10 +405,10 @@ class AppState {
   }
 
   /** Новая версия программы: обычная — окно с «Обновить / Позже» (при повторной проверке не надоедаем),
-   *  обязательная (в описании выпуска отдельной строкой «[обязательное]») — ставится сразу сама. */
+   *  обязательная («[обязательное]» в описании или отметка при публикации) — ставится сразу сама. */
   private offerAppUpdate(u: AppUpdate | null, periodic = false) {
     if (!u || this.appUpdateProgress !== null) return;
-    if (isMandatory(u.notes)) {
+    if (u.mandatory) {
       this.appUpdate = u;
       this.appUpdateDialog = true;
       this.notify(`Обязательное обновление ${u.version}: программа обновится и перезапустится сама`);
@@ -416,6 +418,18 @@ class AppState {
     if (periodic && this.appUpdate?.version === u.version) return;
     this.appUpdate = u;
     this.appUpdateDialog = true;
+  }
+
+  /** Команда (Dev/Admin): проверить тестовую версию и предложить её поставить */
+  async checkTestUpdate() {
+    this.notify('Проверяю новую версию…');
+    try {
+      const u = await checkAppUpdate(true);
+      if (u) this.offerAppUpdate(u);
+      else this.notify('У вас уже самая новая версия');
+    } catch (e) {
+      this.notify(`Не удалось проверить: ${e}`, 'error');
+    }
   }
 
   async installAppUpdate() {

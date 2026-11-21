@@ -79,3 +79,28 @@ describe('обязательное обновление', () => {
     expect(isMandatory(undefined)).toBe(false);
   });
 });
+
+import { cmpVersion, pickTarget, updateUrl } from '../src/lib/update';
+describe('какую версию предложить', () => {
+  it('версии сравниваются числами', () => {
+    expect(cmpVersion('0.7.13', '0.7.9')).toBeGreaterThan(0);
+    expect(cmpVersion('v0.8.0', '0.7.99')).toBeGreaterThan(0);
+    expect(cmpVersion('0.7.14', '0.7.14')).toBe(0);
+  });
+  it('игроку — опубликованная кнопкой, если она новее последнего выпуска', () => {
+    expect(pickTarget('0.7.14', { version: '0.7.14' }, { version: '0.7.16', mandatory: true }, null)).toEqual({ version: '0.7.16', source: 'channel', mandatory: true });
+    expect(pickTarget('0.7.14', { version: '0.7.17', notes: 'x' }, { version: '0.7.16', mandatory: true }, null)).toEqual({ version: '0.7.17', source: 'latest', mandatory: false });
+  });
+  it('тестовую видит только команда и только если она новее', () => {
+    expect(pickTarget('0.7.14', null, { version: '0.7.14', mandatory: false }, null)).toBeNull();
+    expect(pickTarget('0.7.14', null, { version: '0.7.14', mandatory: false }, { version: '0.7.15' })).toEqual({ version: '0.7.15', source: 'test', mandatory: false });
+    expect(pickTarget('0.7.15', null, { version: '0.7.15', mandatory: false }, { version: '0.7.15' })).toBeNull();
+  });
+  it('та же версия опубликована — уже не тестовая; обязательная, если так отметили', () => {
+    expect(pickTarget('0.7.14', null, { version: '0.7.15', mandatory: true }, { version: '0.7.15' })).toEqual({ version: '0.7.15', source: 'channel', mandatory: true });
+    expect(pickTarget('0.7.14', { version: '0.7.15', notes: 'a\n\n[обязательное]' }, null, { version: '0.7.15' })).toEqual({ version: '0.7.15', source: 'latest', mandatory: true });
+  });
+  it('адрес обновления версии', () => {
+    expect(updateUrl('0.7.15')).toBe('https://github.com/MRFUNFOX/NOVA-HELPER/releases/download/v0.7.15/latest.json');
+  });
+});

@@ -3,6 +3,9 @@ name: Сборка программы для Windows
 # Собирает установщик NOVA HELPER (.exe) и публикует релиз. Из этого же релиза
 # установленные программы скачивают обновление (latest.json + подписанный установщик).
 # Запуск: вкладка Actions → «Сборка программы для Windows» → Run workflow.
+# Обычный запуск — выпуск сразу всем игрокам. С галочкой «test» — тестовая версия (pre-release):
+# её получают только Dev и Admin, а игрокам она открывается кнопкой в программе (файл channel.json
+# в репозитории MRFUNFOX/nova-release).
 # Версию программы задаёт app/src-tauri/tauri.conf.json → "version".
 on:
   workflow_dispatch:
@@ -11,8 +14,12 @@ on:
         description: Что нового (это увидят игроки в окне обновления)
         required: false
         default: ''
+      test:
+        description: 'Тестовая версия: сначала приходит только Dev и Admin, игрокам — после кнопки «Опубликовать для всех» (Управление → Выпуски)'
+        type: boolean
+        default: false
       draft:
-        description: 'Тестовая сборка: черновик релиза — виден только владельцу, игрокам не приходит'
+        description: 'Черновик релиза — виден только владельцу на GitHub, в программу не приходит никому'
         type: boolean
         default: false
 
@@ -67,5 +74,5 @@ jobs:
             Если Windows покажет «Система Windows защитила ваш компьютер» — нажмите «Подробнее» → «Выполнить в любом случае».
             Уже установленная программа обновится сама.
           releaseDraft: ${{ inputs.draft }}
-          prerelease: ${{ inputs.draft }}
+          prerelease: ${{ inputs.draft || inputs.test }}
           includeUpdaterJson: true

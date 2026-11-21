@@ -53,7 +53,8 @@
   <div class="backdrop" transition:fade={{ duration: ms(160) }}>
     <div class="dialog" transition:scale={pop} role="alertdialog" aria-modal="true" aria-labelledby="app-title">
       <div class="icon"><Icon name="download" size={22} /></div>
-      <h2 id="app-title">Вышла новая версия NOVA HELPER {app.appUpdate.version}</h2>
+      <h2 id="app-title">{app.appUpdate.test ? 'Тестовая версия' : 'Вышла новая версия'} NOVA HELPER {app.appUpdate.version}</h2>
+      {#if app.appUpdate.test}<p class="test">Видна только команде. Игрокам придёт, когда её опубликуют в «Управление → Выпуски».</p>{/if}
       <p>Программа обновится сама и перезапустится — удалять и устанавливать заново не нужно. Правила и настройки сохранятся.</p>
       {#if whatsNew}<p class="what">{whatsNew}</p>{/if}
       {#if app.appUpdateProgress !== null}
@@ -76,6 +77,7 @@
   h2 { margin: 0 0 8px; font-size: var(--fs-lg); font-weight: 800; line-height: 1.3; }
   p { margin: 0 0 10px; font-size: var(--fs-sm); color: var(--text-dim); }
   .what { color: var(--text); font-weight: 600; }
+  .test { margin-top: -4px; padding: 8px 12px; border-radius: 10px; background: rgba(255, 195, 0, 0.1); color: var(--accent-soft); font-size: 13px; }
   .warn { display: flex; gap: 8px; align-items: flex-start; color: var(--accent-soft); }
   .warn :global(svg) { flex-shrink: 0; margin-top: 2px; }
   .error { color: var(--danger); }

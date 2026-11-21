@@ -77,6 +77,8 @@ class Learn {
   private timer: ReturnType<typeof setInterval> | null = null;
 
   get staff() { return !!this.me; }
+  /** Вошёл ли на этом компьютере Dev/Admin — можно спрашивать и до init() (при запуске программы) */
+  get staffHere() { return !!this.me || !!store.get('nh-staff-me'); }
   get isDev() { return this.me?.role === 'dev'; }
 
   init() {

@@ -6,6 +6,7 @@ mod overlay;
 mod pins;
 mod settings;
 mod sync;
+mod update;
 
 use overlay::OverlayState;
 use settings::Settings;
@@ -177,6 +178,8 @@ pub fn run() {
             finish_first_run,
             quit_app,
             app_version,
+            update::update_check,
+            update::update_install,
             window_glass,
             ai::ai_status,
             ai::ai_set_key,

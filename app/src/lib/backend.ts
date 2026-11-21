@@ -6,6 +6,7 @@
 import type { RuleDocument } from '@shared/types';
 import type { Changelog, Manifest } from '@shared/format';
 import type { Pin } from './pins';
+import { APP_REPO, CHANNEL_REPO, cmpVersion, pickTarget, updateUrl } from './update';
 
 export type HintMode = 'always' | 'timed' | 'off';
 
@@ -152,29 +153,78 @@ export const backend = {
   },
 };
 
-// ── Обновление самой программы (плагин updater) ──
-export interface AppUpdate { version: string; notes?: string; install: (onProgress: (p: number) => void) => Promise<void> }
+// ── Обновление самой программы ──
+export interface AppUpdate {
+  version: string;
+  notes?: string;
+  /** Обязательное: ставится само, без «Позже» */
+  mandatory: boolean;
+  /** Тестовая сборка — видит только команда */
+  test: boolean;
+  install: (onProgress: (p: number) => void) => Promise<void>;
+}
+export { isMandatory } from './update';
 
-/** Обязательное обновление: в описании выпуска отдельной строкой «[обязательное]» (игроки её не видят — окно показывает первый абзац) */
-export const isMandatory = (notes?: string) => /\[обязательное\]/i.test(notes ?? '');
+/** Версия, открытая игрокам кнопкой «Опубликовать для всех» (файл channel.json). Нет связи — null */
+async function channelPublic(): Promise<{ version: string; mandatory: boolean } | null> {
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/${CHANNEL_REPO}/main/channel.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) return null;
+    const p = ((await r.json()) as { public?: { version?: unknown; mandatory?: unknown } | null }).public;
+    return p && typeof p.version === 'string' ? { version: p.version, mandatory: p.mandatory === true } : null;
+  } catch { return null; }
+}
 
-export async function checkAppUpdate(): Promise<AppUpdate | null> {
+/** Для команды: новейшая тестовая сборка (pre-release) */
+async function newestTest(): Promise<{ version: string } | null> {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${APP_REPO}/releases?per_page=10`, { cache: 'no-store' });
+    if (!r.ok) return null;
+    const list = (await r.json()) as { tag_name: string; draft: boolean; prerelease: boolean }[];
+    const v = list.filter((x) => !x.draft && x.prerelease).map((x) => x.tag_name.replace(/^v/, '')).sort(cmpVersion).pop();
+    return v ? { version: v } : null;
+  } catch { return null; }
+}
+
+/**
+ * Есть ли новая версия. Игрокам — последний выпуск или опубликованный кнопкой (что новее).
+ * Команде (staff) — ещё и тестовые сборки.
+ */
+export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
   if (!isTauri) return null;
   const { check } = await import('@tauri-apps/plugin-updater');
-  const u = await check();
-  if (!u) return null;
+  const [latest, channel, test, current] = await Promise.all([
+    check().catch(() => null),
+    channelPublic(),
+    staff ? newestTest() : Promise.resolve(null),
+    backend.version(),
+  ]);
+  const t = pickTarget(current, latest && { version: latest.version, notes: latest.body }, channel, test);
+  if (!t) return null;
+  if (t.source === 'latest' && latest) {
+    return {
+      version: latest.version, notes: latest.body ?? undefined, mandatory: t.mandatory, test: false,
+      async install(onProgress) {
+        let total = 0;
+        let got = 0;
+        await latest.downloadAndInstall((e) => {
+          if (e.event === 'Started') total = e.data.contentLength ?? 0;
+          if (e.event === 'Progress') { got += e.data.chunkLength; if (total) onProgress(got / total); }
+        });
+        const { relaunch } = await import('@tauri-apps/plugin-process');
+        await relaunch();
+      },
+    };
+  }
+  // Опубликованная кнопкой или тестовая — ставится со своего адреса
+  const url = updateUrl(t.version);
+  const found = await invoke<{ version: string; notes: string | null } | null>('update_check', { url });
+  if (!found) return null;
   return {
-    version: u.version,
-    notes: u.body ?? undefined,
+    version: found.version, notes: found.notes ?? undefined, mandatory: t.mandatory, test: t.source === 'test',
     async install(onProgress) {
-      let total = 0;
-      let got = 0;
-      await u.downloadAndInstall((e) => {
-        if (e.event === 'Started') total = e.data.contentLength ?? 0;
-        if (e.event === 'Progress') { got += e.data.chunkLength; if (total) onProgress(got / total); }
-      });
-      const { relaunch } = await import('@tauri-apps/plugin-process');
-      await relaunch();
+      const off = await backend.on('update-progress', (p) => onProgress(Number(p) || 0));
+      try { await invoke('update_install', { url }); } finally { off(); }
     },
   };
 }
