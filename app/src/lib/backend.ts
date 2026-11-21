@@ -191,7 +191,12 @@ async function newestTest(): Promise<{ version: string } | null> {
  * Команде (staff) — ещё и тестовые сборки.
  */
 export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
-  if (!isTauri) return null;
+  if (!isTauri) {
+    // Для проверки вида в браузере: ?appupdate (или ?appupdate=test)
+    const p = import.meta.env.DEV ? new URLSearchParams(location.search).get('appupdate') : null;
+    if (p === null) return null;
+    return { version: '0.7.15', notes: 'Технические работы: исправление ошибок.', mandatory: false, test: p === 'test', install: async () => {} };
+  }
   const { check } = await import('@tauri-apps/plugin-updater');
   const [latest, channel, test, current] = await Promise.all([
     check().catch(() => null),
