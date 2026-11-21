@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.20-0220",
- "generatedAt": "2026-11-20T02:20:48.361Z",
+ "dbVersion": "2026.11.21-0217",
+ "generatedAt": "2026-11-21T02:17:47.907Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -21,9 +21,9 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406248/",
-   "sha256": "567e113191287ed8e76e95ec0e1a08751c1a891f155e347d3e68761e49113b63",
-   "size": 20140,
-   "path": "docs/project_406248.3861bcba1572.json",
+   "sha256": "a119703ded230398dd320e0aef27c7587ba1479d151c64e53ddb80bf691a5082",
+   "size": 18798,
+   "path": "docs/project_406248.e2d42a8b16ff.json",
    "stats": {
     "nodes": 23,
     "punishments": 19,
@@ -186,9 +186,9 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/408658/",
-   "sha256": "8bf41bc27703e7b35fff40197cc6959c0ecf95aa7e89df525a491f9f01bce561",
-   "size": 5045,
-   "path": "docs/project_408658.9782d877a0d9.json",
+   "sha256": "f8229a3d6786b597f6ebbf0e058e808c4dfa55c864b3b232d7f2b4874e18d2e4",
+   "size": 5049,
+   "path": "docs/project_408658.750a3a93a11a.json",
    "stats": {
     "nodes": 6,
     "punishments": 3,
@@ -1081,5 +1081,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.20-0220.json"
+ "changelog": "changelog/2026.11.21-0217.json"
 }
