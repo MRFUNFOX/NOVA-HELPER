@@ -46,6 +46,8 @@ class Prices {
   private audio: AudioContext | null = null;
   /** Меню поверх игры — второе окно программы: звук цели играет только основное окно */
   quiet = false;
+  /** Сколько окон с ценами сейчас открыто в этом окне программы (раздел или окно «Скупщики» в меню поверх игры) */
+  viewers = $state(0);
 
   /** Включить (раздел открыт для игрока): скачать цены и проверять каждый час */
   start() {
@@ -55,6 +57,18 @@ class Prices {
     this.ticker = setInterval(() => (this.now = Date.now()), 30e3);
     // Гайд: третий шаг — игрок открыл редактор окон
     void backend.on('pins-editor', (open) => { if (open && this.running && !this.guide.editor) this.setGuide({ editor: true }); });
+    // Цены скачало другое окно программы (большое окно или меню в игре) — подхватить, не дожидаясь своей проверки
+    window.addEventListener('storage', (e) => {
+      if (e.key !== CACHE || !e.newValue || !this.running) return;
+      try {
+        const f = JSON.parse(e.newValue) as PricesFile;
+        if (!f?.time || !Array.isArray(f.raw)) return;
+        if (this.file && this.file.time === f.time && this.file.updatedAt === f.updatedAt) return;
+        this.file = f;
+        this.error = '';
+        void this.refresh();
+      } catch { /* битая запись — дождёмся своей проверки */ }
+    });
     void this.tick();
   }
 
@@ -70,9 +84,10 @@ class Prices {
     }
   }
 
-  /** Нужно ли сейчас вообще ходить за ценами: есть окна на экране или открыт раздел */
+  /** Нужно ли сейчас вообще ходить за ценами: есть окна на экране, открыт раздел или окно «Скупщики» в меню в игре.
+   *  Раньше меню в игре сюда не попадало: его окно показывало старые цены из памяти и писало «жду новые…» часами. */
   private get wanted() {
-    return this.pinned.size > 0 || app.view.kind === 'buyers' || !this.file;
+    return this.pinned.size > 0 || this.viewers > 0 || app.view.kind === 'buyers' || !this.file;
   }
 
   private async tick() {

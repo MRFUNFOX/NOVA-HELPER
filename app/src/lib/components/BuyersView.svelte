@@ -10,7 +10,11 @@
 
   let tab = $state<Group>('raw');
   let legend = $state(false);
-  $effect(() => { untrack(() => prices.opened()); });
+  // Пока раздел (или окно в меню поверх игры) открыт — цены качаются по расписанию
+  $effect(() => {
+    untrack(() => { prices.viewers++; prices.opened(); });
+    return () => { prices.viewers = Math.max(0, prices.viewers - 1); };
+  });
 
   const rows = $derived(prices.rows.filter((r) => r.group === tab));
   const file = $derived(prices.file);
