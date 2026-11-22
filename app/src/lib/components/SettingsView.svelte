@@ -64,7 +64,9 @@
     devBusy = false;
   }
 
-  // Контакт автора программы
+  // Контакт автора программы (значок Discord — официальный, от владельца)
+  import dsIcon from '../../assets/brand/discord-icon.png';
+  import dsSymbol from '../../assets/brand/discord-symbol.png';
   const DISCORD = 'badalastor';
   // Варианты для сравнения (только в браузере при разработке): ?contact=a|b|c
   const contactV = (import.meta.env.DEV && new URLSearchParams(location.search).get('contact')) || 'a';
@@ -179,7 +181,7 @@
     {#if contactV === 'e'}
       <div class="author">
         <p class="hint">Ошибка или идея? Напишите автору в Discord.</p>
-        <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'chat'} size={16} />{discordCopied ? 'Ник скопирован' : DISCORD}</button>
+        <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник">{#if discordCopied}<Icon name="check" size={16} />{:else}<img src={dsSymbol} alt="" width="18" height="14" />{/if}{discordCopied ? 'Ник скопирован' : DISCORD}</button>
       </div>
     {/if}
     {#if contactV === 'a'}
@@ -216,12 +218,12 @@
 
   {#if contactV === 'd'}
     <section class="ds">
-      <span class="ds-ico"><Icon name="chat" size={20} /></span>
+      <img class="ds-ico" src={dsIcon} alt="Discord" width="42" height="42" />
       <div class="grow">
         <b>Нашли ошибку или есть идея?</b>
         <p>Напишите автору программы в Discord — так NOVA HELPER становится лучше.</p>
       </div>
-      <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'copy'} size={16} />{discordCopied ? 'Ник скопирован' : DISCORD}</button>
+      <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник">{#if discordCopied}<Icon name="check" size={16} />{:else}<img src={dsSymbol} alt="" width="20" height="15" />{/if}{discordCopied ? 'Ник скопирован' : DISCORD}</button>
     </section>
   {/if}
   {#if contactV === 'c'}
@@ -297,7 +299,7 @@
   .talk p { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--text-dim); }
   /* Цвет Discord */
   .ds { --ds: #5865f2; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: linear-gradient(140deg, rgba(88, 101, 242, 0.22) 0%, rgba(88, 101, 242, 0.06) 50%, rgba(88, 101, 242, 0) 75%), var(--surface); border-color: rgba(88, 101, 242, 0.5); }
-  .ds-ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: #5865f2; color: #fff; flex-shrink: 0; }
+  .ds-ico { width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0; }
   .ds .grow { flex: 1; min-width: 220px; }
   .ds b { display: block; font-size: var(--fs-md); }
   .ds p { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--text-dim); }
