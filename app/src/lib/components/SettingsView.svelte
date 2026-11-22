@@ -66,10 +66,7 @@
 
   // Контакт автора программы (значок Discord — официальный, от владельца)
   import dsIcon from '../../assets/brand/discord-icon.png';
-  import dsSymbol from '../../assets/brand/discord-symbol.png';
   const DISCORD = 'badalastor';
-  // Варианты для сравнения (только в браузере при разработке): ?contact=a|b|c
-  const contactV = (import.meta.env.DEV && new URLSearchParams(location.search).get('contact')) || 'a';
   let discordCopied = $state(false);
   async function copyDiscord() {
     try { await navigator.clipboard.writeText(DISCORD); discordCopied = true; setTimeout(() => (discordCopied = false), 1800); } catch { /* без буфера обмена */ }
@@ -178,18 +175,6 @@
       </div>
       <button class="btn" onclick={checkProgram} disabled={appCheck === 'checking'}><Icon name="download" size={16} />{appCheck === 'checking' ? 'Проверяю…' : 'Проверить'}</button>
     </div>
-    {#if contactV === 'e'}
-      <div class="author">
-        <p class="hint">Ошибка или идея? Напишите автору в Discord.</p>
-        <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник">{#if discordCopied}<Icon name="check" size={16} />{:else}<img src={dsSymbol} alt="" width="18" height="14" />{/if}{discordCopied ? 'Ник скопирован' : DISCORD}</button>
-      </div>
-    {/if}
-    {#if contactV === 'a'}
-      <div class="author">
-        <p class="hint">Ошибка или идея? Напишите автору в Discord.</p>
-        <button class="nick" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'chat'} size={15} />{DISCORD}<span>{discordCopied ? 'скопирован' : 'скопировать'}</span></button>
-      </div>
-    {/if}
   </section>
 
   {#if app.devMode}
@@ -216,38 +201,21 @@
     </section>
   {/if}
 
-  {#if contactV === 'd'}
-    <section class="ds">
-      <img class="ds-ico" src={dsIcon} alt="Discord" width="42" height="42" />
-      <div class="grow">
-        <b>Нашли ошибку или есть идея?</b>
-        <p>Напишите автору программы в Discord — так NOVA HELPER становится лучше.</p>
-      </div>
-      <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник">{#if discordCopied}<Icon name="check" size={16} />{:else}<img src={dsSymbol} alt="" width="20" height="15" />{/if}{discordCopied ? 'Ник скопирован' : DISCORD}</button>
-    </section>
-  {/if}
-  {#if contactV === 'c'}
-    <section class="talk">
-      <span class="talk-ico"><Icon name="chat" size={20} /></span>
-      <div class="grow">
-        <b>Нашли ошибку или есть идея?</b>
-        <p>Напишите автору программы в Discord — так NOVA HELPER становится лучше.</p>
-      </div>
-      <button class="nick big" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'copy'} size={15} />{DISCORD}</button>
-    </section>
-  {/if}
+  <section class="ds">
+    <img class="ds-ico" src={dsIcon} alt="Discord" width="42" height="42" />
+    <div class="grow">
+      <b>Нашли ошибку или есть идея?</b>
+      <p>Напишите автору программы в Discord — так NOVA HELPER становится лучше.</p>
+    </div>
+    <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'copy'} size={16} />{discordCopied ? 'Ник скопирован' : DISCORD}</button>
+  </section>
 
   <section class="game">
     <Icon name="window" size={18} />
     <p>Окно видно поверх игры, только если в настройках GTA 5 выбран режим экрана <b>«Оконный»</b> или <b>«Без рамки»</b>. В полноэкранном режиме Windows не может показать другое окно поверх игры.</p>
   </section>
 
-  <div class="foot">
-    <button class="btn ghost quit" onclick={() => backend.quit()}>Выйти из программы</button>
-    {#if contactV === 'b'}
-      <p class="sign">Сделал <button onclick={copyDiscord} title="Скопировать ник">{DISCORD}</button> · Discord{discordCopied ? ' — ник скопирован' : ''}</p>
-    {/if}
-  </div>
+  <button class="btn ghost quit" onclick={() => backend.quit()}>Выйти из программы</button>
 </div>
 
 <style>
@@ -282,33 +250,15 @@
   .code:focus { outline: 0; border-color: var(--accent-line); }
   .bad { color: var(--danger); margin-top: 8px; }
   .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .quit { color: var(--danger); }
-  .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-  /* Связь с автором */
-  .author { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-  .author .hint { margin: 0; }
-  .nick { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-  .nick :global(svg) { color: var(--accent); }
-  .nick span { font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); }
-  .nick:hover { border-color: var(--accent-line); background: var(--surface-2); }
-  .nick.big { height: 40px; padding: 0 16px 0 14px; border-color: var(--accent-line); font-size: var(--fs-md); }
-  .talk { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-glow), var(--surface); border-color: var(--accent-line); }
-  .talk-ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-tint); color: var(--accent); flex-shrink: 0; }
-  .talk .grow { flex: 1; min-width: 220px; }
-  .talk b { display: block; font-size: var(--fs-md); }
-  .talk p { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--text-dim); }
-  /* Цвет Discord */
-  .ds { --ds: #5865f2; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: linear-gradient(140deg, rgba(88, 101, 242, 0.22) 0%, rgba(88, 101, 242, 0.06) 50%, rgba(88, 101, 242, 0) 75%), var(--surface); border-color: rgba(88, 101, 242, 0.5); }
+  .quit { align-self: flex-start; margin-top: 4px; color: var(--danger); }
+  /* Связь с автором — в цвете Discord */
+  .ds { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: linear-gradient(140deg, rgba(88, 101, 242, 0.22) 0%, rgba(88, 101, 242, 0.06) 50%, rgba(88, 101, 242, 0) 75%), var(--surface); border-color: rgba(88, 101, 242, 0.5); }
   .ds-ico { width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0; }
   .ds .grow { flex: 1; min-width: 220px; }
   .ds b { display: block; font-size: var(--fs-md); }
   .ds p { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--text-dim); }
   .ds-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px 0 14px; border: 0; border-radius: var(--radius); background: #5865f2; color: #fff; font: inherit; font-size: var(--fs-md); font-weight: 700; cursor: pointer; transition: background 0.15s; }
   .ds-btn:hover { background: #4752c4; }
-  .author .ds-btn { height: 34px; font-size: var(--fs-sm); padding: 0 14px 0 12px; }
-  .sign { margin: 0; font-size: var(--fs-xs); color: var(--text-muted); }
-  .sign button { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--text-dim); cursor: pointer; border-bottom: 1px dashed var(--border-strong); }
-  .sign button:hover { color: var(--accent); border-color: var(--accent-line); }
   .quit:hover { background: var(--danger-tint); color: var(--danger); }
   @media (max-width: 639px) { .settings { padding: 16px 14px 48px; } section { padding: 16px; } }
 </style>
