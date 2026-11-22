@@ -54,7 +54,7 @@
     <div class="dialog" transition:scale={pop} role="alertdialog" aria-modal="true" aria-labelledby="app-title">
       <div class="icon"><Icon name="download" size={22} /></div>
       <h2 id="app-title">{app.appUpdate.test ? 'Тестовая версия' : 'Вышла новая версия'} NOVA HELPER {app.appUpdate.version}</h2>
-      {#if app.appUpdate.test}<p class="test">Видна только команде. Игрокам придёт, когда её опубликуют в «Управление → Выпуски».</p>{/if}
+      {#if app.appUpdate.test}<p class="test">Видна только команде (Dev и Admin). Игрокам не приходит.</p>{/if}
       <p>Программа обновится сама и перезапустится — удалять и устанавливать заново не нужно. Правила и настройки сохранятся.</p>
       {#if whatsNew}<p class="what">{whatsNew}</p>{/if}
       {#if app.appUpdateProgress !== null}

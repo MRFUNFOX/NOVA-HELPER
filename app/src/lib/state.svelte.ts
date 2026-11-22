@@ -420,18 +420,6 @@ class AppState {
     this.appUpdateDialog = true;
   }
 
-  /** Команда (Dev/Admin): проверить тестовую версию и предложить её поставить */
-  async checkTestUpdate() {
-    this.notify('Проверяю новую версию…');
-    try {
-      const u = await checkAppUpdate(true);
-      if (u) this.offerAppUpdate(u);
-      else this.notify('У вас уже самая новая версия');
-    } catch (e) {
-      this.notify(`Не удалось проверить: ${e}`, 'error');
-    }
-  }
-
   async installAppUpdate() {
     if (!this.appUpdate) return;
     this.appUpdateProgress = 0;

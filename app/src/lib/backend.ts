@@ -6,7 +6,7 @@
 import type { RuleDocument } from '@shared/types';
 import type { Changelog, Manifest } from '@shared/format';
 import type { Pin } from './pins';
-import { APP_REPO, CHANNEL_REPO, cmpVersion, pickTarget, updateUrl } from './update';
+import { APP_REPO, cmpVersion, pickTarget, updateUrl } from './update';
 
 export type HintMode = 'always' | 'timed' | 'off';
 
@@ -165,16 +165,6 @@ export interface AppUpdate {
 }
 export { isMandatory } from './update';
 
-/** Версия, открытая игрокам кнопкой «Опубликовать для всех» (файл channel.json). Нет связи — null */
-async function channelPublic(): Promise<{ version: string; mandatory: boolean } | null> {
-  try {
-    const r = await fetch(`https://raw.githubusercontent.com/${CHANNEL_REPO}/main/channel.json?t=${Date.now()}`, { cache: 'no-store' });
-    if (!r.ok) return null;
-    const p = ((await r.json()) as { public?: { version?: unknown; mandatory?: unknown } | null }).public;
-    return p && typeof p.version === 'string' ? { version: p.version, mandatory: p.mandatory === true } : null;
-  } catch { return null; }
-}
-
 /** Для команды: новейшая тестовая сборка (pre-release) */
 async function newestTest(): Promise<{ version: string } | null> {
   try {
@@ -186,10 +176,7 @@ async function newestTest(): Promise<{ version: string } | null> {
   } catch { return null; }
 }
 
-/**
- * Есть ли новая версия. Игрокам — последний выпуск или опубликованный кнопкой (что новее).
- * Команде (staff) — ещё и тестовые сборки.
- */
+/** Есть ли новая версия. Всем — последний выпуск; команде (staff) — ещё и тестовые сборки. */
 export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
   if (!isTauri) {
     // Для проверки вида в браузере: ?appupdate (или ?appupdate=test)
@@ -198,13 +185,12 @@ export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
     return { version: '0.7.15', notes: 'Технические работы: исправление ошибок.', mandatory: false, test: p === 'test', install: async () => {} };
   }
   const { check } = await import('@tauri-apps/plugin-updater');
-  const [latest, channel, test, current] = await Promise.all([
+  const [latest, test, current] = await Promise.all([
     check().catch(() => null),
-    channelPublic(),
     staff ? newestTest() : Promise.resolve(null),
     backend.version(),
   ]);
-  const t = pickTarget(current, latest && { version: latest.version, notes: latest.body }, channel, test);
+  const t = pickTarget(current, latest && { version: latest.version, notes: latest.body }, test);
   if (!t) return null;
   if (t.source === 'latest' && latest) {
     return {
@@ -221,7 +207,7 @@ export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
       },
     };
   }
-  // Опубликованная кнопкой или тестовая — ставится со своего адреса
+  // Тестовая — ставится со своего адреса
   const url = updateUrl(t.version);
   const found = await invoke<{ version: string; notes: string | null } | null>('update_check', { url });
   if (!found) return null;

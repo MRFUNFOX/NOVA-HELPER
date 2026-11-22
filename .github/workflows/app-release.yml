@@ -4,8 +4,7 @@ name: Сборка программы для Windows
 # установленные программы скачивают обновление (latest.json + подписанный установщик).
 # Запуск: вкладка Actions → «Сборка программы для Windows» → Run workflow.
 # Обычный запуск — выпуск сразу всем игрокам. С галочкой «test» — тестовая версия (pre-release):
-# её получают только Dev и Admin, а игрокам она открывается кнопкой в программе (файл channel.json
-# в репозитории MRFUNFOX/nova-release).
+# её получают только Dev и Admin, игрокам она не приходит.
 # Версию программы задаёт app/src-tauri/tauri.conf.json → "version".
 on:
   workflow_dispatch:
@@ -15,7 +14,7 @@ on:
         required: false
         default: ''
       test:
-        description: 'Тестовая версия: сначала приходит только Dev и Admin, игрокам — после кнопки «Опубликовать для всех» (Управление → Выпуски)'
+        description: 'Тестовая версия: приходит только Dev и Admin, игрокам — нет'
         type: boolean
         default: false
       draft:
