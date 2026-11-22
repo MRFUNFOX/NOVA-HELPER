@@ -50,7 +50,7 @@ describe('автопоиск серверов и законов', () => {
       [500002, 'Нормативно-правовые акты'],
     ]);
     expect(d.docs.filter((x) => x.serverId === 'horizon').map((x) => x.threadId)).toEqual([411152]);
-    expect(d.docs.filter((x) => x.scope === 'project').map((x) => x.threadId)).toEqual([403002, 406242]);
+    expect(d.docs.filter((x) => x.scope === 'project').map((x) => x.threadId)).toEqual([406242]);
   });
 
   it('по умолчанию — правила проекта и законы только сервера Horizon', async () => {
@@ -58,13 +58,13 @@ describe('автопоиск серверов и законов', () => {
     expect(d.warnings).toEqual([]);
     expect(d.servers.map((s) => s.id)).toEqual(['horizon']);
     expect(d.docs.filter((x) => x.scope === 'server').map((x) => [x.serverId, x.threadId])).toEqual([['horizon', 411152]]);
-    expect(d.docs.filter((x) => x.scope === 'project').map((x) => x.threadId)).toEqual([403002, 406242]);
+    expect(d.docs.filter((x) => x.scope === 'project').map((x) => x.threadId)).toEqual([406242]);
   });
 
   it('без законов — только правила проекта', async () => {
     const d = await discover(new FixtureFetcher(pages), undefined, { collectLaws: false });
     expect(d.servers).toEqual([]);
-    expect(d.docs.map((x) => x.threadId)).toEqual([403002, 406242]);
+    expect(d.docs.map((x) => x.threadId)).toEqual([406242]);
   });
 
   it('если у сервера нет пути до законов — предупреждение, а не падение всего сбора', async () => {

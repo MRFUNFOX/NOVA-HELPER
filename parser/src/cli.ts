@@ -2,7 +2,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { BrowserFetcher, ChainFetcher, FirecrawlFetcher, type Fetcher } from './fetcher.js';
-import { CONFIG, discover } from './discover.js';
+import { CONFIG, discover, ROOT_CATEGORY } from './discover.js';
 import { pageUrl, parseThreadPage, type ThreadPage } from './forum.js';
 import { buildDocument, type DocMeta } from './document.js';
 import { publish, summarize } from './publish.js';
@@ -80,6 +80,7 @@ async function scrapeWith(fetcher: Fetcher, outDir: string, now: Date, firecrawl
     signingKeyPem: process.env.NOVA_SIGNING_KEY,
     acceptShrink: process.argv.includes('--accept-shrink'),
     lawsDisabled: !CONFIG.collectLaws,
+    droppedCategories: CONFIG.rootThreads ? [] : [ROOT_CATEGORY],
   });
   report(result, firecrawl?.credits);
   if (result.aborted) process.exitCode = 2;

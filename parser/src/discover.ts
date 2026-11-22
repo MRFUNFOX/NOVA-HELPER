@@ -33,8 +33,16 @@ export const CONFIG = {
   rulesForum: 'https://forum.nova-rp.com/forums/893/',
   /** Подразделы, которые не являются действующими документами */
   skipForums: [/архив/i],
+  /**
+   * Темы в самом разделе 893 (раздел «Правила форума» в программе) не берём — решение владельца
+   * 22.11.2026: правила форума игроку в игре не нужны.
+   */
+  rootThreads: false,
   maxListPages: 10,
 };
+
+/** Категория тем из самого раздела 893 (в программе — «Правила форума») */
+export const ROOT_CATEGORY = 'Правила проекта';
 
 export interface Discovery {
   servers: ServerInfo[];
@@ -79,7 +87,7 @@ export async function discover(
       out.docs.push({ scope: 'project', category, threadId: t.id, sourceUrl: t.url, listTitle: t.title, listItem: t });
     }
   };
-  addRules(await listThreads(CONFIG.rulesForum, rulesHtml), 'Правила проекта');
+  if (CONFIG.rootThreads) addRules(await listThreads(CONFIG.rulesForum, rulesHtml), ROOT_CATEGORY);
   for (const sub of parseNodeList(rulesHtml)) {
     if (CONFIG.skipForums.some((re) => re.test(sub.title))) continue;
     const html = await get(sub.url);

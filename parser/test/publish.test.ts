@@ -134,6 +134,16 @@ describe('публикация базы', () => {
     expect(r.manifest.documents.map((d) => d.id)).toEqual(['p']);
   });
 
+  it('раздел, который перестали собирать, уходит без записи «удалён с форума»', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'nova-'));
+    const forum = { ...doc('f', many(5)), category: 'Правила проекта' };
+    run(dir, [doc('p', many(5)), forum], []);
+    const r = run(dir, [doc('p', many(5))], [], { droppedCategories: ['Правила проекта'], discoveredCount: 1, acceptShrink: true }, '2026-11-10T00:00:00Z');
+    expect(r.manifest.documents.map((d) => d.id)).toEqual(['p']);
+    expect(r.changed).toBe(true);
+    expect(r.changelog).toBeUndefined();
+  });
+
   it('новый сервер попадает в базу и в перечень изменений', () => {
     const dir = mkdtempSync(join(tmpdir(), 'nova-'));
     run(dir, [doc('m', many(5), 'mirage')], [S('mirage')]);

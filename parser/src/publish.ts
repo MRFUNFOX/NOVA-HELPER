@@ -34,6 +34,8 @@ export interface PublishInput {
   acceptShrink?: boolean;
   /** Сбор законов серверов выключен намеренно: серверы и их документы убираются сразу, без «трёх прогонов». */
   lawsDisabled?: boolean;
+  /** Разделы, которые намеренно перестали собирать: их документы уходят из базы без записи «удалён с форума» */
+  droppedCategories?: string[];
 }
 
 export interface PublishResult {
@@ -182,6 +184,7 @@ export function publish(input: PublishInput): PublishResult {
     }
     if (serverId && archivedIds.has(serverId)) continue; // сервер закрыт — документы уходят
     if (serverId && input.lawsDisabled) continue; // законы выключены — уходят без записи в журнал
+    if (!serverId && input.droppedCategories?.includes(prev.meta.category)) continue; // раздел убран намеренно
     // Тема удалена с форума
     const change = diffDocuments(prev.doc, undefined);
     if (change) changes.push(change);
