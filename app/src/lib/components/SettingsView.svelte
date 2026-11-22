@@ -64,6 +64,13 @@
     devBusy = false;
   }
 
+  // Контакт автора программы
+  const DISCORD = 'badalastor';
+  let discordCopied = $state(false);
+  async function copyDiscord() {
+    try { await navigator.clipboard.writeText(DISCORD); discordCopied = true; setTimeout(() => (discordCopied = false), 1800); } catch { /* без буфера обмена */ }
+  }
+
   async function checkProgram() {
     appCheck = 'checking';
     try {
@@ -166,6 +173,17 @@
         </p>
       </div>
       <button class="btn" onclick={checkProgram} disabled={appCheck === 'checking'}><Icon name="download" size={16} />{appCheck === 'checking' ? 'Проверяю…' : 'Проверить'}</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Связь с автором</h2>
+    <div class="row">
+      <div>
+        <p class="value">Discord: <span class="selectable">{DISCORD}</span></p>
+        <p class="hint">Нашли ошибку или есть идея — напишите в личные сообщения.</p>
+      </div>
+      <button class="btn" onclick={copyDiscord}><Icon name={discordCopied ? 'check' : 'copy'} size={16} />{discordCopied ? 'Скопировано' : 'Скопировать ник'}</button>
     </div>
   </section>
 
