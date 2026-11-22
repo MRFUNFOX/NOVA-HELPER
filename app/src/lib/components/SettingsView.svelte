@@ -66,6 +66,8 @@
 
   // Контакт автора программы
   const DISCORD = 'badalastor';
+  // Варианты для сравнения (только в браузере при разработке): ?contact=a|b|c
+  const contactV = (import.meta.env.DEV && new URLSearchParams(location.search).get('contact')) || 'a';
   let discordCopied = $state(false);
   async function copyDiscord() {
     try { await navigator.clipboard.writeText(DISCORD); discordCopied = true; setTimeout(() => (discordCopied = false), 1800); } catch { /* без буфера обмена */ }
@@ -174,17 +176,12 @@
       </div>
       <button class="btn" onclick={checkProgram} disabled={appCheck === 'checking'}><Icon name="download" size={16} />{appCheck === 'checking' ? 'Проверяю…' : 'Проверить'}</button>
     </div>
-  </section>
-
-  <section>
-    <h2>Связь с автором</h2>
-    <div class="row">
-      <div>
-        <p class="value">Discord: <span class="selectable">{DISCORD}</span></p>
-        <p class="hint">Нашли ошибку или есть идея — напишите в личные сообщения.</p>
+    {#if contactV === 'a'}
+      <div class="author">
+        <p class="hint">Ошибка или идея? Напишите автору в Discord.</p>
+        <button class="nick" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'chat'} size={15} />{DISCORD}<span>{discordCopied ? 'скопирован' : 'скопировать'}</span></button>
       </div>
-      <button class="btn" onclick={copyDiscord}><Icon name={discordCopied ? 'check' : 'copy'} size={16} />{discordCopied ? 'Скопировано' : 'Скопировать ник'}</button>
-    </div>
+    {/if}
   </section>
 
   {#if app.devMode}
@@ -211,12 +208,28 @@
     </section>
   {/if}
 
+  {#if contactV === 'c'}
+    <section class="talk">
+      <span class="talk-ico"><Icon name="chat" size={20} /></span>
+      <div class="grow">
+        <b>Нашли ошибку или есть идея?</b>
+        <p>Напишите автору программы в Discord — так NOVA HELPER становится лучше.</p>
+      </div>
+      <button class="nick big" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'copy'} size={15} />{DISCORD}</button>
+    </section>
+  {/if}
+
   <section class="game">
     <Icon name="window" size={18} />
     <p>Окно видно поверх игры, только если в настройках GTA 5 выбран режим экрана <b>«Оконный»</b> или <b>«Без рамки»</b>. В полноэкранном режиме Windows не может показать другое окно поверх игры.</p>
   </section>
 
-  <button class="btn ghost quit" onclick={() => backend.quit()}>Выйти из программы</button>
+  <div class="foot">
+    <button class="btn ghost quit" onclick={() => backend.quit()}>Выйти из программы</button>
+    {#if contactV === 'b'}
+      <p class="sign">Сделал <button onclick={copyDiscord} title="Скопировать ник">{DISCORD}</button> · Discord{discordCopied ? ' — ник скопирован' : ''}</p>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -251,7 +264,24 @@
   .code:focus { outline: 0; border-color: var(--accent-line); }
   .bad { color: var(--danger); margin-top: 8px; }
   .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .quit { align-self: flex-start; margin-top: 4px; color: var(--danger); }
+  .quit { color: var(--danger); }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+  /* Связь с автором */
+  .author { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .author .hint { margin: 0; }
+  .nick { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .nick :global(svg) { color: var(--accent); }
+  .nick span { font-size: var(--fs-xs); font-weight: 600; color: var(--text-muted); }
+  .nick:hover { border-color: var(--accent-line); background: var(--surface-2); }
+  .nick.big { height: 40px; padding: 0 16px 0 14px; border-color: var(--accent-line); font-size: var(--fs-md); }
+  .talk { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--accent-glow), var(--surface); border-color: var(--accent-line); }
+  .talk-ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--accent-tint); color: var(--accent); flex-shrink: 0; }
+  .talk .grow { flex: 1; min-width: 220px; }
+  .talk b { display: block; font-size: var(--fs-md); }
+  .talk p { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--text-dim); }
+  .sign { margin: 0; font-size: var(--fs-xs); color: var(--text-muted); }
+  .sign button { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--text-dim); cursor: pointer; border-bottom: 1px dashed var(--border-strong); }
+  .sign button:hover { color: var(--accent); border-color: var(--accent-line); }
   .quit:hover { background: var(--danger-tint); color: var(--danger); }
   @media (max-width: 639px) { .settings { padding: 16px 14px 48px; } section { padding: 16px; } }
 </style>
