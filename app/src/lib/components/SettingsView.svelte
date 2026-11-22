@@ -176,6 +176,12 @@
       </div>
       <button class="btn" onclick={checkProgram} disabled={appCheck === 'checking'}><Icon name="download" size={16} />{appCheck === 'checking' ? 'Проверяю…' : 'Проверить'}</button>
     </div>
+    {#if contactV === 'e'}
+      <div class="author">
+        <p class="hint">Ошибка или идея? Напишите автору в Discord.</p>
+        <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'chat'} size={16} />{discordCopied ? 'Ник скопирован' : DISCORD}</button>
+      </div>
+    {/if}
     {#if contactV === 'a'}
       <div class="author">
         <p class="hint">Ошибка или идея? Напишите автору в Discord.</p>
@@ -208,6 +214,16 @@
     </section>
   {/if}
 
+  {#if contactV === 'd'}
+    <section class="ds">
+      <span class="ds-ico"><Icon name="chat" size={20} /></span>
+      <div class="grow">
+        <b>Нашли ошибку или есть идея?</b>
+        <p>Напишите автору программы в Discord — так NOVA HELPER становится лучше.</p>
+      </div>
+      <button class="ds-btn" onclick={copyDiscord} title="Скопировать ник"><Icon name={discordCopied ? 'check' : 'copy'} size={16} />{discordCopied ? 'Ник скопирован' : DISCORD}</button>
+    </section>
+  {/if}
   {#if contactV === 'c'}
     <section class="talk">
       <span class="talk-ico"><Icon name="chat" size={20} /></span>
@@ -279,6 +295,15 @@
   .talk .grow { flex: 1; min-width: 220px; }
   .talk b { display: block; font-size: var(--fs-md); }
   .talk p { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--text-dim); }
+  /* Цвет Discord */
+  .ds { --ds: #5865f2; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: linear-gradient(140deg, rgba(88, 101, 242, 0.22) 0%, rgba(88, 101, 242, 0.06) 50%, rgba(88, 101, 242, 0) 75%), var(--surface); border-color: rgba(88, 101, 242, 0.5); }
+  .ds-ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: #5865f2; color: #fff; flex-shrink: 0; }
+  .ds .grow { flex: 1; min-width: 220px; }
+  .ds b { display: block; font-size: var(--fs-md); }
+  .ds p { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--text-dim); }
+  .ds-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px 0 14px; border: 0; border-radius: var(--radius); background: #5865f2; color: #fff; font: inherit; font-size: var(--fs-md); font-weight: 700; cursor: pointer; transition: background 0.15s; }
+  .ds-btn:hover { background: #4752c4; }
+  .author .ds-btn { height: 34px; font-size: var(--fs-sm); padding: 0 14px 0 12px; }
   .sign { margin: 0; font-size: var(--fs-xs); color: var(--text-muted); }
   .sign button { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--text-dim); cursor: pointer; border-bottom: 1px dashed var(--border-strong); }
   .sign button:hover { color: var(--accent); border-color: var(--accent-line); }
