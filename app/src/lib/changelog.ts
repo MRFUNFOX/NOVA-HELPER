@@ -12,7 +12,7 @@ export interface AppRelease {
 
 export const APP_CHANGELOG: AppRelease[] = [
   {
-    version: '0.7.16',
+    version: '0.7.17',
     date: '2026-11-22',
     items: ['В настройках появилась связь с автором: нашли ошибку или есть идея — напишите в Discord, ник копируется одной кнопкой.'],
   },
