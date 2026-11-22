@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.21-0217",
- "generatedAt": "2026-11-21T02:17:47.907Z",
+ "dbVersion": "2026.11.22-1943",
+ "generatedAt": "2026-11-22T19:43:07.714Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -614,7 +614,8 @@
     "nodes": 168,
     "punishments": 59,
     "images": 0
-   }
+   },
+   "stale": true
   },
   {
    "id": "server/horizon/411182",
@@ -678,7 +679,8 @@
     "nodes": 136,
     "punishments": 0,
     "images": 0
-   }
+   },
+   "stale": true
   },
   {
    "id": "server/horizon/411139",
@@ -863,11 +865,11 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411137/",
-   "sha256": "d3ff81c1425007913ea8c70b68c840ef86d8eea2bbc80d9979307f6415c71894",
-   "size": 88205,
-   "path": "docs/server_horizon_411137.1b89432e6ab0.json",
+   "sha256": "a4ad7316375a181dd218abaf2ac22c8b2cc46eb6aa6f43b4a2a57359d5d5ec8a",
+   "size": 59050,
+   "path": "docs/server_horizon_411137.4dbbe4a72ab8.json",
    "stats": {
-    "nodes": 149,
+    "nodes": 113,
     "punishments": 0,
     "images": 0
    }
@@ -1007,11 +1009,11 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411159/",
-   "sha256": "51e00558aa98b9bb410f8b5c1c392b77614b79f3f495ead9499a6b1b6b0148eb",
-   "size": 73781,
-   "path": "docs/server_horizon_411159.8423cf7c1337.json",
+   "sha256": "15db4a4e8f49702331757225a517518075a490b36c24ada02b4d3155bed2d74b",
+   "size": 67976,
+   "path": "docs/server_horizon_411159.46862d3b5e92.json",
    "stats": {
-    "nodes": 95,
+    "nodes": 126,
     "punishments": 0,
     "images": 0
    }
@@ -1030,7 +1032,8 @@
     "nodes": 263,
     "punishments": 0,
     "images": 0
-   }
+   },
+   "stale": true
   },
   {
    "id": "server/horizon/411157",
@@ -1071,15 +1074,15 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411158/",
-   "sha256": "1210908d1ec46df9853d0cd53a40fb4319d6572c1311ec40d5013a7b8daf794e",
-   "size": 23645,
-   "path": "docs/server_horizon_411158.02679ad9494d.json",
+   "sha256": "a179d0b3c431e78a98db7e487bd64c021efabf11df04e57b57e1938cf2523c05",
+   "size": 24188,
+   "path": "docs/server_horizon_411158.bd160a15470b.json",
    "stats": {
-    "nodes": 38,
-    "punishments": 0,
+    "nodes": 40,
+    "punishments": 1,
     "images": 0
    }
   }
  ],
- "changelog": "changelog/2026.11.21-0217.json"
+ "changelog": "changelog/2026.11.22-1943.json"
 }
