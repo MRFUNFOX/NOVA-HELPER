@@ -107,10 +107,12 @@ export async function run(env) {
   const latest = snaps.reduce((a, b) => (Date.parse(a.time) >= Date.parse(b.time) ? a : b));
   const file = buildFile(history, latest);
 
-  await ghWrite(env, 'history.json', { v: 1, history }, hist.sha, `История цен: ${latest.time}`);
+  // Сначала маленький prices.json — его ждут игроки; большую историю (~0,5 МБ) — после.
+  // Если запись истории сорвётся, lastId не сдвинется и следующий запуск допишет её (повтор цен история не дублирует).
   const cur = await ghRead(env, 'prices.json');
   const { history: _omit, ...small } = file;
   await ghWrite(env, 'prices.json', small, cur.sha, `Цены скупщиков: ${latest.time}`);
+  await ghWrite(env, 'history.json', { v: 1, history }, hist.sha, `История цен: ${latest.time}`);
   await env.STATE.put('lastId', newest);
   // Задержка: сколько секунд прошло от публикации в Discord до записи на GitHub
   const lag = Math.round((Date.now() - Date.parse(messages[messages.length - 1].timestamp)) / 1000);
