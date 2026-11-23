@@ -114,13 +114,11 @@ describe('ИИ: проверка ника и история', () => {
     expect(nickIn('Ivan Petrov')).toBe('Ivan_Petrov');
     expect(nickIn('Green Zone')).toBe('Green_Zone');
   });
-  it('формат по п. 2.13 ОП NOVA: Имя_Фамилия, не целиком заглавными или строчными', () => {
-    expect(nickFormat('Layrouse_LaFleyb').every((f) => f.ok)).toBe(true);
-    expect(nickFormat('Ivan_petrov').every((f) => f.ok)).toBe(true);
-    expect(nickFormat('IVAN_IVANOV')[1]!.ok).toBe(false);
-    expect(nickFormat('ivan_ivanov')[1]!.ok).toBe(false);
-    expect(nickFormat('Ivan_petrov2')[0]!.ok).toBe(false);
-    expect(nickFormat('Ivan')[0]!.ok).toBe(false);
+  it('регистр по п. 2.13 ОП NOVA: не целиком заглавными или строчными', () => {
+    expect(nickFormat('Layrouse_LaFleyb')[0]!.ok).toBe(true);
+    expect(nickFormat('Ivan_petrov')[0]!.ok).toBe(true);
+    expect(nickFormat('IVAN_IVANOV')[0]!.ok).toBe(false);
+    expect(nickFormat('ivan_ivanov')[0]!.ok).toBe(false);
   });
   it('история: новые сверху, не больше 200, поиск по словам, битые записи отбрасываются', () => {
     const h = (id: string, q: string) => ({ id, at: 1, q, a: 'ответ', scope: 'project' as const, refs: [] });

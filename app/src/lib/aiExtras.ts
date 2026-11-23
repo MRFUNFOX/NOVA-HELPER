@@ -94,15 +94,13 @@ export function nickIn(text: string): string | null {
   return /^[A-Z][a-zA-Z]+ [A-Z][a-zA-Z]+$/.test(cand) ? cand.replace(' ', '_') : null;
 }
 
-/** Проверки формата по п. 2.13 ОП NOVA RP, которые видны без нейросети */
+/**
+ * Проверки по п. 2.13 ОП NOVA RP, которые видны без нейросети. Формат Имя_Фамилия игра требует сама
+ * при создании персонажа — его не проверяем; остаётся регистр.
+ */
 export function nickFormat(nick: string): { label: string; ok: boolean }[] {
-  const parts = nick.split('_');
-  const two = parts.length === 2 && parts.every((p) => /^\p{L}{2,}$/u.test(p));
-  const letters = nick.replace(/_/g, '');
-  return [
-    { label: 'Формат Имя_Фамилия, только буквы', ok: two },
-    { label: 'Не целиком заглавными или строчными (IVAN_IVANOV, ivan_ivanov)', ok: letters !== letters.toUpperCase() && letters !== letters.toLowerCase() },
-  ];
+  const letters = nick.replace(/[_\s]/g, '');
+  return [{ label: 'Не целиком заглавными или строчными (IVAN_IVANOV, ivan_ivanov)', ok: letters !== letters.toUpperCase() && letters !== letters.toLowerCase() }];
 }
 
 /** «4 212 000» → «4,2 млн»; для строки «встречается у …» */
