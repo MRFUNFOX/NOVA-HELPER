@@ -192,7 +192,7 @@ pub async fn ai_set_key(app: AppHandle, key: String) -> Result<AiStatus, String>
         Provider::Zai => {
             // Списка моделей у Z.ai нет — проверяем ключ крошечным запросом
             let msgs = [Msg { role: "user".into(), content: "Ответь одним словом: ок".into() }];
-            let resp = http.post(format!("{}/chat/completions", p.api())).bearer_auth(&key).json(&body(p, p.helper_models()[0], &msgs, false, false, 8, false)).send().await.map_err(|e| explain(p, None, "", Some(&e)))?;
+            let resp = http.post(format!("{}/chat/completions", p.api())).bearer_auth(&key).json(&body(p, p.helper_models()[0], &msgs, false, false, 8, 0)).send().await.map_err(|e| explain(p, None, "", Some(&e)))?;
             let code = resp.status();
             let text = resp.text().await.unwrap_or_default();
             if !code.is_success() {
@@ -245,15 +245,16 @@ pub struct Msg {
 
 /// think — ответ игроку: модель сначала рассуждает (разбирает ситуацию), потом отвечает. Для служебных запросов
 /// (подбор документов, проверка ника) — без рассуждений: быстрее и не тратит лимит.
-fn body(p: Provider, model: &str, messages: &[Msg], stream: bool, json_mode: bool, max_tokens: u32, think: bool) -> Value {
+/// think: 0 — без рассуждений (служебные запросы), 1 — обычный вопрос, 2 — длинная ситуация или спор (думать глубже)
+fn body(p: Provider, model: &str, messages: &[Msg], stream: bool, json_mode: bool, max_tokens: u32, think: u8) -> Value {
     let msgs: Vec<Value> = messages.iter().map(|m| json!({ "role": m.role, "content": m.content })).collect();
-    let mut b = json!({ "model": model, "messages": msgs, "stream": stream, "temperature": if think { 0.3 } else { 0.2 }, "max_tokens": max_tokens });
+    let mut b = json!({ "model": model, "messages": msgs, "stream": stream, "temperature": if think > 0 { 0.3 } else { 0.2 }, "max_tokens": max_tokens });
     if p == Provider::Zai {
-        b["thinking"] = json!({ "type": if think { "enabled" } else { "disabled" } });
+        b["thinking"] = json!({ "type": if think > 0 { "enabled" } else { "disabled" } });
     } else if model.starts_with("openai/gpt-oss") {
         // Рассуждения нужны, чтобы модель вдумалась в ситуацию; показываем их только команде
-        b["reasoning_effort"] = json!(if think { "medium" } else { "low" });
-        b["include_reasoning"] = json!(think);
+        b["reasoning_effort"] = json!(match think { 0 => "low", 1 => "medium", _ => "high" });
+        b["include_reasoning"] = json!(think > 0);
     }
     if json_mode {
         b["response_format"] = json!({ "type": "json_object" });
@@ -272,7 +273,7 @@ pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>) -> Result<String, S
     let http = client()?;
     let mut last = String::new();
     for model in pick(p.helper_models(), &s.models) {
-        let resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, false, true, 600, false)).send().await {
+        let resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, false, true, 600, 0)).send().await {
             Ok(r) => r,
             Err(e) => return Err(explain(p, None, "", Some(&e))),
         };
@@ -342,11 +343,11 @@ struct Opened {
 type OpenErr = (Option<u16>, String);
 
 /// Отправить вопрос модели и дождаться первых слов ответа
-async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'static str, messages: &[Msg]) -> Result<Opened, OpenErr> {
+async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'static str, messages: &[Msg], think: u8) -> Result<Opened, OpenErr> {
     let mut resp = http
         .post(format!("{}/chat/completions", p.api()))
         .bearer_auth(key)
-        .json(&body(p, model, messages, true, false, 2500, true))
+        .json(&body(p, model, messages, true, false, if think > 1 { 4000 } else { 2500 }, think))
         .send()
         .await
         .map_err(|e| (None, explain(p, None, "", Some(&e))))?;
@@ -383,7 +384,8 @@ fn retryable(e: &OpenErr) -> bool {
 /// У Z.ai бесплатные модели иногда подолгу стоят в очереди, поэтому спрашиваем две модели сразу
 /// и берём ту, что начала отвечать первой; вторая отменяется.
 #[tauri::command]
-pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<Value, String> {
+pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>, deep: Option<bool>) -> Result<Value, String> {
+    let think = if deep.unwrap_or(false) { 2 } else { 1 };
     let s = load(&app);
     if s.key.is_empty() {
         return Err("Помощник не настроен".into());
@@ -393,8 +395,8 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<V
     let models = pick(p.answer_models(), &s.models);
 
     let opened: Result<Opened, String> = if p == Provider::Zai && models.len() >= 2 {
-        let fa = open_stream(&http, p, &s.key, models[0], &messages);
-        let fb = open_stream(&http, p, &s.key, models[1], &messages);
+        let fa = open_stream(&http, p, &s.key, models[0], &messages, think);
+        let fb = open_stream(&http, p, &s.key, models[1], &messages, think);
         tokio::pin!(fa);
         tokio::pin!(fb);
         let (mut a_done, mut b_done) = (false, false);
@@ -409,7 +411,7 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<V
     } else {
         let mut res = Err(String::new());
         for model in models {
-            match open_stream(&http, p, &s.key, model, &messages).await {
+            match open_stream(&http, p, &s.key, model, &messages, think).await {
                 Ok(o) => { res = Ok(o); break; }
                 Err(e) => {
                     let again = retryable(&e);

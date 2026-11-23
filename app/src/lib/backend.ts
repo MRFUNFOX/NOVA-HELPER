@@ -114,7 +114,8 @@ export const backend = {
   aiComplete: (messages: ChatMsg[]) => invoke<string>('ai_complete', { messages }),
   /** Сколько людей носят имя / фамилию по forebears.io (правило 2.13 ОП советует его). null — сайт не ответил */
   nameCount: (kind: 'forenames' | 'surnames', name: string) => invoke<number | null>('name_count', { kind, name }),
-  aiChat: (id: string, messages: ChatMsg[]) => invoke<{ text: string; model: string; reasoning?: string }>('ai_chat', { id, messages }),
+  /** deep — длинная ситуация или спор: нейросеть рассуждает глубже */
+  aiChat: (id: string, deep: boolean, messages: ChatMsg[]) => invoke<{ text: string; model: string; reasoning?: string }>('ai_chat', { id, deep, messages }),
 
   async toggleMaximize() {
     if (!isTauri) return;

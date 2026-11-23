@@ -7,7 +7,7 @@ import type { RuleDocument } from '@shared/types';
 import { backend, type AiProvider, type AiStatus, type ChatMsg } from './backend';
 import { app, sectionOf, shortTitle, type Section } from './state.svelte';
 import { nodeBadge, rank, type Entry } from './search';
-import { slang } from './slang';
+import { aboutGov, slang } from './slang';
 import { errorKind, track } from './stats';
 import { learn, type Note } from './learn.svelte';
 import { HISTORY_KEY, nickFormat, nickIn, people, pushHistory, sanitizeHistory, type HistItem, type NickCheck, type Rating } from './aiExtras';
@@ -98,6 +98,7 @@ ${where}
 /** Первый шаг: нейросеть видит список документов раздела и выбирает подходящие к вопросу */
 const PLAN = `Игрок GTA 5 RP-проекта NOVA RP задаёт вопрос или описывает игровую ситуацию. Ниже — список документов.
 1. Выбери 1–4 документа, в которых, скорее всего, есть ответ. Если речь о нарушении правил проекта (DM, NonRP, PG, MG и т. п.), общие правила проекта подходят почти всегда.
+   Если в ситуации участвуют сотрудники госструктур (полиция, «госники», армия, FIB, EMS) — добавь общие правила государственных структур.
 2. Составь 5–12 слов для поиска по тексту: официальные термины и сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC, ограбление, похищение, задержание),
    как это пишется в документах (например «растулил»/«завалил» → «убийство», «коп» → «сотрудник полиции LSPD»), номера пунктов и статей из вопроса.
 3. "dispute": true, если игрок не согласен с прошлым ответом по смыслу правил или приводит довод, что тот ошибся в правилах («но ведь…», «там не сказано…», «ты не прав, это разрешено»); иначе false.
@@ -361,6 +362,8 @@ class Assistant {
           }
         }
       } catch { /* без подсказки ищем по самому вопросу */ }
+      // Госники, полиция, армия… — их общие правила нужны всегда, даже если нейросеть их не выбрала
+      if (aboutGov(`${q} ${prev}`)) for (const d of docs) if (/общие правила государственных структур/i.test(d.title)) boost.add(d.id);
       if (!fast) t.time.plan = sec();
       t.plan = { docs: [...boost].map((id) => shortTitle(app.doc(id)?.title ?? id)), keywords: extra.trim() };
 
@@ -396,7 +399,9 @@ class Assistant {
       const ask = t.debate
         ? `Фрагменты:\n\n${context}\n\nДовод игрока: ${q}\n\n(Разбери довод по фрагментам и не забудь служебную строку ИТОГ в конце.)`
         : `Фрагменты:\n\n${context}\n\n${meta ? `Прошлый вопрос игрока: ${asked}\nИгрок недоволен прошлым ответом: «${q}». Коротко признай это и ответь на прошлый вопрос полностью.` : `Вопрос игрока: ${q}`}\n\n(${sameNum.length ? `Номер ${refsIn(asked).map((r) => r.num).join(', ')} есть в нескольких документах: ${[...new Set(sameNum.map((e) => shortTitle(e.doc.title)))].join('; ')}. Если из вопроса не ясно, о каком документе речь, — коротко объясни каждый вариант (по одному предложению, назови документ) и спроси, какой имелся в виду. ` : ''}${sameNum.length ? 'Не больше 5 предложений.' : 'Вдумайся в ситуацию, вынеси вердикт и объясни свою логику: 3–5 предложений.'})`;
-      await backend.aiChat(t.id, [
+      // Длинная ситуация или спор — думать глубже; короткий вопрос — быстро
+      const deep = !!t.debate || q.length > 140;
+      await backend.aiChat(t.id, deep, [
         { role: 'system', content: t.debate ? debateSystem(scope) : system(scope) },
         ...history,
         { role: 'user', content: ask },
