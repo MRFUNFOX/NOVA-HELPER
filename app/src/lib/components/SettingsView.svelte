@@ -81,7 +81,7 @@
   async function vinstall() {
     verr = '';
     if (app.settings?.voiceDeclined) await save({ voiceDeclined: false });
-    vstat = { ...(vstat ?? { installed: false, sizeMb: 235 }), installing: true };
+    vstat = { ...(vstat ?? { installed: false, sizeMb: 290 }), installing: true };
     try { await backend.voiceInstall(); } catch (e) { verr = String(e); }
     await vload();
     // Голос установлен — Alt+Q теперь работает как задумано, напоминание про перенос клавиш больше не нужно
@@ -219,9 +219,9 @@
           <div>
             {#if app.settings?.voiceDeclined}
               <p class="value">Голос удалён</p>
-              <p class="hint">Сам больше не скачается. Вернуть — около {vstat?.sizeMb ?? 235} МБ, один раз.</p>
+              <p class="hint">Сам больше не скачается. Вернуть — около {vstat?.sizeMb ?? 290} МБ, один раз.</p>
             {:else}
-              <p class="value">Голос скачается сам — один раз, около {vstat?.sizeMb ?? 235} МБ</p>
+              <p class="value">Голос скачается сам — один раз, около {vstat?.sizeMb ?? 290} МБ</p>
               <p class="hint">Распознавание речи и голос помощника. Обновления программы их не трогают, потом всё работает без интернета.</p>
             {/if}
           </div>

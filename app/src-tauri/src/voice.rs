@@ -71,7 +71,7 @@ pub struct VoiceStatus {
 
 #[tauri::command]
 pub fn voice_status(app: AppHandle) -> VoiceStatus {
-    VoiceStatus { installed: installed(&app), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 310 }
+    VoiceStatus { installed: installed(&app), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 290 }
 }
 
 // ── Установка моделей ──
@@ -556,6 +556,13 @@ fn sentences(text: &str) -> Vec<String> {
         .replace(['—', '–'], ", ")
         .replace([':', ';'], ".")
         .replace(['(', ')'], ", ");
+    // Убрать лишние запятые от скобок и тире: «минут , пункт», «ОП, .», «, ,»
+    static SPACE_COMMA: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| regex::Regex::new(r"\s+([,.!?])").unwrap());
+    static DOUBLE: std::sync::LazyLock<regex::Regex> = std::sync::LazyLock::new(|| regex::Regex::new(r",\s*([,.!?])").unwrap());
+    let mut t = SPACE_COMMA.replace_all(&t, "$1").into_owned();
+    while DOUBLE.is_match(&t) {
+        t = DOUBLE.replace_all(&t, "$1").into_owned();
+    }
     let mut out: Vec<String> = Vec::new();
     let mut cur = String::new();
     let chars: Vec<char> = t.chars().collect();
@@ -762,5 +769,18 @@ mod tests {
             sentences("Нет, это DM: убийство без причины — так нельзя. За это дают JAIL до 120 минут!"),
             vec!["Нет, это дэ эм.", "Убийство без причины, так нельзя.", "За это дают джейл до сто двадцать минут!"]
         );
+        assert_eq!(sentences("Дают JAIL (п. 4.1 ОП)."), vec!["Дают джейл, пункт четыре точка один ОП."]);
+    }
+}
+
+#[cfg(test)]
+mod demo {
+    /// cargo test --lib voice::demo -- --ignored --nocapture — как программа разобьёт ответ на фразы
+    #[test]
+    #[ignore]
+    fn show() {
+        for s in super::sentences("Нет, так нельзя — это DM: убийство без причины. За такое дают JAIL до 120 минут (п. 4.1 ОП). Цена у скупщика — $230.") {
+            println!("{s}");
+        }
     }
 }

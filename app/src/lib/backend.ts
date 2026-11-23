@@ -362,9 +362,9 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       mockState.aiKey = mockState.aiGroq || mockState.aiZai;
       return mockStatus();
     case 'voice_status':
-      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 235 };
+      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 290 };
     case 'voice_install': {
-      const total = 235e6;
+      const total = 290e6;
       for (const [i, stage] of ['asr', 'asr', 'tts-supertonic', 'tts-supertonic', 'done'].entries()) {
         await new Promise((r) => setTimeout(r, 500));
         mockEmit('voice-install', { stage, done: Math.min(total, (i + 1) * 70e6), total });
