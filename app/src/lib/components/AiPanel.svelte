@@ -220,7 +220,7 @@
               </div>
             {/if}
           {:else if !t.a}
-            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.think ? 'Разбираю ситуацию…' : t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
+            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.stage === 'plan' ? 'Разбираю ситуацию…' : t.think ? 'Обдумываю ответ…' : t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
             {#if slow && waited >= 3}
               <p class="wait-note">Бесплатные серверы Z.ai загружены — ответ может занять до минуты. Быстрее отвечает Groq, но он не работает в России и СНГ.</p>
             {/if}
@@ -249,6 +249,11 @@
                   </button>
                 {/each}
               </div>
+            {/if}
+            {#if t.stage === 'check'}
+              <p class="learn wait"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Перепроверяю ответ…</p>
+            {:else if t.checked?.fixed && !t.pending}
+              <p class="learn"><Icon name="check" size={14} /><span>Ответ поправлен после перепроверки{#if learn.staffHere}: {t.checked.problems.join('; ')}{/if}</span></p>
             {/if}
             {#if t.learnState === 'checking'}
               <p class="learn wait"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Сверяю довод с законом…</p>
@@ -279,12 +284,18 @@
               <!-- Только в режиме разработчика: что выбрала нейросеть и что нашёл поиск -->
               <details class="debug">
                 <summary>Поиск: {t.sources.length} пунктов</summary>
+                {#if t.analysis}
+                  {#if t.analysis.who.length}<p><b>Участники:</b> {t.analysis.who.join('; ')}</p>{/if}
+                  {#if t.analysis.ask}<p><b>Хочет узнать:</b> {t.analysis.ask}</p>{/if}
+                  {#if t.analysis.topics.length}<p><b>Проверить:</b> {t.analysis.topics.map((x) => x.check || x.words.join(', ')).join(' · ')}</p>{/if}
+                {/if}
+                {#if t.checked}<p><b>Перепроверка:</b> {t.checked.fixed ? `поправлен — ${t.checked.problems.join('; ')}` : 'ошибок не нашла'}</p>{/if}
                 {#if t.plan}
                   <p><b>Документы:</b> {t.plan.docs.length ? t.plan.docs.join('; ') : 'не выбраны'}</p>
                   <p><b>Слова:</b> {t.plan.keywords || '—'}</p>
                 {/if}
                 {#if t.time}
-                  <p><b>Время:</b> {[t.time.plan !== undefined ? `выбор документов ${t.time.plan} с` : 'без выбора документов', t.time.first !== undefined ? `первые слова ${t.time.first} с` : '', t.time.total !== undefined ? `весь ответ ${t.time.total} с` : ''].filter(Boolean).join(' · ')} · {t.model ?? ai.status?.provider}</p>
+                  <p><b>Время:</b> {[t.time.plan !== undefined ? `разбор ${t.time.plan} с` : 'без разбора', t.time.first !== undefined ? `первые слова ${t.time.first} с` : '', t.time.total !== undefined ? `весь ответ ${t.time.total} с` : ''].filter(Boolean).join(' · ')} · {t.model ?? ai.status?.provider}</p>
                 {/if}
                 <ol>
                   {#each t.sources as s (s.n)}

@@ -146,7 +146,7 @@ fn explain(p: Provider, status: Option<reqwest::StatusCode>, body: &str, net: Op
         Some(401) => "Ключ не подходит. Скопируйте его ещё раз целиком.".into(),
         Some(403) if p == Provider::Groq => format!("Groq недоступен из вашей страны.{other}"),
         Some(403) => format!("{n} отказал в доступе{}", if msg.is_empty() { ".".into() } else { format!(": {msg}") }),
-        Some(429) => format!("Бесплатный лимит {n} на сейчас исчерпан. Подождите минуту и спросите снова."),
+        Some(429 | 413) => format!("Бесплатный лимит {n} на сейчас исчерпан. Подождите минуту и спросите снова."),
         Some(code) if code >= 500 => format!("У {n} временные неполадки. Попробуйте чуть позже."),
         Some(code) => format!("{n} вернул ошибку {code}{}", if msg.is_empty() { String::new() } else { format!(": {msg}") }),
         None => "Неизвестная ошибка".into(),
@@ -262,32 +262,47 @@ fn body(p: Provider, model: &str, messages: &[Msg], stream: bool, json_mode: boo
     b
 }
 
-/// Короткий ответ целиком — для подбора ключевых слов к вопросу
+/// Короткий ответ целиком (JSON) — служебные шаги.
+/// level: 0 — подбор слов, проверка ника (быстро, без рассуждений);
+/// 1 — разбор ситуации перед поиском (модель-помощник думает);
+/// 2 — проверка готового ответа и экзамен (сильная модель думает).
 #[tauri::command]
-pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>) -> Result<String, String> {
+pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>, level: Option<u8>) -> Result<String, String> {
+    let level = level.unwrap_or(0).min(2);
     let s = load(&app);
     if s.key.is_empty() {
         return Err("Помощник не настроен".into());
     }
     let p = Provider::of(&s.key);
     let http = client()?;
+    let (models, think, max) = match level {
+        0 => (p.helper_models(), 0, 600),
+        1 => (p.helper_models(), 1, 1500),
+        _ => (p.answer_models(), 1, 2500),
+    };
     let mut last = String::new();
-    for model in pick(p.helper_models(), &s.models) {
-        let resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, false, true, 600, 0)).send().await {
+    for model in pick(models, &s.models) {
+        let resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, false, true, max, think)).send().await {
             Ok(r) => r,
             Err(e) => return Err(explain(p, None, "", Some(&e))),
         };
         let code = resp.status();
         let text = resp.text().await.unwrap_or_default();
         if code.is_success() {
-            return serde_json::from_str::<Value>(&text)
+            let content = serde_json::from_str::<Value>(&text)
                 .ok()
                 .and_then(|v| v["choices"][0]["message"]["content"].as_str().map(String::from))
-                .ok_or_else(|| format!("Пустой ответ {}", p.name()));
+                .unwrap_or_default();
+            if !content.trim().is_empty() {
+                return Ok(content);
+            }
+            // Модель всё время думала и не успела ответить — пробуем следующую
+            last = format!("Пустой ответ {}", p.name());
+            continue;
         }
         last = explain(p, Some(code), &text, None);
-        // Лимит этой модели исчерпан или модель недоступна — пробуем следующую
-        if !matches!(code.as_u16(), 429 | 404 | 400 | 503) {
+        // Лимит этой модели исчерпан, запрос ей велик или модель недоступна — пробуем следующую
+        if !matches!(code.as_u16(), 429 | 413 | 404 | 400 | 503) {
             break;
         }
     }
@@ -347,7 +362,7 @@ async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'st
     let mut resp = http
         .post(format!("{}/chat/completions", p.api()))
         .bearer_auth(key)
-        .json(&body(p, model, messages, true, false, if think > 1 { 4000 } else { 2500 }, think))
+        .json(&body(p, model, messages, true, false, if think > 1 { 3000 } else { 2000 }, think))
         .send()
         .await
         .map_err(|e| (None, explain(p, None, "", Some(&e))))?;
@@ -373,9 +388,9 @@ async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'st
     }
 }
 
-/// Лимит исчерпан или модель недоступна — можно попробовать другую
+/// Лимит исчерпан, запрос велик для лимита модели (413) или модель недоступна — можно попробовать другую
 fn retryable(e: &OpenErr) -> bool {
-    matches!(e.0, Some(429 | 404 | 400 | 503))
+    matches!(e.0, Some(429 | 413 | 404 | 400 | 503))
 }
 
 /// Ответ на вопрос: текст приходит по кусочкам событиями `ai-chunk`, по мере того как нейросеть его пишет.

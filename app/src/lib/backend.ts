@@ -111,7 +111,8 @@ export const backend = {
     name, props, locale: navigator.language || '',
     osVersion: /Windows NT ([\d.]+)/.exec(navigator.userAgent)?.[1] ?? '',
   }),
-  aiComplete: (messages: ChatMsg[]) => invoke<string>('ai_complete', { messages }),
+  /** level: 0 — служебный запрос; 1 — разбор ситуации (модель думает); 2 — проверка ответа сильной моделью */
+  aiComplete: (messages: ChatMsg[], level = 0) => invoke<string>('ai_complete', { messages, level }),
   /** Сколько людей носят имя / фамилию по forebears.io (правило 2.13 ОП советует его). null — сайт не ответил */
   nameCount: (kind: 'forenames' | 'surnames', name: string) => invoke<number | null>('name_count', { kind, name }),
   /** deep — длинная ситуация или спор: нейросеть рассуждает глубже */
@@ -342,6 +343,34 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
         return JSON.stringify({ verdict: 'ok', issues: [] });
       }
       if (sys.includes('проверяешь толкование')) return JSON.stringify({ ok: true, refs: 'ст. 4 ч. 1, ст. 11, ст. 15 ч. 1', reason: 'Бронежилет отнесён к спецсредствам, ст. 15 говорит только об оружии.' });
+      const user = String((args!.messages as ChatMsg[])[1]?.content ?? '');
+      await new Promise((r) => setTimeout(r, 400));
+      // Разбор ситуации
+      if (sys.includes('Не отвечай на него — разбери')) {
+        const q = user.split('Вопрос игрока: ').pop() ?? '';
+        if (/госник|полиц|сотрудник/i.test(q)) return JSON.stringify({
+          who: ['игрок — рассказчик', 'два сотрудника госструктуры — игроки', 'администратор — посадил сотрудников в деморган'],
+          facts: ['сотрудники остановили игрока на центральной улице', 'выписывали штрафы без причины и намекали на деньги', 'игрок написал репорт', 'администратор посадил сотрудников в деморган'],
+          ask: 'справедливо ли администратор наказал сотрудников',
+          topics: [
+            { check: 'можно ли сотруднику выписывать штрафы без причины', words: ['злоупотребление полномочиями', 'необоснованная выдача штрафов'] },
+            { check: 'можно ли сотруднику брать взятку на центральной улице', words: ['взятки', 'общественных местах', 'центральных улицах'] },
+            { check: 'за что администрация сажает сотрудников в деморган', words: ['JAIL', 'государственных структур'] },
+          ],
+          docs: ['D1'], dispute: false,
+        });
+        return JSON.stringify({ who: [], facts: [], ask: q.slice(0, 80), topics: [{ check: q.slice(0, 80), words: [] }], docs: [], dispute: false });
+      }
+      // Самопроверка ответа
+      if (sys.includes('Помощник ответил игроку')) {
+        if (/госник|деморган/i.test(user)) return JSON.stringify({ ok: false, problems: ['Ответ перепутал участников: в деморган посадили сотрудников, а не игрока'], answer: '**Да, наказание справедливое.** Сотрудники выписывали штрафы без причины — это злоупотребление полномочиями [S1], а намёки на деньги на центральной улице — запрещённая взятка в общественном месте [S2]. Госники — тоже игроки, поэтому за это их и наказала администрация: до **JAIL 180 минут** [S1].' });
+        return JSON.stringify({ ok: true, problems: [], answer: '' });
+      }
+      // Оценка экзамена
+      if (sys.includes('принимаешь экзамен')) {
+        const r = [...user].reduce((n, c) => n + c.charCodeAt(0), 0) % 4;
+        return JSON.stringify(r === 0 ? { match: 'no', why: 'Вердикт противоположный эталону: помощник назвал это DM, хотя пункт разрешает.' } : r === 1 ? { match: 'partly', why: 'Вердикт верный, но не названо наказание.' } : { match: 'yes', why: 'Вердикт и пункт совпадают с эталоном.' });
+      }
       return JSON.stringify({ keywords: [] });
     }
     case 'ai_chat': {

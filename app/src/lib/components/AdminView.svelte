@@ -1,12 +1,13 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
+  import ExamTab from './ExamTab.svelte';
   import { app } from '../state.svelte';
   import { learn, LearnError, type FullNote, type LogEntry, type Member, type QueueItem } from '../learn.svelte';
 
-  type Tab = 'queue' | 'notes' | 'team' | 'log';
+  type Tab = 'queue' | 'notes' | 'team' | 'log' | 'exam';
   let tab = $state<Tab>('queue');
   const tabs = $derived<[Tab, string][]>(learn.isDev
-    ? [['queue', 'Проверка'], ['notes', 'Принятые'], ['team', 'Команда'], ['log', 'Журнал']]
+    ? [['queue', 'Проверка'], ['notes', 'Принятые'], ['team', 'Команда'], ['log', 'Журнал'], ['exam', 'Экзамен']]
     : [['queue', 'Проверка'], ['notes', 'Принятые']]);
 
   let items = $state<QueueItem[] | null>(null);
@@ -33,12 +34,12 @@
       if (which === 'queue') { items = await learn.queue(); learn.pending = items.length; }
       else if (which === 'notes') notes = (await learn.allNotes()).slice().reverse();
       else if (which === 'team') members = (await learn.team()).users;
-      else journal = await learn.journal(7);
+      else if (which === 'log') journal = await learn.journal(7);
     } catch (e) { error = why(e); }
   }
   $effect(() => { void tab; void load(tab); });
   // Admin не видит вкладки Dev: если роль сменилась — на «Проверку»
-  $effect(() => { if (!learn.isDev && (tab === 'team' || tab === 'log')) tab = 'queue'; });
+  $effect(() => { if (!learn.isDev && (tab === 'team' || tab === 'log' || tab === 'exam')) tab = 'queue'; });
 
   async function act(fn: () => Promise<unknown>, reload: Tab[] = [tab]) {
     if (busy) return;
@@ -146,7 +147,7 @@
         {label}{#if id === 'queue' && items}<b>{items.length}</b>{:else if id === 'notes' && notes}<b>{notes.length}</b>{/if}
       </button>
     {/each}
-    <button class="tab refresh" title="Обновить" aria-label="Обновить" onclick={() => load()}><Icon name="refresh" size={15} /></button>
+    {#if tab !== 'exam'}<button class="tab refresh" title="Обновить" aria-label="Обновить" onclick={() => load()}><Icon name="refresh" size={15} /></button>{/if}
   </div>
 
   {#if error}<p class="err"><Icon name="alert" size={15} />{error}</p>{/if}
@@ -315,6 +316,8 @@
         {/each}
       </div>
     {/if}
+  {:else if tab === 'exam' && learn.isDev}
+    <ExamTab />
   {/if}
 </div>
 

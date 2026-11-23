@@ -10,6 +10,8 @@ import { nodeBadge, rank, type Entry } from './search';
 import { aboutGov, slang } from './slang';
 import { errorKind, track } from './stats';
 import { learn, type Note } from './learn.svelte';
+import { WORLD, WORLD_SHORT } from './world';
+import { EXAM, JUDGE, citesRef, type ExamItem, type ExamResult, type Match } from './exam';
 import { HISTORY_KEY, nickFormat, nickIn, people, pushHistory, sanitizeHistory, type HistItem, type NickCheck, type Rating } from './aiExtras';
 
 export interface Source { n: number; entry: Entry }
@@ -48,6 +50,24 @@ export interface Turn {
   fromHistory?: boolean;
   /** Как модель рассуждала перед ответом — видит только команда (Dev/Admin) */
   think?: string;
+  /** Разбор ситуации перед поиском: участники, факты, что проверить */
+  analysis?: Analysis;
+  /** Что сейчас делает помощник: разбирает ситуацию, отвечает, проверяет ответ */
+  stage?: 'plan' | 'answer' | 'check';
+  /** Итог самопроверки: поправлен ли ответ и что было не так */
+  checked?: { fixed: boolean; problems: string[] };
+  /** Вопрос экзамена — не в истории и не в статистике */
+  exam?: boolean;
+}
+
+/** Разбор ситуации: нейросеть сначала понимает, кто что сделал и что проверить, — и только потом ищем пункты */
+export interface Analysis {
+  who: string[];
+  facts: string[];
+  ask: string;
+  topics: { check: string; words: string[] }[];
+  docs: string[];
+  dispute: boolean;
 }
 
 export interface Verdict { agree: boolean; refs: string; note: string; keywords: string[] }
@@ -65,10 +85,7 @@ ${where}
 
 Ты не справочник, а опытный администратор: тебе дают ситуацию — ты в неё вдумываешься и выносишь решение.
 
-Кто есть кто — не путай:
-- Игроки отыгрывают роли внутри игры. Сотрудники госструктур («госники», полиция, «копы», армия, EMS) — тоже игроки, а не администрация.
-- Администрация (админы, «красный ник») — вне игры: выдаёт JAIL и деморган, WARN, BAN, мут. «Откинули в деморган» = администратор посадил игрока в деморган (админ-тюрьму); «до смены ника» = пока он не сменит ник, нарушающий правила.
-- «ДК» — Дорожный кодекс, «УК» — Уголовный кодекс: это законы штата, не правила проекта.
+${WORLD}
 
 Как думать (про себя, до ответа):
 1. Разбери ситуацию: кто что сделал и в каком порядке, кто начал, была ли RP-ситуация и весомая IC-причина, что было до и после.
@@ -77,6 +94,7 @@ ${where}
 3. Примерь каждый пункт к фактам по смыслу, а не по совпадению слов. Пункт про другое — отбрось. Если пункты противоречат — частный важнее общего.
 4. Подумай, как это решил бы разумный администратор: что здесь здраво, а что — попытка обойти правило.
 5. Не хватает важной детали — реши по самому вероятному варианту и скажи, от чего ещё зависит итог. Не уходи от ответа.
+Перед фрагментами может быть «Разбор ситуации» — это черновик помощника. Сверь его с рассказом игрока: если разбор с рассказом расходится, верь рассказу.
 
 Как отвечать:
 - Игрок просто описал ситуацию без вопроса — пойми, что он хочет узнать (обычно: прав ли он, кто нарушил, за что наказали), и оцени поступки каждого участника.
@@ -95,20 +113,125 @@ ${where}
 - Если во фрагментах ничего по теме — скажи «${nothing}» и что стоит уточнить. Ничего не выдумывай.`;
 }
 
-/** Первый шаг: нейросеть видит список документов раздела и выбирает подходящие к вопросу */
-const PLAN = `Игрок GTA 5 RP-проекта NOVA RP задаёт вопрос или описывает игровую ситуацию. Ниже — список документов.
-1. Выбери 1–4 документа, в которых, скорее всего, есть ответ. Если речь о нарушении правил проекта (DM, NonRP, PG, MG и т. п.), общие правила проекта подходят почти всегда.
-   Если в ситуации участвуют сотрудники госструктур (полиция, «госники», армия, FIB, EMS) — добавь общие правила государственных структур.
-2. Составь 5–12 слов для поиска по тексту: официальные термины и сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC, ограбление, похищение, задержание),
-   как это пишется в документах (например «растулил»/«завалил» → «убийство», «коп» → «сотрудник полиции LSPD»), номера пунктов и статей из вопроса.
-3. "dispute": true, если игрок не согласен с прошлым ответом по смыслу правил или приводит довод, что тот ошибся в правилах («но ведь…», «там не сказано…», «ты не прав, это разрешено»); иначе false.
-   Жалоба на сам ответ — «не уточнил», «дай подробнее», «должен был дать оба варианта», «это не тот пункт» — это НЕ спор: false.
-Ответ строго в JSON: {"docs": ["D3", "D12"], "keywords": ["…"], "dispute": false}`;
+/** Первый шаг: нейросеть разбирает ситуацию — кто участники, какие факты, что проверить по правилам — и выбирает документы.
+ *  Каждый вопрос к правилам потом ищем отдельно, поэтому в ответ попадают пункты обо всех частях ситуации. */
+function analyzeSystem(scope: Section) {
+  const docsHint = scope === 'laws'
+    ? 'Обычно ответ в Уголовном, Административном или Дорожном кодексе; о полномочиях сотрудников — в законах о статусе их структур.'
+    : 'О нарушениях (DM, NonRP, PG, MG, RK, оскорбления, ник, чат) — почти всегда «Общие правила проекта». Если в ситуации сотрудники госструктур (полиция, «госники», FIB, армия, EMS) — добавь «Общие правила государственных структур».';
+  const words = scope === 'laws'
+    ? 'как пишут в законах: убийство, похищение, взятка, задержание, превышение полномочий, штраф, лишение свободы, номера статей из вопроса'
+    : 'как пишут в правилах: DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, NLR, DriveBy DB, ООС, IC, злоупотребление полномочиями, задержание, ограбление, похищение, зелёная зона, номера пунктов из вопроса';
+  return `Ты — опытный администратор GTA 5 RP-проекта NOVA RP. Игрок задаёт вопрос или описывает ситуацию. Не отвечай на него — разбери, чтобы потом найти нужные пункты ${scope === 'laws' ? 'законов штата' : 'правил проекта'}.
+${WORLD_SHORT}
+
+Ответ строго в JSON:
+{"who": ["участник — кто он и что сделал"], "facts": ["факт из рассказа"], "ask": "что игрок хочет узнать", "topics": [{"check": "что проверить по правилам", "words": ["слово"]}], "docs": ["D3"], "dispute": false}
+- who: 0–5 участников, включая самого игрока. Роль каждого: игрок, сотрудник полиции или другой госструктуры, администратор. Госник и коп — игроки, а не администрация. Кто кого наказал — как в рассказе.
+- facts: только то, что сказал игрок, по порядку. Ничего не додумывай.
+- ask: одним предложением. Если вопроса нет, игрок обычно хочет узнать, прав ли он, кто нарушил и справедливо ли наказание.
+- topics: 1–5 отдельных вопросов к правилам: каждый поступок каждого участника — свой вопрос («правомерно ли сотрудник выписал штраф без причины», «можно ли было стрелять в ответ»). words — 3–8 слов, ${words}.
+- docs: 1–5 документов из списка, где скорее всего ответ. ${docsHint}
+- dispute: true, только если игрок спорит с прошлым ответом о смысле правил («но ведь…», «там не сказано…», «ты не прав, это разрешено»). Жалоба на сам ответ («не уточнил», «подробнее», «должен был дать оба варианта», «не тот пункт») — false.`;
+}
+
+/** Разбор из ответа нейросети. Плохой JSON — null, лишнее отбрасываем */
+export function parseAnalysis(raw: string): Analysis | null {
+  let j: Record<string, unknown>;
+  try {
+    const a = raw.indexOf('{');
+    const b = raw.lastIndexOf('}');
+    j = JSON.parse(a >= 0 && b > a ? raw.slice(a, b + 1) : raw) as Record<string, unknown>;
+  } catch { return null; }
+  if (!j || typeof j !== 'object') return null;
+  const strs = (v: unknown, n: number) => (Array.isArray(v) ? v : [])
+    .map((x) => (typeof x === 'string' || typeof x === 'number' ? String(x).trim() : '')).filter(Boolean).slice(0, n);
+  const topics: Analysis['topics'] = (Array.isArray(j.topics) ? j.topics : []).flatMap((x: unknown) => {
+    if (typeof x === 'string') return x.trim() ? [{ check: x.trim(), words: [] }] : [];
+    if (!x || typeof x !== 'object') return [];
+    const o = x as Record<string, unknown>;
+    const check = typeof o.check === 'string' ? o.check.trim() : '';
+    const words = strs(o.words, 10);
+    return check || words.length ? [{ check, words }] : [];
+  }).slice(0, 6);
+  // Старый формат шага: просто слова для поиска
+  const kw = strs(j.keywords, 12);
+  if (kw.length) topics.push({ check: '', words: kw });
+  return { who: strs(j.who, 6), facts: strs(j.facts, 8), ask: typeof j.ask === 'string' ? j.ask.trim() : '', topics, docs: strs(j.docs, 6), dispute: j.dispute === true };
+}
+
+/** Разбор для ответа — черновиком, который нейросеть сверит с рассказом */
+export function analysisText(a: Analysis) {
+  const lines: string[] = [];
+  if (a.who.length) lines.push(`Участники: ${a.who.join('; ')}`);
+  if (a.facts.length) lines.push(`Факты: ${a.facts.join('; ')}`);
+  if (a.ask) lines.push(`Игрок хочет узнать: ${a.ask}`);
+  const checks = a.topics.map((x) => x.check).filter(Boolean);
+  if (checks.length) lines.push(`Что проверить: ${checks.map((c, i) => `${i + 1}) ${c}`).join(' ')}`);
+  return lines.length ? `Разбор ситуации (черновик — сверь с рассказом игрока, рассказ главнее):\n${lines.join('\n')}` : '';
+}
+
+/** Пункты из нескольких поисков в один список: обязательные — первыми, дальше по очереди из каждого поиска,
+ *  пока не кончится место. Так каждая часть ситуации получает свои пункты, а длинный поиск не вытесняет короткий. */
+export function mergeGroups<T>(forced: T[], groups: T[][], budget: number, max: number, size: (x: T) => number, key: (x: T) => string): T[] {
+  const out: T[] = [];
+  const seen = new Set<string>();
+  let used = 0;
+  for (const x of forced) {
+    if (seen.has(key(x))) continue;
+    seen.add(key(x)); out.push(x); used += size(x);
+  }
+  const depth = Math.max(0, ...groups.map((g) => g.length));
+  for (let d = 0; d < depth && out.length < max; d++) {
+    for (const g of groups) {
+      const x = g[d];
+      if (x === undefined || seen.has(key(x)) || out.length >= max) continue;
+      const n = size(x);
+      if (used + n > budget) continue;
+      seen.add(key(x)); out.push(x); used += n;
+    }
+  }
+  return out;
+}
+
+/** Сколько знаков займёт пункт во фрагментах — чтобы запрос влез в бесплатный лимит */
+function fragSize(e: Entry, max: number) {
+  return 90 + Math.min(e.node.text.length, max)
+    + e.node.punishments.reduce((n, p) => n + p.raw.length + 12, 0)
+    + e.node.annotations.reduce((n, a) => n + Math.min(a.text.length, 300) + 14, 0);
+}
+
+/** Самопроверка ответа на сложную ситуацию: второй взгляд ищет грубые ошибки и, если нашёл, переписывает ответ */
+const CHECK = `Ты — старший администратор GTA 5 RP-проекта NOVA RP. Помощник ответил игроку. Проверь ответ строго по рассказу игрока и фрагментам правил.
+${WORLD}
+
+Ищи только серьёзные ошибки:
+- перепутаны участники или их роли (игрок, сотрудник госструктуры, администратор), кто кого наказал;
+- ответ приписывает игроку или участникам то, чего в рассказе нет;
+- пункт применён не по смыслу, или вывод противоречит тексту пункта, примечанию, исключению;
+- законы штата вместо правил проекта или наоборот;
+- нет вердикта или ответ уходит от вопроса;
+- ссылка [S#] на фрагмент, где этого нет.
+Стиль, длину и мелкие неточности не трогай. Ответ без серьёзных ошибок — ok: true.
+Ответ строго в JSON: {"ok": true, "problems": ["коротко, что не так"], "answer": ""}
+Если ok: false — в "answer" напиши исправленный ответ целиком по тем же правилам: первое предложение — вердикт, дальше 2–4 предложения логики, ссылки [S#] только на фрагменты из списка, без списков и заголовков, главное **жирным**, не больше 110 слов.`;
+
+/** Итог самопроверки. Поправляем ответ, только если проверка нашла ошибку и дала новый текст */
+export function parseCheck(raw: string): { fix: boolean; problems: string[]; answer: string } | null {
+  try {
+    const a = raw.indexOf('{');
+    const j = JSON.parse(a >= 0 ? raw.slice(a, raw.lastIndexOf('}') + 1) : raw) as Record<string, unknown>;
+    const problems = (Array.isArray(j.problems) ? j.problems : []).filter((x): x is string => typeof x === 'string' && !!x.trim()).slice(0, 5);
+    const answer = typeof j.answer === 'string' ? j.answer.trim() : '';
+    return { fix: j.ok === false && problems.length > 0 && answer.length >= 20, problems, answer };
+  } catch { return null; }
+}
 
 /** Игрок спорит с прошлым ответом: честная проверка довода по тексту */
 function debateSystem(scope: Section) {
   const where = scope === 'laws' ? 'законам штата' : 'правилам проекта NOVA RP';
   return `Ты — помощник программы NOVA HELPER для игроков GTA 5 RP-проекта NOVA RP (сервер Horizon). Отвечаешь по ${where}.
+${WORLD_SHORT}
 Игрок не согласен с твоим прошлым ответом и приводит довод. Проверь довод честно, только по тексту фрагментов:
 1. Что именно запрещает или разрешает пункт, на который ссылаются. Если наказание — за «незаконное» действие, найди, какая норма делает его незаконным. Нет такой нормы — значит, действие не запрещено.
 2. Есть ли во фрагментах пункт, который прямо делает это действие нарушением.
@@ -240,7 +363,7 @@ class Assistant {
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch { /* переполнено — живём без истории */ }
   }
   private remember(t: Turn) {
-    if (t.fromHistory || t.error || (!t.a && !t.nick)) return;
+    if (t.fromHistory || t.exam || t.error || (!t.a && !t.nick)) return;
     const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' && p.kind === 's' ? [p.n] : [])));
     this.saveHistory(pushHistory(this.history, {
       id: t.id, at: t.at ?? Date.now(), q: t.q, a: answerText(t.a), scope: t.scope ?? 'project',
@@ -278,7 +401,7 @@ class Assistant {
   /** Вопрос игрока (раздел — как выбран в меню слева: «Правила» или «Законы»). Возвращает ход разговора, когда ответ готов (для голосового вопроса) */
   ask(question: string): Promise<Turn | undefined> {
     const q = question.trim();
-    if (!q || this.busy) return Promise.resolve(undefined);
+    if (!q || this.busy || this.exam.running) return Promise.resolve(undefined);
     const nick = nickIn(q);
     const scope: Section = nick ? 'project' : app.hasLaws ? app.section : 'project';
     // Открытый из истории вопрос — начало нового разговора
@@ -330,77 +453,87 @@ class Assistant {
     this.busy = true;
     try {
       const i = this.turns.indexOf(t);
-      // Прошлый вопрос того же раздела — для уточнений «а если…»
-      const before = this.turns.slice(0, i).filter((x) => x.scope === scope && x.a && !x.error);
-      const prev = before.at(-1)?.q ?? '';
+      // Прошлый вопрос того же раздела — для уточнений «а если…» (у вопроса экзамена прошлого нет)
+      const before = i < 0 ? [] : this.turns.slice(0, i).filter((x) => x.scope === scope && x.a && !x.error);
+      const last = before.at(-1);
+      const prev = last?.q ?? '';
       const inScope = (d: RuleDocument) => sectionOf(d) === scope;
 
       const t0 = performance.now();
       const sec = () => Math.round((performance.now() - t0) / 100) / 10;
       t.time = { start: t0 };
-      // Бесплатные модели Z.ai медленные — для них пропускаем шаг выбора документов (минус один запрос),
-      // а разговорные слова переводим сами
+      // Бесплатные модели Z.ai медленные и с коротким окном — им фрагменты покороче
       const fast = this.provider === 'zai';
 
-      // 1. Нейросеть выбирает подходящие документы и переводит разговорный вопрос на язык правил
+      // 1. Разбор ситуации: кто участники, что произошло, что проверить по правилам, в каких документах искать
+      t.stage = 'plan';
       const docs = app.db.docs.filter(inScope);
       const catalog = docs.map((d, n) => `D${n + 1} ${shortTitle(d.title)}`).join('\n');
       let extra = slang(`${q} ${prev}`);
       const boost = new Set<string>();
-      if (!fast) try {
+      let an: Analysis | null = null;
+      try {
+        const lastA = last ? cut(answerText(last.a).replace(/\s*[[(](?:[SN]\d+(?:\s*[,;]\s*)?)+[\])]/g, ''), 400) : '';
         const raw = await backend.aiComplete([
-          { role: 'system', content: PLAN },
-          { role: 'user', content: `Документы (${SCOPES[scope].label.toLowerCase()}):\n${catalog}\n\n${prev ? `Предыдущий вопрос: ${prev}\n` : ''}Вопрос: ${q}` },
-        ]);
-        const plan = JSON.parse(raw) as { docs?: unknown; keywords?: unknown; dispute?: unknown };
-        if (plan.dispute === true && before.length) t.debate = true;
-        if (Array.isArray(plan.keywords)) extra += ' ' + plan.keywords.filter((x) => typeof x === 'string').join(' ');
-        if (Array.isArray(plan.docs)) {
-          for (const id of plan.docs) {
-            const d = docs[Number(String(id).replace(/\D/g, '')) - 1];
-            if (d) boost.add(d.id);
-          }
+          { role: 'system', content: analyzeSystem(scope) },
+          { role: 'user', content: `Документы (${SCOPES[scope].label.toLowerCase()}):\n${catalog}\n\n${prev ? `Прошлый вопрос игрока: ${prev}\nПрошлый ответ помощника: ${lastA}\n\n` : ''}Вопрос игрока: ${q}` },
+        ], 1);
+        an = parseAnalysis(raw);
+      } catch { /* без разбора ищем по самому вопросу */ }
+      if (an) {
+        t.analysis = an;
+        if (an.dispute && before.length) t.debate = true;
+        extra += ' ' + an.topics.flatMap((x) => x.words).join(' ');
+        for (const id of an.docs) {
+          const d = docs[Number(id.replace(/\D/g, '')) - 1];
+          if (d) boost.add(d.id);
         }
-      } catch { /* без подсказки ищем по самому вопросу */ }
+      }
       // Госники, полиция, армия… — их общие правила нужны всегда, даже если нейросеть их не выбрала
       if (aboutGov(`${q} ${prev}`)) for (const d of docs) if (/общие правила государственных структур/i.test(d.title)) boost.add(d.id);
-      if (!fast) t.time.plan = sec();
+      t.time.plan = sec();
       t.plan = { docs: [...boost].map((id) => shortTitle(app.doc(id)?.title ?? id)), keywords: extra.trim() };
 
       if (before.length && looksLikeDispute(q)) t.debate = true;
-      const last = before.at(-1);
       // «Ты не уточнил», «дай подробнее» — не спор, а просьба ответить полнее на прошлый вопрос
       const meta = !!last && looksLikeMeta(q);
       if (meta) t.debate = false;
       const asked = meta && last ? last.q : q;
 
-      // 2. Подбор пунктов только в выбранном разделе: по вопросу, словам-подсказкам и прошлому вопросу.
-      //    В споре — ещё пункты, названные игроком, пункты прошлого ответа и их документы целиком.
-      const ranked = t.debate && last
-        ? debateEntries(q, extra, last, inScope, boost)
-        : rank(app.index, `${asked} ${q} ${extra} ${prev}`, fast ? 10 : 14, inScope, boost);
-      // Номера, которые назвал игрок, — первыми и во всех документах раздела (поиск мог взять только один)
+      // 2. Подбор пунктов только в выбранном разделе.
+      //    Обычный вопрос: номера, названные игроком, → по очереди пункты к каждому вопросу разбора → поиск по всему вопросу.
+      //    Спор: пункты, названные игроком, пункты прошлого ответа и их документы целиком.
+      const max = fast ? 420 : 550;
       const exact = t.debate ? [] : exactEntries(asked, inScope);
-      const entries = [...exact, ...ranked.filter((e) => !exact.includes(e))].slice(0, Math.max(exact.length, fast ? 10 : 14));
+      let entries: Entry[];
+      if (t.debate && last) entries = debateEntries(q, extra, last, inScope, boost);
+      else {
+        const topics = (an?.topics ?? []).map((x) => rank(app.index, `${x.check} ${x.words.join(' ')} ${slang(x.check)}`, 6, inScope, boost));
+        const whole = rank(app.index, `${asked} ${q} ${extra} ${prev}`, 14, inScope, boost);
+        entries = mergeGroups(exact, [...topics, whole], fast ? 7000 : 8500, 18, (e) => fragSize(e, max), (e) => e.node.id);
+      }
       const sameNum = new Set(exact.map((e) => e.doc.id)).size > 1 ? exact : [];
       t.sources = entries.map((entry, n) => ({ n: n + 1, entry }));
-      t.notes = learn.relevant(`${q} ${prev} ${extra}`, scope).map((note, n) => ({ n: n + 1, note }));
+      const topicWords = (an?.topics ?? []).map((x) => x.check).join(' ');
+      t.notes = learn.relevant(`${q} ${prev} ${extra} ${topicWords}`, scope).map((note, n) => ({ n: n + 1, note }));
 
-      // 3. Ответ: пункты + последние пару вопросов-ответов того же раздела
+      // 3. Ответ: разбор + пункты + последние пару вопросов-ответов того же раздела
+      t.stage = 'answer';
       const history: ChatMsg[] = before.slice(-2).flatMap((x) => [
         { role: 'user' as const, content: x.q },
         { role: 'assistant' as const, content: answerText(x.a).replace(/\s*[[(](?:[SN]\d+(?:\s*[,;]\s*)?)+[\])]/g, '') },
       ]);
       const parts = [
         ...(t.notes ?? []).map((s) => `[N${s.n}] Разъяснение команды NOVA HELPER\n${s.note.text}`),
-        ...t.sources.map((s) => fragment(s, t.debate ? 450 : fast ? 420 : 550)),
+        ...t.sources.map((s) => fragment(s, t.debate ? 450 : max)),
       ];
       const context = parts.length ? parts.join('\n\n') : '(подходящих фрагментов не найдено)';
+      const draft = an && !t.debate && !meta && !sameNum.length ? analysisText(an) : '';
       const ask = t.debate
         ? `Фрагменты:\n\n${context}\n\nДовод игрока: ${q}\n\n(Разбери довод по фрагментам и не забудь служебную строку ИТОГ в конце.)`
-        : `Фрагменты:\n\n${context}\n\n${meta ? `Прошлый вопрос игрока: ${asked}\nИгрок недоволен прошлым ответом: «${q}». Коротко признай это и ответь на прошлый вопрос полностью.` : `Вопрос игрока: ${q}`}\n\n(${sameNum.length ? `Номер ${refsIn(asked).map((r) => r.num).join(', ')} есть в нескольких документах: ${[...new Set(sameNum.map((e) => shortTitle(e.doc.title)))].join('; ')}. Если из вопроса не ясно, о каком документе речь, — коротко объясни каждый вариант (по одному предложению, назови документ) и спроси, какой имелся в виду. ` : ''}${sameNum.length ? 'Не больше 5 предложений.' : 'Вдумайся в ситуацию, вынеси вердикт и объясни свою логику: 3–5 предложений.'})`;
-      // Длинная ситуация или спор — думать глубже; короткий вопрос — быстро
-      const deep = !!t.debate || q.length > 140;
+        : `${draft ? `${draft}\n\n` : ''}Фрагменты:\n\n${context}\n\n${meta ? `Прошлый вопрос игрока: ${asked}\nИгрок недоволен прошлым ответом: «${q}». Коротко признай это и ответь на прошлый вопрос полностью.` : `Вопрос игрока: ${q}`}\n\n(${sameNum.length ? `Номер ${refsIn(asked).map((r) => r.num).join(', ')} есть в нескольких документах: ${[...new Set(sameNum.map((e) => shortTitle(e.doc.title)))].join('; ')}. Если из вопроса не ясно, о каком документе речь, — коротко объясни каждый вариант (по одному предложению, назови документ) и спроси, какой имелся в виду. Не больше 5 предложений.` : 'Вдумайся в ситуацию, вынеси вердикт и объясни свою логику: 3–5 предложений.'})`;
+      // Длинная ситуация, несколько вопросов в одном или спор — думать глубже; короткий вопрос — быстро
+      const deep = !!t.debate || q.length > 140 || (an?.topics.filter((x) => x.check).length ?? 0) >= 3;
       await backend.aiChat(t.id, deep, [
         { role: 'system', content: t.debate ? debateSystem(scope) : system(scope) },
         ...history,
@@ -410,15 +543,86 @@ class Assistant {
       if (t.debate) {
         t.verdict = parseVerdict(t.a) ?? undefined;
         t.a = answerText(t.a);
-        if (t.verdict && last) void this.report(t, last, context);
+        if (t.verdict && last && !t.exam) void this.report(t, last, context);
+      } else if (deep && !meta && !sameNum.length) {
+        // 4. Сложная ситуация — второй взгляд: нет ли грубой ошибки
+        t.stage = 'check';
+        await this.selfCheck(t, context);
+        t.time.total = sec();
       }
-      track('ai_answer', { provider: this.provider, scope, model: t.model ?? '', first: t.time.first ?? t.time.total, total: t.time.total, sources: t.sources.length, debate: t.debate ? 1 : 0, agree: t.verdict ? (t.verdict.agree ? 1 : 0) : -1, notes: t.notes?.length ?? 0 });
+      if (!t.exam) track('ai_answer', { provider: this.provider, scope, model: t.model ?? '', first: t.time.first ?? t.time.total, total: t.time.total, sources: t.sources.length, debate: t.debate ? 1 : 0, agree: t.verdict ? (t.verdict.agree ? 1 : 0) : -1, notes: t.notes?.length ?? 0, topics: an?.topics.length ?? -1, fixed: t.checked ? (t.checked.fixed ? 1 : 0) : -1 });
     } catch (e) {
       t.error = String(e);
-      track('ai_error', { provider: this.provider, scope, kind: errorKind(t.error) });
+      if (!t.exam) track('ai_error', { provider: this.provider, scope, kind: errorKind(t.error) });
     } finally {
+      t.stage = undefined;
       t.pending = false;
       this.busy = false;
+    }
+  }
+
+  /** Второй взгляд на ответ: сильная модель ищет грубые ошибки (перепутаны участники, пункт не о том, нет вердикта) и переписывает ответ */
+  private async selfCheck(t: Turn, context: string) {
+    try {
+      const raw = await backend.aiComplete([
+        { role: 'system', content: CHECK },
+        { role: 'user', content: `Фрагменты:\n\n${context}\n\nРассказ и вопрос игрока: ${t.q}\n\nОтвет помощника:\n${answerText(t.a)}` },
+      ], 2);
+      const r = parseCheck(raw);
+      if (!r) return;
+      t.checked = { fixed: r.fix, problems: r.problems };
+      if (r.fix) t.a = r.answer;
+    } catch { /* проверка не удалась (лимит, сеть) — оставляем ответ как есть */ }
+  }
+
+  // ── Экзамен (только Dev): вопросы с известным правильным ответом ──
+  exam = $state<ExamState>(readExam());
+  private examStop = false;
+
+  stopExam() { this.examStop = true; }
+
+  async runExam(items: ExamItem[] = EXAM) {
+    if (this.busy || this.exam.running) return;
+    this.examStop = false;
+    this.exam = { running: true, done: 0, total: items.length, at: Date.now(), results: [], provider: this.status?.provider ?? '' };
+    for (const item of items) {
+      if (this.examStop) break;
+      this.exam.current = item.id;
+      let r = await this.examOne(item);
+      // Бесплатный лимит на минуту кончился — ждём и пробуем ещё раз
+      if (r.match === 'error' && /лимит|подождите/i.test(r.why) && !this.examStop) {
+        await sleep(60_000, () => this.examStop);
+        if (!this.examStop) r = await this.examOne(item);
+      }
+      this.exam.results.push(r);
+      this.exam.done++;
+      saveExam(this.exam);
+      // Пауза, чтобы не упереться в лимит токенов в минуту
+      if (this.exam.done < items.length && !this.examStop) await sleep(this.provider === 'groq' ? 12_000 : 3_000, () => this.examStop);
+    }
+    this.exam.running = false;
+    this.exam.current = undefined;
+    saveExam(this.exam);
+  }
+
+  private async examOne(item: ExamItem): Promise<ExamResult> {
+    const t: Turn = { id: `exam-${item.id}-${Date.now()}`, q: item.q, a: '', sources: [], pending: true, scope: item.scope, at: Date.now(), exam: true };
+    await this.answer(t);
+    const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' && p.kind === 's' ? [p.n] : [])));
+    const cited = t.sources.filter((s) => used.has(s.n)).map((s) => `${sourceLabel(s).num} · ${sourceLabel(s).doc}`);
+    const base = { id: item.id, answer: plainAnswer(t), cited, citedOk: citesRef(cited, item.refs), model: t.model, seconds: t.time?.total, fixed: t.checked?.fixed };
+    if (t.error) return { ...base, match: 'error', why: t.error };
+    try {
+      const raw = await backend.aiComplete([
+        { role: 'system', content: JUDGE },
+        { role: 'user', content: `Вопрос игрока: ${item.q}\n\nЭталон: ${item.verdict}\nВажно упомянуть: ${item.points.join('; ')}\n\nОтвет помощника: ${base.answer}\nПомощник сослался на: ${cited.join('; ') || 'ни на что'}` },
+      ], 1);
+      const a = raw.indexOf('{');
+      const j = JSON.parse(a >= 0 ? raw.slice(a, raw.lastIndexOf('}') + 1) : raw) as { match?: unknown; why?: unknown };
+      const match: Match = j.match === 'yes' || j.match === 'partly' ? j.match : 'no';
+      return { ...base, match, why: typeof j.why === 'string' ? j.why : '' };
+    } catch (e) {
+      return { ...base, match: 'error', why: `Оценка не удалась: ${String(e)}` };
     }
   }
 
@@ -570,3 +774,28 @@ export function pieces(text: string): Piece[] {
 
 function readHistory(): HistItem[] { try { return sanitizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]')); } catch { return []; } }
 function readFlag(key: string) { try { return localStorage.getItem(key) === '1'; } catch { return false; } }
+
+export interface ExamState {
+  running: boolean;
+  done: number;
+  total: number;
+  at: number;
+  results: ExamResult[];
+  /** Какая нейросеть сдавала */
+  provider: string;
+  current?: string;
+}
+const EXAM_KEY = 'nova.examLast';
+function readExam(): ExamState {
+  try {
+    const j = JSON.parse(localStorage.getItem(EXAM_KEY) ?? 'null') as ExamState | null;
+    if (j && Array.isArray(j.results)) return { ...j, running: false, current: undefined };
+  } catch { /* нет прошлого экзамена */ }
+  return { running: false, done: 0, total: 0, at: 0, results: [], provider: '' };
+}
+function saveExam(x: ExamState) { try { localStorage.setItem(EXAM_KEY, JSON.stringify({ ...$state.snapshot(x), running: false })); } catch { /* без памяти */ } }
+/** Пауза, которую можно прервать кнопкой «Остановить» */
+async function sleep(ms: number, stop: () => boolean) {
+  const end = Date.now() + ms;
+  while (Date.now() < end && !stop()) await new Promise((r) => setTimeout(r, 500));
+}
