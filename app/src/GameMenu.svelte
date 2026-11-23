@@ -72,9 +72,8 @@
     if (app.calcEnabled) earn.push({ id: 'calc', label: 'Калькулятор', sub: 'Доходы и расходы', icon: 'calc' });
     out.push({ group: 'earn', label: 'Заработок', icon: 'coin', kids: earn });
     out.push({ group: 'guide', label: 'Гид', icon: 'compass', kids: [
-      { id: SOON, label: 'Путеводитель', sub: 'С чего начать и что дальше', icon: 'route', soon: true },
+      { id: SOON, label: 'Гайды', sub: 'С чего начать и что дальше', icon: 'route', soon: true },
       { id: SOON, label: 'Организации', sub: 'Уставы и гайды фракций', icon: 'users', soon: true },
-      { id: SOON, label: 'Карта', sub: 'NPC, работы, скупщики', icon: 'map', soon: true },
     ] });
     if (app.aiEnabled) out.push({ sep: true }, { id: 'ai', label: 'ИИ-помощник', icon: 'chat', iconOnly: true });
     const more: Kid[] = [];
