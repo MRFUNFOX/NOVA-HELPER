@@ -1,0 +1,62 @@
+# Проверка цепочки дообучения голоса на маленьком наборе (на процессоре, 2 эпохи):
+# установка Piper → обучение от «Дениса» → экспорт → упаковка → пробная озвучка.
+# Ничего не выпускает. Нужна, чтобы не тратить часы Kaggle на нерабочий рецепт.
+name: Проверка обучения голоса
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Системные пакеты
+        run: sudo apt-get update -q && sudo apt-get install -y -q build-essential cmake ninja-build espeak-ng >/dev/null
+      - name: Маленький набор (робот eSpeak вместо человека)
+        run: |
+          mkdir -p data/wavs
+          python3 - <<'PY'
+          import json, subprocess
+          ph = json.load(open('tools/voice-studio/phrases.json'))[:24]
+          with open('data/metadata.csv', 'w') as f:
+              for p in ph:
+                  subprocess.run(['espeak-ng', '-v', 'ru', '-w', f"data/wavs/{p['id']}.wav", p['say']], check=True)
+                  f.write(f"{p['id']}.wav|{p['say']}\n")
+          PY
+          ls data/wavs | wc -l
+      - name: Torch для процессора
+        run: pip install -q torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+      - name: Обучение (2 эпохи на процессоре)
+        env:
+          BATCH: '4'
+        run: bash tools/voice-train/train.sh "$PWD/data" "$PWD/out" 2 cpu
+      - name: Упаковка
+        run: pip install -q onnx && python3 tools/voice-train/pack.py out test
+      - name: Пробная озвучка через Piper
+        run: |
+          cd ~/piper-work/piper1-gpl
+          python3 - <<'PY'
+          import wave, os
+          from piper import PiperVoice
+          out = os.environ['GITHUB_WORKSPACE'] + '/out'
+          v = PiperVoice.load(out + '/model.onnx', config_path=out + '/model.onnx.json')
+          with wave.open(out + '/test.wav', 'wb') as w:
+              v.synthesize_wav('Нет, это ди-эм — убийство без причины.', w)
+          print('ok', os.path.getsize(out + '/test.wav'))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voice-check
+          path: |
+            out/tts-test.zip
+            out/test.wav
+            out/model.onnx.json
+          retention-days: 3
