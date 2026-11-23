@@ -13,8 +13,11 @@ if [ ! -d piper1-gpl ]; then
 fi
 cd piper1-gpl
 if [ ! -f .installed ]; then
+  python3 -m pip install -q scikit-build cmake ninja
   python3 -m pip install -q -e '.[train]'
-  python3 setup.py build_ext --inplace -q
+  # Расширение выравнивания (cython) — как в инструкции Piper
+  if [ -x ./build_monotonic_align.sh ]; then ./build_monotonic_align.sh; fi
+  python3 setup.py build_ext --inplace
   touch .installed
 fi
 
