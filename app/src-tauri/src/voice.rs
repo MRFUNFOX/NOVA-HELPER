@@ -457,11 +457,26 @@ fn speakable(text: &str) -> String {
     t = COMMA.replace_all(&t, "$1 целых $2").into_owned();
     let mut t = format!(" {t} ");
     for (a, b) in [
-        ("JAIL", "джейл"), ("Jail", "джейл"), ("WARN", "варн"), ("Warn", "варн"), ("BAN", "бан"), ("Ban", "бан"), ("MUTE", "мут"),
-        ("DM", "ди-эм"), ("RK", "эр-ка"), ("PG", "пэ-гэ"), ("MG", "эм-гэ"), ("NonRP", "нон-эр-пэ"), ("RP", "эр-пэ"), ("ООС", "о-о-эс"), ("OOC", "о-о-эс"), ("IC", "ай-си"),
         (" п. ", " пункт "), (" ст. ", " статья "), (" ч. ", " часть "), ("$", " долларов "),
     ] {
         t = t.replace(a, b);
+    }
+    // Сокращения — русскими буквами, как говорят игроки: DM — «дэ-эм». Только целые слова (латиница и кириллица).
+    static WORDS: LazyLock<Vec<(Regex, &str)>> = LazyLock::new(|| {
+        [
+            ("JAIL|Jail|ДЖЕЙЛ", "джейл"), ("WARN|Warn", "варн"), ("BAN|Ban", "бан"), ("MUTE|Mute", "мут"),
+            ("NonRP|NONRP|НонРП", "нон-эр-пэ"), ("DM|ДМ", "дэ-эм"), ("RK|РК", "эр-ка"), ("PG|ПГ", "пэ-гэ"), ("MG|МГ", "эм-гэ"),
+            ("RP|РП", "эр-пэ"), ("OOC|ООС", "о-о-эс"), ("IC", "ай-си"),
+        ]
+        .into_iter()
+        .map(|(w, say)| (Regex::new(&format!(r"(^|[^\p{{L}}])(?:{w})($|[^\p{{L}}])")).unwrap(), say))
+        .collect()
+    });
+    for (re, say) in WORDS.iter() {
+        // дважды — для стоящих подряд («DM DM»): соседи делят одну границу
+        for _ in 0..2 {
+            t = re.replace_all(&t, format!("${{1}}{say}${{2}}")).into_owned();
+        }
     }
     t.trim().to_string()
 }
@@ -651,6 +666,13 @@ mod tests {
     #[test]
     fn reads_admin_words() {
         assert_eq!(speakable("JAIL до 120 минут, п. 4.1"), "джейл до 120 минут, пункт 4 точка 1");
+    }
+    #[test]
+    fn reads_abbreviations() {
+        assert_eq!(speakable("Это DM и RK."), "Это дэ-эм и эр-ка.");
+        assert_eq!(speakable("это ДМ, а не РП-ситуация"), "это дэ-эм, а не эр-пэ-ситуация");
+        assert_eq!(speakable("NonRP поведение"), "нон-эр-пэ поведение");
+        assert_eq!(speakable("ADMIN DMV"), "ADMIN DMV");
     }
     #[test]
     fn reads_numbers() {
