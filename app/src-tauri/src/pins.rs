@@ -208,29 +208,12 @@ pub fn active_editor_key(app: &AppHandle) -> Option<String> {
     (!cur.is_empty()).then(|| cur.clone())
 }
 
-/// Идёт голосовой вопрос: слой показываем, даже если закреплённых окон нет
-static VOICE: AtomicBool = AtomicBool::new(false);
-
-pub fn voice_layer(app: &AppHandle, on: bool) {
-    if VOICE.swap(on, Ordering::Relaxed) != on {
-        sync(app);
-    }
-}
-
-/// Карточка голосового ответа исчезла — слой можно убрать (если окон нет)
-#[tauri::command]
-pub fn voice_overlay_done(app: AppHandle) {
-    voice_layer(&app, false);
-}
-
 /// Показать или убрать слой в зависимости от того, включена ли функция и есть ли закреплённые пункты
 pub fn sync(app: &AppHandle) {
     let pins = if enabled(app) { load(app) } else { Vec::new() };
     // Окна видны только в игре (или пока открыт редактор)
     let visible = crate::game::in_game() || EDITOR.load(Ordering::Relaxed);
-    // Голосовой вопрос рисуется на этом же слое — пока он идёт, слой нужен и без закреплённых окон
-    let voice = VOICE.load(Ordering::Relaxed) && crate::game::in_game();
-    if (pins.is_empty() && !voice) || !visible {
+    if pins.is_empty() || !visible {
         if pins.is_empty() {
             editor(app, false);
         }
@@ -240,7 +223,7 @@ pub fn sync(app: &AppHandle) {
             let _ = w.hide();
         }
     } else if let Some(w) = layer(app) {
-        set_editor_key(app, !pins.is_empty());
+        set_editor_key(app, true);
         cover(&w);
         let _ = w.emit("pins-changed", &pins);
         if !w.is_visible().unwrap_or(false) {

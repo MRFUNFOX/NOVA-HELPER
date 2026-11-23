@@ -14,7 +14,6 @@
   import AdminView from './lib/components/AdminView.svelte';
   import { learn } from './lib/learn.svelte';
   import NewsBuyers from './lib/components/NewsBuyers.svelte';
-  import NewsVoice from './lib/components/NewsVoice.svelte';
   import { prices } from './lib/prices.svelte';
   import Wizard from './lib/components/Wizard.svelte';
   import UpdateDialog from './lib/components/UpdateDialog.svelte';
@@ -22,7 +21,6 @@
   import Icon from './lib/components/Icon.svelte';
   import { app, focusSearch } from './lib/state.svelte';
   import { ai } from './lib/ai.svelte';
-  import { voice } from './lib/voice.svelte';
   import AiSetup from './lib/components/AiSetup.svelte';
   import Consent from './lib/components/Consent.svelte';
   import News from './lib/components/News.svelte';
@@ -42,8 +40,6 @@
         trackErrors();
         track('app_start', startProps());
         await ai.init();
-        // Голосовой вопрос: распознанную фразу задаём помощнику здесь, в главном окне
-        void voice.startMain();
         learn.init();
         // Программа стояла до появления помощника: один раз предлагаем его настроить
         if (app.aiEnabled && app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;
@@ -70,30 +66,17 @@
   // Новость «Пункты поверх игры» с гайдом — всем один раз, после остальных окон
   const NEWS = 'pins-0.6.0';
   let newsSeen = $state((() => { try { return localStorage.getItem('nova.news') === NEWS; } catch { return false; } })());
-  // Новость «Спроси правила голосом» (голос, 0.7.18+) — всем, у кого есть ИИ-помощник, один раз; остальные новости ждут её
-  const NEWS_VOICE = 'voice-1';
-  let voiceSeen = $state((() => { try { return localStorage.getItem('nova.newsVoice') === NEWS_VOICE; } catch { return false; } })());
-  // Пока выключена: вариант новости владелец не утвердил («Не очень»), голос меняется — вернёмся к ней позже
-  const VOICE_NEWS_ON = false;
-  const voiceNewsOpen = $derived(VOICE_NEWS_ON && started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.aiEnabled && !voiceSeen && !app.guideOpen);
-  function closeVoiceNews(result: 'open' | 'setup' | 'later' | 'esc', tried: number) {
-    track('news_voice', { result, tried, ai: ai.ready ? 1 : 0 });
-    voiceSeen = true;
-    try { localStorage.setItem('nova.newsVoice', NEWS_VOICE); } catch { /* покажем ещё раз — не страшно */ }
-    if (result === 'open') app.aiOpen = true;
-    if (result === 'setup') ai.setupOpen = true;
-  }
   // Новость 0.7.0 «Цены скупщиков» — всем один раз; новость про закрепки ждёт, пока её закроют
   const NEWS_BUYERS = 'buyers-0.7.0';
   let buyersSeen = $state((() => { try { return localStorage.getItem('nova.newsBuyers') === NEWS_BUYERS; } catch { return false; } })());
-  const buyersNewsOpen = $derived(started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.buyersEnabled && !buyersSeen && !app.guideOpen && !voiceNewsOpen);
+  const buyersNewsOpen = $derived(started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.buyersEnabled && !buyersSeen && !app.guideOpen);
   function closeBuyersNews(result: 'open' | 'later' | 'esc', moved: boolean) {
     track('news_buyers', { result, moved: moved ? 1 : 0 });
     buyersSeen = true;
     try { localStorage.setItem('nova.newsBuyers', NEWS_BUYERS); } catch { /* покажем ещё раз — не страшно */ }
     if (result === 'open') { app.query = ''; app.view = { kind: 'buyers' }; app.sidebarOpen = false; }
   }
-  const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen && !buyersNewsOpen && !voiceNewsOpen));
+  const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen && !buyersNewsOpen));
   function closeNews(result: string, step: number) {
     track('guide', { from: app.guideOpen ? 'settings' : 'auto', result, step });
     newsSeen = true;
@@ -231,13 +214,6 @@
     <div class="backdrop" transition:fade={{ duration: ms(160) }}>
       <div class="dialog" role="dialog" aria-modal="true" aria-label="Анонимная статистика" transition:scale={{ start: 0.96, duration: ms(220) }}>
         <Consent onDone={(ok) => { if (ok) track('app_start', startProps()); }} />
-      </div>
-    </div>
-  {/if}
-  {#if voiceNewsOpen}
-    <div class="backdrop" transition:fade={{ duration: ms(160) }}>
-      <div class="dialog news-buyers" role="dialog" aria-modal="true" aria-label="Новое: вопрос голосом" transition:scale={{ start: 0.96, duration: ms(220) }}>
-        <NewsVoice onDone={closeVoiceNews} />
       </div>
     </div>
   {/if}

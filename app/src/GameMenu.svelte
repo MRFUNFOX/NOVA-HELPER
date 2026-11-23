@@ -58,7 +58,6 @@
   type Item = { sep: true } | { group: string; label: string; icon: IconName; kids: Kid[]; iconOnly?: boolean } | { id: WinId; label: string; icon: IconName; badge?: number; yellow?: boolean; iconOnly?: boolean };
   // Предпросмотр нового меню (все функции в выпадающих списках) — только при разработке: game.html?menu2
   const MENU2 = import.meta.env.DEV && new URLSearchParams(location.search).has('menu2');
-  // Предпросмотр голосового вопроса: game.html?voice=listen|think|answer
   const items = $derived.by<Item[]>(() => MENU2 ? items2() : items1());
   function items2(): Item[] {
     const SOON = 'rules' as WinId;
@@ -182,7 +181,7 @@
   });
   const isOpen = (id: WinId) => gm.open.includes(id);
   const pinLabel = $derived(gm.layout.pinned ? 'Закреплено. Нажмите, чтобы меню снова пряталось' : 'Закрепить: меню и окна останутся на экране, пока вы играете');
-  const hotkey = $derived(app.settings?.hotkey ?? 'Alt+X');
+  const hotkey = $derived(app.settings?.hotkey ?? 'Alt+Q');
 
   function setGlass(e: Event) {
     gm.layout.glass = Number((e.currentTarget as HTMLInputElement).value);

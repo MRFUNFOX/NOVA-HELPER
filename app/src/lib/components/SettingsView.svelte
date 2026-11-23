@@ -4,8 +4,6 @@
   import { app, formatDate } from '../state.svelte';
   import { backend, checkAppUpdate, type HintMode } from '../backend';
   import { ai } from '../ai.svelte';
-  import { voice } from '../voice.svelte';
-  import { pretty } from '../hotkey';
   import { PUBLIC, checkDevCode } from '../features';
   import { learn, LearnError } from '../learn.svelte';
 
@@ -66,39 +64,6 @@
     devBusy = false;
   }
 
-  // ── Голосовой вопрос ──
-  let vstat = $state<{ installed: boolean; installing: boolean; sizeMb: number } | null>(null);
-  let devs = $state<{ inputs: string[]; outputs: string[] }>({ inputs: [], outputs: [] });
-  let verr = $state('');
-  let testing = $state(false);
-  async function vload() {
-    try { vstat = await backend.voiceStatus(); } catch { vstat = null; }
-    if (vstat?.installed) devs = await backend.voiceDevices().catch(() => devs);
-  }
-  $effect(() => { void vload(); void voice.watchInstall(); });
-  // Скачивание закончилось — обновить состояние
-  $effect(() => { if (!voice.install && vstat?.installing) void vload(); });
-  async function vinstall() {
-    verr = '';
-    if (app.settings?.voiceDeclined) await save({ voiceDeclined: false });
-    vstat = { ...(vstat ?? { installed: false, sizeMb: 290 }), installing: true };
-    try { await backend.voiceInstall(); } catch (e) { verr = String(e); }
-    await vload();
-    // Голос установлен — Alt+Q теперь работает как задумано, напоминание про перенос клавиш больше не нужно
-    if (vstat?.installed && app.settings?.keysMoved) await save({ keysMoved: false });
-  }
-  // Удалил сам — больше не скачиваем в фоне; вернуть можно кнопкой «Установить голос»
-  async function vremove() { await backend.voiceRemove().catch(() => {}); await save({ voiceDeclined: true }); await vload(); }
-  // Громкость и скорость: двигаем — видно сразу, сохраняем, когда отпустили
-  let vol = $state(100);
-  let rate = $state(1.1);
-  $effect(() => { vol = app.settings?.voiceVolume ?? 100; rate = app.settings?.voiceRate ?? 1.1; });
-  async function vtest() {
-    testing = true;
-    try { await backend.voiceSay('Привет! Так звучит голос помощника. Можно, но только по правилам.'); } catch (e) { verr = String(e); }
-    testing = false;
-  }
-  const mb = (b: number) => `${Math.round(b / 1e6)} МБ`;
 
   // Контакт автора программы (значок Discord — официальный, от владельца)
   import dsIcon from '../../assets/brand/discord-icon.png';
@@ -200,70 +165,6 @@
   </section>
   {/if}
 
-  {#if app.aiEnabled}
-  <section>
-    <h2>Голосовой вопрос</h2>
-    <p class="hint">Зажмите клавишу в игре и спросите помощника голосом — ответ появится сверху экрана и прозвучит вслух. Речь распознаётся прямо на компьютере, без интернета и ключей.</p>
-    {#if app.settings?.keysMoved}
-      <p class="vmoved"><Icon name="info" size={15} /><span>Окно помощника теперь открывается на <b>{pretty(app.settings.hotkey)}</b>, а Alt + Q — голосовой вопрос.</span></p>
-    {/if}
-    {#if !vstat?.installed}
-      {#if voice.install || vstat?.installing}
-        {@const p = voice.install}
-        <div class="vprog">
-          <div class="vbar"><i style="width: {p && p.total ? (p.done / p.total) * 100 : 3}%"></i></div>
-          <span class="hint">{p?.stage === 'unpack' ? 'Распаковываю…' : p ? `Скачиваю ${mb(p.done)} из ${mb(p.total)}` : 'Начинаю скачивание…'}</span>
-        </div>
-      {:else}
-        <div class="row">
-          <div>
-            {#if app.settings?.voiceDeclined}
-              <p class="value">Голос удалён</p>
-              <p class="hint">Сам больше не скачается. Вернуть — около {vstat?.sizeMb ?? 290} МБ, один раз.</p>
-            {:else}
-              <p class="value">Голос скачается сам — один раз, около {vstat?.sizeMb ?? 290} МБ</p>
-              <p class="hint">Распознавание речи и голос помощника. Обновления программы их не трогают, потом всё работает без интернета.</p>
-            {/if}
-          </div>
-          <button class="btn primary" onclick={vinstall}><Icon name="download" size={16} />{app.settings?.voiceDeclined ? 'Установить голос' : 'Скачать сейчас'}</button>
-        </div>
-      {/if}
-    {:else}
-      <div class="vgrid">
-        <span class="vl">Клавиша — зажать и говорить</span>
-        <HotkeyField kind="voice" />
-        <label class="toggle">
-          <input type="checkbox" checked={app.settings?.voiceSpeak !== false} onchange={(e) => save({ voiceSpeak: e.currentTarget.checked })} />
-          <span><b>Озвучивать ответы</b><span class="hint">Окно ответа держится, пока помощник читает. Без озвучки — столько, чтобы успеть прочитать.</span></span>
-        </label>
-        <label class="vsel"><span class="vl">Микрофон</span>
-          <select value={app.settings?.voiceInput ?? ''} onchange={(e) => save({ voiceInput: e.currentTarget.value || null })}>
-            <option value="">Как в Windows</option>
-            {#each devs.inputs as d (d)}<option value={d}>{d}</option>{/each}
-          </select>
-        </label>
-        <label class="vsel"><span class="vl">Куда выводить голос помощника</span>
-          <select value={app.settings?.voiceOutput ?? ''} onchange={(e) => save({ voiceOutput: e.currentTarget.value || null })}>
-            <option value="">Как в Windows</option>
-            {#each devs.outputs as d (d)}<option value={d}>{d}</option>{/each}
-          </select>
-        </label>
-        <label class="vsel"><span class="vl">Громкость <b class="vnum">{vol}%</b></span>
-          <input class="vrange" type="range" min="0" max="100" step="5" bind:value={vol} onchange={() => save({ voiceVolume: vol })} style="--p: {vol}%" />
-        </label>
-        <label class="vsel"><span class="vl">Скорость речи <b class="vnum">{rate === 1 ? 'обычная' : `${String(rate.toFixed(2)).replace('.', ',')}×`}</b></span>
-          <input class="vrange" type="range" min="0.8" max="1.5" step="0.05" bind:value={rate} onchange={() => save({ voiceRate: rate })} style="--p: {((rate - 0.8) / 0.7) * 100}%" />
-        </label>
-        <div class="vbtns">
-          <button class="btn" onclick={vtest} disabled={testing}><Icon name="speaker" size={16} />{testing ? 'Говорю…' : 'Послушать голос'}</button>
-          <button class="btn ghost" onclick={vremove}>Удалить голос</button>
-        </div>
-      </div>
-    {/if}
-    {#if verr}<p class="msg-err" role="alert">{verr}</p>{/if}
-  </section>
-  {/if}
-
   <section>
     <h2>Правила</h2>
     <div class="row">
@@ -345,22 +246,6 @@
   .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
   .segmented button { border: 0; background: none; padding: 7px 14px; transition: background 0.15s var(--ease), color 0.15s var(--ease); border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
   .segmented button.on { background: var(--accent); color: var(--on-accent); }
-  .vmoved { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--text); font-size: 13.5px; }
-  .vmoved :global(svg) { color: var(--accent); flex-shrink: 0; }
-  .vprog { display: flex; flex-direction: column; gap: 6px; }
-  .vbar { height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
-  .vbar i { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }
-  .vgrid { display: flex; flex-direction: column; gap: 14px; }
-  .vl { display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--text-dim); margin-bottom: -6px; }
-  .vsel { display: flex; flex-direction: column; gap: 6px; }
-  .vnum { margin-left: 6px; color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
-  .vrange { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; margin: 8px 0; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--p), var(--border-strong) var(--p)); cursor: pointer; }
-  .vrange::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
-  .vrange:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-  .vsel .vl { margin: 0; }
-  .vsel select { height: 38px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-sm); }
-  .vbtns { display: flex; gap: 8px; flex-wrap: wrap; }
-  .msg-err { margin: 10px 0 0; font-size: var(--fs-xs); color: var(--danger); }
   .aiopts { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
   .toggles { display: flex; flex-direction: column; gap: 14px; }
   .toggle { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }

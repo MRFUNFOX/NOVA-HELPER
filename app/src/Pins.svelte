@@ -10,9 +10,6 @@
   import CalcPin from './lib/components/CalcPin.svelte';
   import { fmtPrice, minutesLeft, timeLabel } from './lib/prices';
   import Icon from './lib/components/Icon.svelte';
-  import VoiceCard from './lib/components/VoiceCard.svelte';
-  import { voice } from './lib/voice.svelte';
-  import { app } from './lib/state.svelte';
 
   let pins = $state<Pin[]>([]);
   let editor = $state(false);
@@ -97,14 +94,6 @@
     requestAnimationFrame(() => { place(); pins.forEach(clamp); });
   }
 
-  // Карточка голосового ответа исчезла — слой больше не нужен (если закреплённых окон нет)
-  let voiceWas = 'idle';
-  $effect(() => {
-    const st = voice.stage;
-    if (st === 'idle' && voiceWas !== 'idle') void backend.voiceOverlayDone().catch(() => {});
-    voiceWas = st;
-  });
-
   $effect(() => {
     const offs: (() => void)[] = [];
     backend.pinsGet().then((s) => { editorKey = s.editorKey; editor = s.editor; hint = s.hint ?? null; apply(s.pins); if (editor) sessionStart(); }).catch(() => {});
@@ -117,10 +106,7 @@
       if (editor && !was) sessionStart();
       else if (!editor && was) sessionEnd();
     }).then((u) => offs.push(u));
-    backend.on('settings-changed', (s) => { const k = (s as { editorHotkey?: string }).editorHotkey; if (k) editorKey = k; app.settings = s as typeof app.settings; }).then((u) => offs.push(u));
-    // Голосовой вопрос рисуется на этом слое
-    backend.getSettings().then((s) => (app.settings = s)).catch(() => {});
-    void voice.startOverlay(); void voice.watchInstall();
+    backend.on('settings-changed', (s) => { const k = (s as { editorHotkey?: string }).editorHotkey; if (k) editorKey = k; }).then((u) => offs.push(u));
     const resize = () => { vw = window.innerWidth; vh = window.innerHeight; pins.forEach(clamp); };
     window.addEventListener('resize', resize);
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape' && editor) void backend.pinsEditor(false); };
@@ -277,7 +263,6 @@
     {/if}
   {/if}
 
-  <VoiceCard />
   {#each pins as p (p.key)}
     <div
       class="pin"

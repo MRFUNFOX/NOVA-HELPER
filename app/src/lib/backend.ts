@@ -23,21 +23,6 @@ export interface Settings {
   analytics?: boolean | null;
   /** Клавиша редактора закреплённых окон */
   editorHotkey?: string;
-  /** Голосовой вопрос к ИИ: зажать и говорить; пусто — не назначена */
-  voiceHotkey?: string;
-  /** Озвучивать ответы */
-  voiceSpeak?: boolean;
-  /** Громкость голоса ИИ, 0–100 */
-  voiceVolume?: number;
-  /** Скорость речи: 1 — обычная */
-  voiceRate?: number;
-  /** Микрофон и вывод голоса (имена устройств); null — как в Windows */
-  voiceInput?: string | null;
-  voiceOutput?: string | null;
-  /** Клавишу окна перенесли с Alt+Q на Alt+X — показать один раз */
-  keysMoved?: boolean;
-  /** Игрок сам удалил голос — в фоне больше не скачиваем */
-  voiceDeclined?: boolean;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -160,22 +145,6 @@ export const backend = {
     if (enable === false) await a.disable();
     return a.isEnabled();
   },
-  /** Событие всем окнам программы */
-  async emit(event: string, payload: unknown): Promise<void> {
-    if (!isTauri) { mockEmit(event, payload); return; }
-    const { emit } = await import('@tauri-apps/api/event');
-    await emit(event, payload);
-  },
-  // ── Голос ──
-  voiceStatus: () => invoke<{ installed: boolean; installing: boolean; sizeMb: number }>('voice_status'),
-  voiceInstall: () => invoke<void>('voice_install'),
-  voiceRemove: () => invoke<void>('voice_remove'),
-  voiceDevices: () => invoke<{ inputs: string[]; outputs: string[] }>('voice_devices'),
-  voiceSay: (text: string) => invoke<void>('voice_say', { text }),
-  voiceStop: () => invoke<void>('voice_stop'),
-  voiceOverlayDone: () => invoke<void>('voice_overlay_done'),
-  setVoiceHotkey: (hotkey: string) => invoke<Settings>('set_voice_hotkey', { hotkey }),
-  suspendVoiceHotkey: (suspended: boolean) => invoke<void>('suspend_voice_hotkey', { suspended }),
   async on(event: string, cb: (payload: unknown) => void): Promise<() => void> {
     if (!isTauri) {
       (mockListeners[event] ??= new Set()).add(cb);
@@ -256,12 +225,9 @@ export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
 // ── Заглушка для браузера ──
 const mockListeners: Record<string, Set<(p: unknown) => void>> = {};
 const mockEmit = (event: string, payload: unknown) => mockListeners[event]?.forEach((cb) => cb(payload));
-// Для проверки в браузере: события программы можно послать из консоли — __nhEmit('voice', { stage: 'listen' })
-if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __nhEmit: typeof mockEmit }).__nhEmit = mockEmit;
 const mockState = {
-  settings: { hotkey: 'Alt+X', voiceHotkey: 'Alt+Q', voiceSpeak: true, hint: 'always', closeToTray: true, firstRunDone: false, window: null } as Settings,
+  settings: { hotkey: 'Alt+Q', hint: 'always', closeToTray: true, firstRunDone: false, window: null } as Settings,
   autostart: true,
-  voice: false,
   dbLoaded: false,
   aiKey: '',
   aiGroq: '',
@@ -315,7 +281,6 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
     }
     case 'get_settings':
       if (params.has('ready')) mockState.settings.firstRunDone = true;
-      if (params.has('moved') && mockState.settings.keysMoved === undefined) mockState.settings.keysMoved = true;
       // ?ready&aisetup — программа стояла до появления помощника: покажется разовая настройка
       if (params.has('ready') && !params.has('aisetup') && mockState.settings.aiSetupDone === undefined) mockState.settings.aiSetupDone = true;
       // ?dev — режим разработчика уже включён
@@ -361,36 +326,6 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       if (mockState.aiKey.startsWith('gsk_')) mockState.aiGroq = ''; else mockState.aiZai = '';
       mockState.aiKey = mockState.aiGroq || mockState.aiZai;
       return mockStatus();
-    case 'voice_status':
-      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 290 };
-    case 'voice_install': {
-      const total = 290e6;
-      for (const [i, stage] of ['asr', 'asr', 'tts-supertonic', 'tts-supertonic', 'done'].entries()) {
-        await new Promise((r) => setTimeout(r, 500));
-        mockEmit('voice-install', { stage, done: Math.min(total, (i + 1) * 70e6), total });
-      }
-      mockState.voice = true;
-      return;
-    }
-    case 'voice_remove':
-      mockState.voice = false;
-      return;
-    case 'voice_devices':
-      return { inputs: ['Микрофон (HyperX Cloud II)', 'Микрофон (Realtek Audio)'], outputs: ['Наушники (HyperX Cloud II)', 'Динамики (Realtek Audio)'] };
-    case 'voice_say': {
-      for (let p = 0; p <= 1; p += 0.05) { mockEmit('voice-say', { p, done: false }); await new Promise((r) => setTimeout(r, 150)); }
-      mockEmit('voice-say', { p: 1, done: true });
-      return;
-    }
-    case 'voice_stop':
-    case 'voice_overlay_done':
-      return;
-    case 'set_voice_hotkey':
-      if (args!.hotkey === mockState.settings.hotkey) throw `«${args!.hotkey}» уже открывает окно программы. Выберите другую клавишу.`;
-      mockState.settings.voiceHotkey = args!.hotkey as string;
-      return { ...mockState.settings };
-    case 'suspend_voice_hotkey':
-      return;
     case 'name_count': {
       const n = String(args!.name).toLowerCase();
       const known: Record<string, number> = { vova: 98_000, ivan: 4_212_000, petrov: 584_743, bandit: 4_886, katya: 61_000, alex: 1_900_000, layrouse: 0 };

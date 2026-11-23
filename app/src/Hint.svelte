@@ -2,7 +2,7 @@
   // Подсказка в правом нижнем углу экрана, пока окно программы скрыто. Клики проходят сквозь неё в игру.
   import { keys } from './lib/hotkey';
   const q = new URLSearchParams(location.search);
-  let hotkey = $state(q.get('hotkey') ?? 'Alt+X');
+  let hotkey = $state(q.get('hotkey') ?? 'Alt+Q');
   /** Клавиша редактора закреплённых окон — только когда окна есть */
   let editor = $state<string | null>(q.get('editor'));
 
