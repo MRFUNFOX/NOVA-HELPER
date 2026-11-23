@@ -113,9 +113,34 @@ class Voice {
     });
   }
 
+  /**
+   * Голос ставится сам: один раз тихо скачивается в фоне — у тех, у кого включён ИИ (без ИИ голос не нужен).
+   * Дальше обновления программы его не трогают; если мы заменим модели — докачается только изменённое.
+   * Удалил сам (voiceDeclined) — больше не качаем, остаётся кнопка в настройках.
+   */
+  private autoTimer: ReturnType<typeof setTimeout> | undefined;
+  private autoInstall(delay = 45_000) {
+    clearTimeout(this.autoTimer);
+    this.autoTimer = setTimeout(async () => {
+      // ИИ ещё не настроен — заглянем позже
+      if (!ai.ready || !app.settings) return this.autoInstall(5 * 60_000);
+      if (app.settings.voiceDeclined) return;
+      const st = await backend.voiceStatus().catch(() => null);
+      if (!st || st.installing) return;
+      try {
+        await backend.voiceInstall();
+        if (!st.installed) track('voice_auto_install', {});
+      } catch {
+        // Нет интернета и т. п. — попробуем через полчаса (и при следующем запуске)
+        this.autoInstall(30 * 60_000);
+      }
+    }, delay);
+  }
+
   /** Главное окно: распознанная фраза → вопрос ИИ → ответ всем окнам и голосом */
   async startMain() {
     void this.watchInstall();
+    this.autoInstall();
     await backend.on('voice', async (p) => {
       const v = p as { stage: string; text?: string };
       if (v.stage !== 'heard' || !v.text) return;

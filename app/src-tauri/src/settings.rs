@@ -71,6 +71,8 @@ pub struct Settings {
     pub keys_v2: bool,
     /// Клавишу окна перенесли с Alt+Q на Alt+X — показать игроку один раз
     pub keys_moved: bool,
+    /// Игрок сам удалил голос — больше не скачиваем его в фоне (кнопка «Установить голос» остаётся)
+    pub voice_declined: bool,
 }
 
 impl Default for Settings {
@@ -92,6 +94,7 @@ impl Default for Settings {
             voice_output: None,
             keys_v2: true,
             keys_moved: false,
+            voice_declined: false,
         }
     }
 }

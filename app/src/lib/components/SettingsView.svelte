@@ -80,13 +80,15 @@
   $effect(() => { if (!voice.install && vstat?.installing) void vload(); });
   async function vinstall() {
     verr = '';
-    vstat = { ...(vstat ?? { installed: false, sizeMb: 300 }), installing: true };
+    if (app.settings?.voiceDeclined) await save({ voiceDeclined: false });
+    vstat = { ...(vstat ?? { installed: false, sizeMb: 235 }), installing: true };
     try { await backend.voiceInstall(); } catch (e) { verr = String(e); }
     await vload();
     // Голос установлен — Alt+Q теперь работает как задумано, напоминание про перенос клавиш больше не нужно
     if (vstat?.installed && app.settings?.keysMoved) await save({ keysMoved: false });
   }
-  async function vremove() { await backend.voiceRemove().catch(() => {}); await vload(); }
+  // Удалил сам — больше не скачиваем в фоне; вернуть можно кнопкой «Установить голос»
+  async function vremove() { await backend.voiceRemove().catch(() => {}); await save({ voiceDeclined: true }); await vload(); }
   async function vtest() {
     testing = true;
     try { await backend.voiceSay('Привет! Так звучит голос помощника. Можно, но только по правилам.'); } catch (e) { verr = String(e); }
@@ -211,10 +213,15 @@
       {:else}
         <div class="row">
           <div>
-            <p class="value">Нужно скачать один раз — около {vstat?.sizeMb ?? 300} МБ</p>
-            <p class="hint">Распознавание речи, голос «Денис» и модуль произношения. Потом всё работает без интернета.</p>
+            {#if app.settings?.voiceDeclined}
+              <p class="value">Голос удалён</p>
+              <p class="hint">Сам больше не скачается. Вернуть — около {vstat?.sizeMb ?? 235} МБ, один раз.</p>
+            {:else}
+              <p class="value">Голос скачается сам — один раз, около {vstat?.sizeMb ?? 235} МБ</p>
+              <p class="hint">Распознавание речи, голос «Денис» и модуль произношения. Обновления программы его не трогают, потом всё работает без интернета.</p>
+            {/if}
           </div>
-          <button class="btn primary" onclick={vinstall}><Icon name="download" size={16} />Установить голос</button>
+          <button class="btn primary" onclick={vinstall}><Icon name="download" size={16} />{app.settings?.voiceDeclined ? 'Установить голос' : 'Скачать сейчас'}</button>
         </div>
       {/if}
     {:else}

@@ -32,6 +32,8 @@ export interface Settings {
   voiceOutput?: string | null;
   /** Клавишу окна перенесли с Alt+Q на Alt+X — показать один раз */
   keysMoved?: boolean;
+  /** Игрок сам удалил голос — в фоне больше не скачиваем */
+  voiceDeclined?: boolean;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -356,9 +358,9 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       mockState.aiKey = mockState.aiGroq || mockState.aiZai;
       return mockStatus();
     case 'voice_status':
-      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 300 };
+      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 235 };
     case 'voice_install': {
-      const total = 300e6;
+      const total = 235e6;
       for (const [i, stage] of ['asr', 'asr', 'tts-denis', 'espeak', 'done'].entries()) {
         await new Promise((r) => setTimeout(r, 500));
         mockEmit('voice-install', { stage, done: Math.min(total, (i + 1) * 70e6), total });

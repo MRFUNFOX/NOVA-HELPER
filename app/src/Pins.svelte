@@ -120,7 +120,7 @@
     backend.on('settings-changed', (s) => { const k = (s as { editorHotkey?: string }).editorHotkey; if (k) editorKey = k; app.settings = s as typeof app.settings; }).then((u) => offs.push(u));
     // Голосовой вопрос рисуется на этом слое
     backend.getSettings().then((s) => (app.settings = s)).catch(() => {});
-    void voice.startOverlay();
+    void voice.startOverlay(); void voice.watchInstall();
     const resize = () => { vw = window.innerWidth; vh = window.innerHeight; pins.forEach(clamp); };
     window.addEventListener('resize', resize);
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape' && editor) void backend.pinsEditor(false); };

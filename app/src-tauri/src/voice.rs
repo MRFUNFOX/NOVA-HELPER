@@ -71,7 +71,7 @@ pub struct VoiceStatus {
 
 #[tauri::command]
 pub fn voice_status(app: AppHandle) -> VoiceStatus {
-    VoiceStatus { installed: installed(&app), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 300 }
+    VoiceStatus { installed: installed(&app), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 235 }
 }
 
 // ── Установка моделей ──
@@ -103,9 +103,21 @@ async fn install(app: &AppHandle) -> Result<(), String> {
     let list: serde_json::Value = http.get(format!("{BASE}/voice.json")).send().await.map_err(net)?.error_for_status().map_err(net)?.json().await.map_err(net)?;
     let root = dir(app);
     std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
-    let total: u64 = PACKS.iter().map(|p| list["files"][p]["size"].as_u64().unwrap_or(0)).sum();
+    // Что уже стоит (контрольные суммы наборов): одинаковые не качаем — обновление моделей докачивает только изменённое
+    let have_path = root.join("installed.json");
+    let mut have: serde_json::Map<String, serde_json::Value> =
+        std::fs::read_to_string(&have_path).ok().and_then(|s| serde_json::from_str(&s).ok()).unwrap_or_default();
+    let fresh = |pack: &str, have: &serde_json::Map<String, serde_json::Value>| {
+        have.get(pack).and_then(|v| v.as_str()) == list["files"][pack]["sha256"].as_str() && root.join(pack).exists()
+    };
+    let need: Vec<&str> = PACKS.iter().copied().filter(|p| !fresh(p, &have)).collect();
+    if need.is_empty() {
+        let _ = app.emit("voice-install", InstallProgress { stage: "done".into(), done: 0, total: 0 });
+        return Ok(());
+    }
+    let total: u64 = need.iter().map(|p| list["files"][p]["size"].as_u64().unwrap_or(0)).sum();
     let mut done_before = 0u64;
-    for pack in PACKS {
+    for pack in need {
         let info = &list["files"][pack];
         let (Some(file), Some(sha)) = (info["file"].as_str(), info["sha256"].as_str()) else {
             return Err(format!("В описании моделей нет «{pack}»"));
@@ -133,11 +145,23 @@ async fn install(app: &AppHandle) -> Result<(), String> {
         }
         done_before += size;
         let _ = app.emit("voice-install", InstallProgress { stage: "unpack".into(), done: done_before, total });
+        // Распаковываем рядом и только потом подменяем: пока качается обновление, старый голос продолжает работать
         let target = root.join(pack);
-        let _ = std::fs::remove_dir_all(&target);
-        let (tmp2, target2) = (tmp.clone(), target.clone());
-        tokio::task::spawn_blocking(move || unzip(&tmp2, &target2)).await.map_err(|e| e.to_string())??;
+        let staged = root.join(format!("{pack}.new"));
+        let _ = std::fs::remove_dir_all(&staged);
+        let (tmp2, staged2) = (tmp.clone(), staged.clone());
+        tokio::task::spawn_blocking(move || unzip(&tmp2, &staged2)).await.map_err(|e| e.to_string())??;
         let _ = std::fs::remove_file(&tmp);
+        {
+            // Загруженные модели держат файлы — отпускаем, при следующем вопросе загрузятся новые
+            let st = app.state::<VoiceState>();
+            *st.asr.lock().unwrap() = None;
+            *st.tts.lock().unwrap() = None;
+        }
+        let _ = std::fs::remove_dir_all(&target);
+        std::fs::rename(&staged, &target).map_err(|e| e.to_string())?;
+        have.insert(pack.into(), serde_json::Value::String(sha.into()));
+        let _ = std::fs::write(&have_path, serde_json::Value::Object(have.clone()).to_string());
     }
     let _ = app.emit("voice-install", InstallProgress { stage: "done".into(), done: total, total });
     Ok(())
@@ -211,7 +235,9 @@ pub fn key_down(app: &AppHandle) {
     let st = app.state::<VoiceState>();
     crate::pins::voice_layer(app, true);
     if !installed(app) {
-        let _ = app.emit("voice", Stage { stage: "missing", text: None, error: None });
+        // Голос ещё скачивается в фоне — так и скажем, а не «не установлен»
+        let busy = st.installing.load(Ordering::Relaxed);
+        let _ = app.emit("voice", Stage { stage: "missing", text: None, error: busy.then(|| "installing".to_string()) });
         return;
     }
     let mut rec = st.rec.lock().unwrap();

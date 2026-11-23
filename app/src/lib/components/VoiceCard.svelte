@@ -42,7 +42,9 @@
     {:else if voice.stage === 'missing' || voice.stage === 'error'}
       <div class="dpill think">
         <span class="dmic warn">!</span>
-        {#if voice.stage === 'missing' && moved}
+        {#if voice.stage === 'missing' && voice.error === 'installing'}
+          <span class="dtxt"><b>Голос ещё скачивается{voice.install?.total ? ` — ${Math.round((voice.install.done / voice.install.total) * 100)}%` : ''}</b><small>пока можно спросить в окне помощника — {pretty(app.settings?.hotkey || 'Alt+X')}</small></span>
+        {:else if voice.stage === 'missing' && moved}
           <span class="dtxt"><b>Окно помощника теперь — {pretty(app.settings?.hotkey || 'Alt+X')}</b><small>а {key} — голосовой вопрос: Настройки → Голосовой вопрос</small></span>
         {:else}
           <span class="dtxt"><b>{voice.stage === 'missing' ? 'Голос не установлен' : 'Не получилось'}</b><small>{voice.stage === 'missing' ? 'Настройки → Голосовой вопрос → Установить' : voice.error}</small></span>
