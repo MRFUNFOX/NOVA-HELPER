@@ -547,6 +547,7 @@ fn say(app: &AppHandle, text: &str, gen_no: u64) -> Result<(), String> {
     let alive = || gen.load(Ordering::SeqCst) == gen_no;
     let t = tts(app)?;
     let mut g = GenerationConfig::default();
+    g.speed = settings::load(app).voice_rate.clamp(0.7, 1.6);
     g.phoneme_codepoints = Some(phonemes(app, text)?);
     if !alive() {
         return Ok(());
@@ -564,11 +565,15 @@ fn play(app: &AppHandle, samples: &[f32], rate: i32, alive: &dyn Fn() -> bool) -
     let cfg = dev.default_output_config().map_err(|e| e.to_string())?;
     let out_rate = cfg.sample_rate().0 as i32;
     let ch = cfg.channels() as usize;
-    let data: Arc<Vec<f32>> = Arc::new(if out_rate == rate {
+    // Громкость из настроек: квадрат — чтобы ползунок звучал равномерно на слух
+    let gain = (s.voice_volume.min(100) as f32 / 100.0).powi(2);
+    let mut data = if out_rate == rate {
         samples.to_vec()
     } else {
         LinearResampler::create(rate, out_rate).map(|r| r.resample(samples, true)).unwrap_or_else(|| samples.to_vec())
-    });
+    };
+    data.iter_mut().for_each(|v| *v *= gain);
+    let data: Arc<Vec<f32>> = Arc::new(data);
     let pos = Arc::new(AtomicUsize::new(0));
     let err = |e| eprintln!("звук: {e}");
     macro_rules! out_stream {

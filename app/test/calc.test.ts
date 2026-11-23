@@ -130,3 +130,17 @@ describe('ИИ: проверка ника и история', () => {
     expect(sanitizeHistory([null, { id: 1 }, h('ok', 'q')])).toHaveLength(1);
   });
 });
+
+describe('голосовой ответ', () => {
+  const raw = 'Нет, это **DM** — убийство без причины [S1]. За это дают JAIL до 120 минут [S2].\n\nГОЛОС: Нет, так нельзя — это ДМ, убийство без причины. Могут посадить в джейл на пару часов.';
+  it('короткий вариант для озвучки — из строки ГОЛОС', async () => {
+    const { spokenIn } = await import('../src/lib/ai.svelte');
+    expect(spokenIn(raw)).toBe('Нет, так нельзя — это ДМ, убийство без причины. Могут посадить в джейл на пару часов.');
+    expect(spokenIn('Просто ответ.')).toBe('');
+    expect(spokenIn('Ответ.\n**ГОЛОС:** «Можно [S1].»')).toBe('Можно.');
+  });
+  it('в окне ИИ строки ГОЛОС нет', async () => {
+    const { answerText } = await import('../src/lib/ai.svelte');
+    expect(answerText(raw)).toBe('Нет, это **DM** — убийство без причины [S1]. За это дают JAIL до 120 минут [S2].');
+  });
+});

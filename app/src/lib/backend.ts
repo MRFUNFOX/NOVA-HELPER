@@ -27,6 +27,10 @@ export interface Settings {
   voiceHotkey?: string;
   /** Озвучивать ответы */
   voiceSpeak?: boolean;
+  /** Громкость голоса ИИ, 0–100 */
+  voiceVolume?: number;
+  /** Скорость речи: 1 — обычная */
+  voiceRate?: number;
   /** Микрофон и вывод голоса (имена устройств); null — как в Windows */
   voiceInput?: string | null;
   voiceOutput?: string | null;

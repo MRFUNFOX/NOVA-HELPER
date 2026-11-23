@@ -89,6 +89,10 @@
   }
   // Удалил сам — больше не скачиваем в фоне; вернуть можно кнопкой «Установить голос»
   async function vremove() { await backend.voiceRemove().catch(() => {}); await save({ voiceDeclined: true }); await vload(); }
+  // Громкость и скорость: двигаем — видно сразу, сохраняем, когда отпустили
+  let vol = $state(100);
+  let rate = $state(1.15);
+  $effect(() => { vol = app.settings?.voiceVolume ?? 100; rate = app.settings?.voiceRate ?? 1.15; });
   async function vtest() {
     testing = true;
     try { await backend.voiceSay('Привет! Так звучит голос помощника. Можно, но только по правилам.'); } catch (e) { verr = String(e); }
@@ -244,6 +248,12 @@
             {#each devs.outputs as d (d)}<option value={d}>{d}</option>{/each}
           </select>
         </label>
+        <label class="vsel"><span class="vl">Громкость <b class="vnum">{vol}%</b></span>
+          <input class="vrange" type="range" min="0" max="100" step="5" bind:value={vol} onchange={() => save({ voiceVolume: vol })} style="--p: {vol}%" />
+        </label>
+        <label class="vsel"><span class="vl">Скорость речи <b class="vnum">{rate === 1 ? 'обычная' : `${String(rate.toFixed(2)).replace('.', ',')}×`}</b></span>
+          <input class="vrange" type="range" min="0.8" max="1.5" step="0.05" bind:value={rate} onchange={() => save({ voiceRate: rate })} style="--p: {((rate - 0.8) / 0.7) * 100}%" />
+        </label>
         <div class="vbtns">
           <button class="btn" onclick={vtest} disabled={testing}><Icon name="speaker" size={16} />{testing ? 'Говорю…' : 'Послушать голос'}</button>
           <button class="btn ghost" onclick={vremove}>Удалить голос</button>
@@ -343,6 +353,10 @@
   .vgrid { display: flex; flex-direction: column; gap: 14px; }
   .vl { display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--text-dim); margin-bottom: -6px; }
   .vsel { display: flex; flex-direction: column; gap: 6px; }
+  .vnum { margin-left: 6px; color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .vrange { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; margin: 8px 0; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--p), var(--border-strong) var(--p)); cursor: pointer; }
+  .vrange::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4); }
+  .vrange:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
   .vsel .vl { margin: 0; }
   .vsel select { height: 38px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-sm); }
   .vbtns { display: flex; gap: 8px; flex-wrap: wrap; }

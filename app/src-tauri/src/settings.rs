@@ -73,6 +73,10 @@ pub struct Settings {
     pub keys_moved: bool,
     /// Игрок сам удалил голос — больше не скачиваем его в фоне (кнопка «Установить голос» остаётся)
     pub voice_declined: bool,
+    /// Громкость голоса ИИ, 0–100
+    pub voice_volume: u8,
+    /// Скорость речи: 1 — как записан голос; по умолчанию чуть быстрее
+    pub voice_rate: f32,
 }
 
 impl Default for Settings {
@@ -95,6 +99,8 @@ impl Default for Settings {
             keys_v2: true,
             keys_moved: false,
             voice_declined: false,
+            voice_volume: 100,
+            voice_rate: 1.15,
         }
     }
 }

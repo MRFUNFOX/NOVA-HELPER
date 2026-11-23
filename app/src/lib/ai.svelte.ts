@@ -46,6 +46,10 @@ export interface Turn {
   nick?: NickCheck;
   /** Открыт из истории — не пишем в историю повторно */
   fromHistory?: boolean;
+  /** Вопрос задан голосом — нейросеть дописывает короткий вариант для озвучки */
+  voice?: boolean;
+  /** Что сказать вслух: 1–2 разговорные фразы (в окне ИИ — полный ответ) */
+  spoken?: string;
 }
 
 export interface Verdict { agree: boolean; refs: string; note: string; keywords: string[] }
@@ -224,14 +228,14 @@ class Assistant {
   }
 
   /** Вопрос игрока (раздел — как выбран в меню слева: «Правила» или «Законы»). Возвращает ход разговора, когда ответ готов (для голосового вопроса) */
-  ask(question: string): Promise<Turn | undefined> {
+  ask(question: string, opts: { voice?: boolean } = {}): Promise<Turn | undefined> {
     const q = question.trim();
     if (!q || this.busy) return Promise.resolve(undefined);
     const nick = nickIn(q);
     const scope: Section = nick ? 'project' : app.hasLaws ? app.section : 'project';
     // Открытый из истории вопрос — начало нового разговора
     if (this.turns.some((x) => x.fromHistory)) this.turns = [];
-    this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope, at: Date.now(), ...(nick ? { nick: { nick, format: nickFormat(nick), verdict: null, issues: [] } } : {}) });
+    this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope, at: Date.now(), ...(opts.voice ? { voice: true } : {}), ...(nick ? { nick: { nick, format: nickFormat(nick), verdict: null, issues: [] } } : {}) });
     const t = this.turns[this.turns.length - 1]!; // реактивная копия
     return (nick ? this.checkNick(t) : this.answer(t)).then(() => { this.remember(t); return t; });
   }
@@ -336,13 +340,17 @@ class Assistant {
       const context = parts.length ? parts.join('\n\n') : '(подходящих фрагментов не найдено)';
       const ask = t.debate
         ? `Фрагменты:\n\n${context}\n\nДовод игрока: ${q}\n\n(Разбери довод по фрагментам и не забудь служебную строку ИТОГ в конце.)`
-        : `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.)`;
+        : `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.${t.voice ? VOICE_LINE : ''})`;
       await backend.aiChat(t.id, [
         { role: 'system', content: t.debate ? debateSystem(scope) : system(scope) },
         ...history,
         { role: 'user', content: ask },
       ]).then((r) => { if (!t.a) t.a = r.text; t.model = r.model; });
       t.time.total = sec();
+      if (t.voice) {
+        t.spoken = spokenIn(t.a);
+        t.a = answerText(t.a);
+      }
       if (t.debate) {
         t.verdict = parseVerdict(t.a) ?? undefined;
         t.a = answerText(t.a);
@@ -380,6 +388,16 @@ class Assistant {
     });
     track('ai_dispute', { scope: t.scope!, agree: v.agree ? 1 : 0, confirmed: verdict.ok ? 1 : 0, sent: t.learnState });
   }
+}
+
+/** Для голосового вопроса: в конце ответа — короткий вариант, который прочитает голос */
+const VOICE_LINE = ` Вопрос задан голосом в игре: в самом конце добавь отдельную строку «ГОЛОС: …» — то же самое для озвучки: одна-две короткие фразы, как живой человек сказал бы другу в голосовом чате. Простыми словами, без ссылок [S], номеров пунктов и канцелярита; наказание — по-человечески («могут посадить в джейл на час»); числа — словами.`;
+
+/** Короткий вариант для озвучки из строки «ГОЛОС: …»; нет строки — пусто (тогда читаем сокращённый ответ) */
+export function spokenIn(text: string): string {
+  const m = /(?:^|\n)[ \t*_`]*ГОЛОС\s*:\s*([\s\S]+)$/.exec(text);
+  if (!m) return '';
+  return m[1]!.replace(/\*\*|__|`/g, '').replace(/\s*[[(](?:[SN]\d+(?:\s*[,;]\s*)?)+[\])]/g, '').replace(/\s+/g, ' ').trim().replace(/^[«"]|[»"]$/g, '');
 }
 
 /** Проверка ника: нейросеть оценивает только смысл, формат программа уже проверила */
@@ -455,7 +473,7 @@ export function parseVerdict(text: string): Verdict | null {
 
 /** Текст ответа без служебной строки (пока ответ печатается — тоже) */
 export function answerText(text: string) {
-  const i = text.search(/\n?[ \t*_`]*ИТОГ\s*:/);
+  const i = text.search(/\n?[ \t*_`]*(?:ИТОГ|ГОЛОС)\s*:/);
   return (i >= 0 ? text.slice(0, i) : text).trimEnd();
 }
 

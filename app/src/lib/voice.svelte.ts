@@ -31,6 +31,15 @@ export function splitAnswer(t: Turn): { verdict: string; rest: string } {
   return { verdict: m[1]!.trim(), rest: text.slice(m[0].length).trim() };
 }
 
+/** Первая фраза — вывод, остальное — пояснение */
+function sentences(text: string): { verdict: string; rest: string } {
+  const m = /^(.+?[.!?])(\s+|$)/s.exec(text.trim());
+  return m ? { verdict: m[1]!.trim(), rest: text.trim().slice(m[0].length).trim() } : { verdict: text.trim(), rest: '' };
+}
+function shorten(a: { verdict: string; rest: string }) {
+  return { verdict: a.verdict, rest: sentences(a.rest).verdict };
+}
+
 function payload(t: Turn, speak: boolean): VoiceAnswer {
   if (t.nick) {
     const n = t.nick;
@@ -40,7 +49,8 @@ function payload(t: Turn, speak: boolean): VoiceAnswer {
       rest: [...n.format.filter((f) => !f.ok).map((f) => f.label), ...n.issues].join('. '),
     };
   }
-  const { verdict, rest } = splitAnswer(t);
+  // Голосом — короткий разговорный вариант от нейросети; если его нет — вывод и одна фраза объяснения
+  const { verdict, rest } = t.spoken ? sentences(t.spoken) : shorten(splitAnswer(t));
   const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' && p.kind === 's' ? [p.n] : [])));
   const cited = t.sources.filter((s) => used.has(s.n));
   const pun = cited.flatMap((s) => s.entry.node.punishments).map((p) => p.raw.split('|')[0]!.trim()).find(Boolean);
@@ -151,7 +161,7 @@ class Voice {
       }
       // Пока помощник отвечает на прошлый вопрос — ждём
       for (let i = 0; ai.busy && i < 100; i++) await new Promise((r) => setTimeout(r, 200));
-      const t = await ai.ask(v.text);
+      const t = await ai.ask(v.text, { voice: true });
       if (!t) return;
       if (t.error) {
         await backend.emit('voice-answer', { q: t.q, verdict: 'Не получилось ответить.', rest: t.error, refs: [], scope: t.scope ?? 'project', speak: false, error: 'ai' } satisfies VoiceAnswer);
