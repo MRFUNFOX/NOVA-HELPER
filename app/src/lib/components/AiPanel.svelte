@@ -2,11 +2,12 @@
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import { app } from '../state.svelte';
+  import { backend } from '../backend';
   import { ai, answerText, pieces, sourceLabel, SCOPES, type NoteSource, type Source, type Turn } from '../ai.svelte';
   import type { Section } from '../state.svelte';
   import ModelPicker from './ModelPicker.svelte';
   import { ease, ms } from '../motion';
-  import { dayLabel, searchHistory, type HistItem } from '../aiExtras';
+  import { dayLabel, people, searchHistory, type HistItem } from '../aiExtras';
 
   /** Что показано: разговор или история вопросов */
   let view = $state<'chat' | 'history'>('chat');
@@ -177,6 +178,14 @@
               </div>
               <ul class="nlist">
                 {#each n.format as f (f.label)}<li class:bad={!f.ok}><Icon name={f.ok ? 'check' : 'close'} size={13} />{f.label}</li>{/each}
+                {#if n.names}
+                  {@const [fn = '', ln = ''] = n.nick.split('_')}
+                  {#each [{ c: n.names.first, w: fn, what: 'Имя' }, { c: n.names.last, w: ln, what: 'Фамилия' }] as x (x.what)}
+                    {#if x.c === null}<li class="doubt"><Icon name="alert" size={13} />{x.what} не проверено — forebears.io не ответил</li>
+                    {:else if x.c > 0}<li><Icon name="check" size={13} /><span>{x.what} <b>{x.w}</b> есть в жизни — у {people(x.c)} человек</span></li>
+                    {:else}<li class="doubt"><Icon name="alert" size={13} /><span>{x.what} <b>{x.w}</b> не нашлась на forebears.io — выдуманные разрешены, если вписываются в RP</span></li>{/if}
+                  {/each}
+                {/if}
                 {#if n.verdict !== null}
                   {#if n.issues.length}
                     {#each n.issues as i (i)}<li class:bad={n.verdict === 'bad'} class:doubt={n.verdict !== 'bad'}><Icon name="alert" size={13} />{i}</li>{/each}
@@ -188,6 +197,7 @@
                 <button class="src" onclick={() => open(s0)}><span class="num">{sourceLabel(s0).num}</span><span class="doc">{sourceLabel(s0).doc}</span><Icon name="chevron" size={13} /></button>
                 {#if n.verdict !== 'ok' && s0.entry.node.punishments[0]}<p class="npun"><b>Наказание:</b> {s0.entry.node.punishments[0].raw.split('|')[0]?.trim()}</p>{/if}
               {/if}
+              {#if n.names}<p class="nsrc">Имена проверены по <button class="link" onclick={() => backend.openUrl(`https://forebears.io/surnames/${n.nick.split('_')[1]?.toLowerCase() ?? ''}`)}>forebears.io</button> — его советует п. 2.13</p>{/if}
               {#if n.verdict === 'doubt'}<p class="nnote">Окончательно решает администрация. Смысл и звучание ника нейросеть оценивает приблизительно.</p>{/if}
             </div>
             {#if !t.pending}
@@ -388,6 +398,9 @@
   .nlist li.bad { color: var(--text); }
   .nlist li.bad :global(svg) { color: var(--danger); }
   .nlist li.doubt :global(svg) { color: var(--accent); }
+  .nlist li b { color: var(--text); font-weight: 700; }
+  .nsrc { margin: -2px 0 0; font-size: 11px; color: var(--text-muted); }
+  .nsrc .link { padding: 0; border: 0; background: none; color: var(--text-dim); font: inherit; text-decoration: underline; cursor: pointer; }
   .nick .src { margin: 0 -8px; }
   .npun { margin: -4px 0 0; padding: 6px 9px; border-radius: var(--radius-sm); background: var(--danger-tint); color: #ffb3b6; font-size: var(--fs-xs); line-height: 1.4; }
   .npun b { color: var(--danger); }

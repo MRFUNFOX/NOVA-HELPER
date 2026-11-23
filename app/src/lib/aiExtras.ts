@@ -16,6 +16,8 @@ export interface NickCheck {
   verdict: 'ok' | 'bad' | 'doubt' | null;
   /** Что не так по смыслу (по пунктам правила) */
   issues: string[];
+  /** Сколько людей носят имя и фамилию (forebears.io): null — сайт не ответил, 0 — не нашлось */
+  names?: { first: number | null; last: number | null };
 }
 
 /** Вопрос в истории: всё, чтобы открыть его снова без нейросети */
@@ -91,13 +93,20 @@ export function nickIn(text: string): string | null {
   return /^[A-Za-z]+_[A-Za-z]+$/.test(cand) ? cand : null;
 }
 
-/** Проверки формата по п. 2.13 ОП, которые видны без нейросети */
+/** Проверки формата по п. 2.13 ОП NOVA RP, которые видны без нейросети */
 export function nickFormat(nick: string): { label: string; ok: boolean }[] {
   const parts = nick.split('_');
-  const two = parts.length === 2 && parts.every((p) => p.length >= 2);
+  const two = parts.length === 2 && parts.every((p) => /^\p{L}{2,}$/u.test(p));
+  const letters = nick.replace(/_/g, '');
   return [
-    { label: 'Формат Имя_Фамилия', ok: two },
-    { label: 'Латинские буквы, без цифр и знаков', ok: /^[A-Za-z_]+$/.test(nick) },
-    { label: 'С заглавной буквы, не капсом', ok: two && parts.every((p) => /^[A-Z]/.test(p) && p !== p.toUpperCase()) },
+    { label: 'Формат Имя_Фамилия, только буквы', ok: two },
+    { label: 'Не целиком заглавными или строчными (IVAN_IVANOV, ivan_ivanov)', ok: letters !== letters.toUpperCase() && letters !== letters.toLowerCase() },
   ];
+}
+
+/** «4 212 000» → «4,2 млн»; для строки «встречается у …» */
+export function people(n: number): string {
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1).replace('.', ',').replace(',0', '')} млн`;
+  if (n >= 1e4) return `${Math.round(n / 1e3)} тыс.`;
+  return n.toLocaleString('ru-RU');
 }

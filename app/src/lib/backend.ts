@@ -112,6 +112,8 @@ export const backend = {
     osVersion: /Windows NT ([\d.]+)/.exec(navigator.userAgent)?.[1] ?? '',
   }),
   aiComplete: (messages: ChatMsg[]) => invoke<string>('ai_complete', { messages }),
+  /** Сколько людей носят имя / фамилию по forebears.io (правило 2.13 ОП советует его). null — сайт не ответил */
+  nameCount: (kind: 'forenames' | 'surnames', name: string) => invoke<number | null>('name_count', { kind, name }),
   aiChat: (id: string, messages: ChatMsg[]) => invoke<{ text: string; model: string }>('ai_chat', { id, messages }),
 
   async toggleMaximize() {
@@ -324,6 +326,11 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       if (mockState.aiKey.startsWith('gsk_')) mockState.aiGroq = ''; else mockState.aiZai = '';
       mockState.aiKey = mockState.aiGroq || mockState.aiZai;
       return mockStatus();
+    case 'name_count': {
+      const n = String(args!.name).toLowerCase();
+      const known: Record<string, number> = { vova: 98_000, ivan: 4_212_000, petrov: 584_743, bandit: 4_886, katya: 61_000, alex: 1_900_000, layrouse: 0 };
+      return known[n] ?? 0;
+    }
     case 'ai_complete': {
       const sys = String((args!.messages as ChatMsg[])[0]?.content ?? '');
       if (sys.includes('проверяешь игровой ник')) {

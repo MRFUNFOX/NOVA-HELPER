@@ -10,7 +10,7 @@ import { nodeBadge, rank, type Entry } from './search';
 import { slang } from './slang';
 import { errorKind, track } from './stats';
 import { learn, type Note } from './learn.svelte';
-import { HISTORY_KEY, nickFormat, nickIn, pushHistory, sanitizeHistory, type HistItem, type NickCheck, type Rating } from './aiExtras';
+import { HISTORY_KEY, nickFormat, nickIn, people, pushHistory, sanitizeHistory, type HistItem, type NickCheck, type Rating } from './aiExtras';
 
 export interface Source { n: number; entry: Entry }
 /** Принятое разъяснение в ответе: ссылка [N1] */
@@ -236,27 +236,34 @@ class Assistant {
     void (nick ? this.checkNick(t) : this.answer(t)).then(() => this.remember(t));
   }
 
-  /** Проверка ника по п. 2.13 ОП: формат — сразу, смысл — нейросеть */
+  /** Проверка ника по п. 2.13 ОП: формат — сразу, имя и фамилия — на forebears.io (так советует само правило), смысл — нейросеть */
   private async checkNick(t: Turn) {
     const n = t.nick!;
     this.busy = true;
     const rule = app.index.entries.find((e) => e.doc.scope === 'project' && e.node.number === '2.13' && /никнейм/i.test(e.node.text));
     if (rule) t.sources = [{ n: 1, entry: rule }];
+    const [first = '', last = ''] = n.nick.split('_');
     try {
-      const text = rule ? `${rule.node.text}\n${rule.node.annotations.map((a) => a.text).join('\n')}` : 'Никнейм в формате Имя_Фамилия, без скрытого смысла, оскорблений, имён известных людей, упоминания роли и родных.';
+      const [a, b] = await Promise.all([
+        backend.nameCount('forenames', first).catch(() => null),
+        backend.nameCount('surnames', last).catch(() => null),
+      ]);
+      n.names = { first: a, last: b };
+      const seen = (x: number | null, what: string, w: string) => x === null ? `${what} «${w}»: forebears.io не ответил` : x > 0 ? `${what} «${w}» есть в жизни — у ${people(x)} человек` : `${what} «${w}» не найдена на forebears.io`;
+      const text = rule ? `${rule.node.text}\n${rule.node.annotations.map((x) => x.text).join('\n')}` : 'Никнейм в формате Имя_Фамилия.';
       const raw = await backend.aiComplete([
         { role: 'system', content: NICK },
-        { role: 'user', content: `Правило:\n${text}\n\nНик: ${n.nick}` },
+        { role: 'user', content: `Правило:\n${text}\n\nПо базе имён forebears.io:\n${seen(a, 'Имя', first)}\n${seen(b, 'Фамилия', last)}\n\nНик: ${n.nick}` },
       ]);
       const j = JSON.parse(raw) as { verdict?: unknown; issues?: unknown };
       const formatOk = n.format.every((f) => f.ok);
-      const ai = j.verdict === 'bad' || j.verdict === 'doubt' ? j.verdict : 'ok';
+      const verdict = j.verdict === 'bad' || j.verdict === 'doubt' ? j.verdict : 'ok';
       n.issues = Array.isArray(j.issues) ? j.issues.filter((x): x is string => typeof x === 'string').slice(0, 5) : [];
-      n.verdict = !formatOk ? 'bad' : ai;
+      n.verdict = !formatOk ? 'bad' : verdict;
       t.a = n.verdict === 'ok' ? `Ник ${n.nick} подходит по [S1].` : n.verdict === 'bad' ? `Ник ${n.nick} не подходит по [S1].` : `Ник ${n.nick} спорный — решает администрация по [S1].`;
-      track('ai_nick', { provider: this.provider, verdict: n.verdict });
+      track('ai_nick', { provider: this.provider, verdict: n.verdict, first: a === null ? -1 : a > 0 ? 1 : 0, last: b === null ? -1 : b > 0 ? 1 : 0 });
     } catch (e) {
-      // Нейросеть недоступна — показываем хотя бы формат
+      // Нейросеть недоступна — показываем хотя бы формат и forebears
       n.verdict = n.format.every((f) => f.ok) ? 'doubt' : 'bad';
       t.error = String(e);
     } finally {
@@ -376,12 +383,15 @@ class Assistant {
 }
 
 /** Проверка ника: нейросеть оценивает только смысл, формат программа уже проверила */
-const NICK = `Ты проверяешь игровой ник по правилу RP-проекта NOVA RP (GTA 5). Ник в формате Имя_Фамилия.
-Оцени смысл: скрытый смысл или звучание, близкое к оскорблениям; мат; упоминание родных (Papa, Mama…);
-имя известной личности; отражение роли (Vova_Bandit, Katya_Medik); похожесть на администрацию.
-Выдуманные и редкие имена и фамилии разрешены, как и фамилия по названию семьи.
+const NICK = `Ты проверяешь игровой ник по правилу 2.13 Общих правил проекта NOVA RP (GTA 5). Текст правила будет ниже — опирайся только на него.
+Формат (Имя_Фамилия, регистр) программа уже проверила — его не оценивай.
+Оцени смысл по списку правила: пол персонажа не угадывай; родные и близкие; скрытый смысл и звучание, близкое к оскорблениям; известные личности;
+роль игрока (Bandit, Medik, Inkassator); фашизм; религия, раса, нация; лекарства; мат; бессмысленные слова и клички, животные, персонажи,
+овощи и фрукты, предметы, компании (Cheater, GodMode, Shrek, Pomidor, Divan).
+Выдуманные имена и фамилии разрешены, как и фамилия по названию семьи, если вписываются в RolePlay.
+Сведения forebears.io — подсказка: если имя или фамилия есть в жизни — это довод «за», но запрещённое правилом слово (например Bandit) всё равно нельзя.
 Не придирайся: обычные имена и фамилии любых народов — «ok». Если не уверен — «doubt».
-Ответь только JSON: {"verdict":"ok|bad|doubt","issues":["коротко, что не так — по-русски"]}. Для «ok» issues пустой.`;
+Ответь только JSON: {"verdict":"ok|bad|doubt","issues":["коротко по-русски, какой пункт правила нарушен"]}. Для «ok» issues пустой.`;
 
 /** Подбор пунктов для спора: названные игроком → из прошлого ответа → поиск → документы целиком */
 function debateEntries(q: string, extra: string, last: Turn, inScope: (d: RuleDocument) => boolean, boost: Set<string>): Entry[] {
