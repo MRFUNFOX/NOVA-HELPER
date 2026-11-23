@@ -111,6 +111,8 @@ describe('ИИ: проверка ника и история', () => {
     expect(nickIn('ник: Ivan_petrov2')).toBe('Ivan_petrov2');
     expect(nickIn('Можно ли убить человека?')).toBeNull();
     expect(nickIn('DM')).toBeNull();
+    expect(nickIn('Ivan Petrov')).toBe('Ivan_Petrov');
+    expect(nickIn('Green Zone')).toBe('Green_Zone');
   });
   it('формат по п. 2.13 ОП NOVA: Имя_Фамилия, не целиком заглавными или строчными', () => {
     expect(nickFormat('Layrouse_LaFleyb').every((f) => f.ok)).toBe(true);

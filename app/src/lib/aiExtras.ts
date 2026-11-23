@@ -89,8 +89,9 @@ export function nickIn(text: string): string | null {
   const said = /^(?:проверь(?:те)?\s+)?(?:мой\s+)?ник(?:нейм)?\s*[:\-—]?\s*(.+)$/i.exec(t);
   const cand = (said ? said[1]! : t).trim().replace(/^[«"']|[»"'?.!]$/g, '');
   if (said && /^[\p{L}\d]+(?:[_ ][\p{L}\d]+)?$/u.test(cand)) return cand.replace(' ', '_');
-  // Без слова «ник» — только явный формат Имя_Фамилия латиницей
-  return /^[A-Za-z]+_[A-Za-z]+$/.test(cand) ? cand : null;
+  // Без слова «ник» — только явный формат Имя_Фамилия или «Имя Фамилия» латиницей с заглавных
+  if (/^[A-Za-z]+_[A-Za-z]+$/.test(cand)) return cand;
+  return /^[A-Z][a-zA-Z]+ [A-Z][a-zA-Z]+$/.test(cand) ? cand.replace(' ', '_') : null;
 }
 
 /** Проверки формата по п. 2.13 ОП NOVA RP, которые видны без нейросети */
