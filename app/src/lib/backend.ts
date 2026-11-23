@@ -114,7 +114,7 @@ export const backend = {
   aiComplete: (messages: ChatMsg[]) => invoke<string>('ai_complete', { messages }),
   /** Сколько людей носят имя / фамилию по forebears.io (правило 2.13 ОП советует его). null — сайт не ответил */
   nameCount: (kind: 'forenames' | 'surnames', name: string) => invoke<number | null>('name_count', { kind, name }),
-  aiChat: (id: string, messages: ChatMsg[]) => invoke<{ text: string; model: string }>('ai_chat', { id, messages }),
+  aiChat: (id: string, messages: ChatMsg[]) => invoke<{ text: string; model: string; reasoning?: string }>('ai_chat', { id, messages }),
 
   async toggleMaximize() {
     if (!isTauri) return;
@@ -358,12 +358,22 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
           ? `**Нет, не так.** Гражданский бронежилет носить открыто можно [N1]: это спецсредство, а не оружие [S${num(/спец средствам относятся/)}], а запрет есть только для государственного образца [S${num(/государственного образца разрешены/)}].`
           : /бронежилет|бронник/i.test(user)
             ? `**Нет**, с лицензией разрешено только скрытое ношение (S${num(/скрытое ношение оружия/)}). За нарушение — 4 года или штраф $10 000–30 000.`
-            : 'Нет, это **DM** (убийство без причины) [S1]. Администрация даст **JAIL до 120 минут** [S1].';
+            : /8\.3/.test(user)
+              ? `Пункт 8.3 есть в двух документах. В **Общих правилах** он запрещает мешать работе администрации — например, лезть в разбирательство или флудить в репорт [S${num(/помеху работе администрации/)}]. В **Правилах криминальных организаций** — запрещает союзы с другими бандами ради покраски граффити [S${num(/покраски граффити/)}]. О каком из них речь?`
+              : 'Нет, это **DM** (убийство без причины) [S1]. Он выстрелил первым без RP-ситуации и без весомой причины, а то, что вы «косо посмотрели», причиной не считается. Администрация даст **JAIL до 120 минут** [S1].';
+      // Модель сначала рассуждает (видно только команде), потом пишет ответ
+      const reasoning = /8\.3/.test(user)
+        ? 'Игрок спрашивает, что значит 8.3, без документа. Во фрагментах два пункта 8.3: в Общих правилах (помеха работе администрации) и в Правилах криминальных организаций (союзы для граффити). Из вопроса не понять, какой нужен — коротко объясню оба и спрошу.'
+        : 'Ситуация: игрок А убил игрока Б. Был ли повод? Игрок пишет, что Б «косо посмотрел» — это не угроза жизни и не RP-ситуация. Пункт про DM [S1] требует весомую IC-причину; её нет. Исключений про самооборону здесь не видно. Вердикт: DM, нарушил тот, кто стрелял.';
+      for (const part of reasoning.match(/.{1,16}/gs) ?? []) {
+        mockEmit('ai-think', { id: args!.id, delta: part });
+        await new Promise((r) => setTimeout(r, 25));
+      }
       for (const part of text.match(/.{1,12}/gs) ?? []) {
         mockEmit('ai-chunk', { id: args!.id, delta: part });
         await new Promise((r) => setTimeout(r, 40));
       }
-      return { text, model: 'openai/gpt-oss-120b' };
+      return { text, model: 'openai/gpt-oss-120b', reasoning };
     }
     case 'pins_get': {
       if (params.has('sample') && !mockState.pins.length) mockState.pins = SAMPLE_PINS.map((p) => ({ ...p }));

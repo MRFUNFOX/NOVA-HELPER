@@ -8,6 +8,16 @@
   import ModelPicker from './ModelPicker.svelte';
   import { ease, ms } from '../motion';
   import { dayLabel, people, searchHistory, type HistItem } from '../aiExtras';
+  import { learn } from '../learn.svelte';
+
+  /** Рассуждения модели: [S2] → номер пункта, [N1] → «разъяснение» — как в ответе */
+  function thoughts(t: Turn) {
+    return (t.think ?? '').trim().replace(/\[\s*([SN])(\d+)\s*\]/g, (m, k: string, n: string) => {
+      if (k === 'N') return '(разъяснение)';
+      const src = t.sources.find((x) => x.n === Number(n));
+      return src ? `(${sourceLabel(src).num} ${sourceLabel(src).doc})` : '';
+    });
+  }
 
   /** Что показано: разговор или история вопросов */
   let view = $state<'chat' | 'history'>('chat');
@@ -210,7 +220,7 @@
               </div>
             {/if}
           {:else if !t.a}
-            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
+            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.think ? 'Разбираю ситуацию…' : t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
             {#if slow && waited >= 3}
               <p class="wait-note">Бесплатные серверы Z.ai загружены — ответ может занять до минуты. Быстрее отвечает Groq, но он не работает в России и СНГ.</p>
             {/if}
@@ -257,6 +267,13 @@
                 </span>
               </div>
               {#if t.rating === 'down'}<p class="thanks">Спасибо — так мы видим, где помощник ошибается. Если хотите поспорить с ответом, просто напишите свой довод.</p>{/if}
+            {/if}
+            {#if t.think && learn.staffHere && !t.pending}
+              <!-- Только команде: как нейросеть пришла к ответу — чтобы ловить ошибки логики -->
+              <details class="why">
+                <summary title="Видит только команда (Dev и Admin)"><Icon name="spark" size={13} />Как помощник рассуждал</summary>
+                <p class="selectable">{thoughts(t)}</p>
+              </details>
             {/if}
             {#if app.devMode && !t.pending}
               <!-- Только в режиме разработчика: что выбрала нейросеть и что нашёл поиск -->
@@ -340,6 +357,11 @@
   .src:hover { background: var(--surface-3); color: var(--text); }
   .src .num { flex-shrink: 0; padding: 2px 6px; border-radius: 5px; background: var(--accent-tint); color: var(--accent); font-weight: 800; }
   .src .doc { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .why { margin-top: 10px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); }
+  .why summary { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; list-style: none; font-size: 12px; font-weight: 700; color: var(--text-dim); }
+  .why summary::-webkit-details-marker { display: none; }
+  .why summary:hover { color: var(--text); }
+  .why p { margin: 0; padding: 0 10px 10px; max-height: 260px; overflow: auto; white-space: pre-wrap; font-size: 12.5px; line-height: 1.5; color: var(--text-dim); }
   .debug { margin-top: 10px; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px dashed var(--border-strong); font-size: 11.5px; color: var(--text-muted); }
   .debug summary { cursor: pointer; color: var(--accent-soft); font-weight: 700; }
   .debug p { margin: 6px 0 0; }

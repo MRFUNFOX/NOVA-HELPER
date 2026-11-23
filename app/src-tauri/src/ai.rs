@@ -192,7 +192,7 @@ pub async fn ai_set_key(app: AppHandle, key: String) -> Result<AiStatus, String>
         Provider::Zai => {
             // Списка моделей у Z.ai нет — проверяем ключ крошечным запросом
             let msgs = [Msg { role: "user".into(), content: "Ответь одним словом: ок".into() }];
-            let resp = http.post(format!("{}/chat/completions", p.api())).bearer_auth(&key).json(&body(p, p.helper_models()[0], &msgs, false, false, 8)).send().await.map_err(|e| explain(p, None, "", Some(&e)))?;
+            let resp = http.post(format!("{}/chat/completions", p.api())).bearer_auth(&key).json(&body(p, p.helper_models()[0], &msgs, false, false, 8, false)).send().await.map_err(|e| explain(p, None, "", Some(&e)))?;
             let code = resp.status();
             let text = resp.text().await.unwrap_or_default();
             if !code.is_success() {
@@ -243,16 +243,17 @@ pub struct Msg {
     content: String,
 }
 
-fn body(p: Provider, model: &str, messages: &[Msg], stream: bool, json_mode: bool, max_tokens: u32) -> Value {
+/// think — ответ игроку: модель сначала рассуждает (разбирает ситуацию), потом отвечает. Для служебных запросов
+/// (подбор документов, проверка ника) — без рассуждений: быстрее и не тратит лимит.
+fn body(p: Provider, model: &str, messages: &[Msg], stream: bool, json_mode: bool, max_tokens: u32, think: bool) -> Value {
     let msgs: Vec<Value> = messages.iter().map(|m| json!({ "role": m.role, "content": m.content })).collect();
-    let mut b = json!({ "model": model, "messages": msgs, "stream": stream, "temperature": 0.2, "max_tokens": max_tokens });
+    let mut b = json!({ "model": model, "messages": msgs, "stream": stream, "temperature": if think { 0.3 } else { 0.2 }, "max_tokens": max_tokens });
     if p == Provider::Zai {
-        // Без «размышлений»: иначе модель тратит лимит токенов на них и может вернуть пустой ответ
-        b["thinking"] = json!({ "type": "disabled" });
+        b["thinking"] = json!({ "type": if think { "enabled" } else { "disabled" } });
     } else if model.starts_with("openai/gpt-oss") {
-        // Рассуждения модели игроку не нужны, а «низкие» — быстрее и экономят лимит
-        b["reasoning_effort"] = json!("low");
-        b["include_reasoning"] = json!(false);
+        // Рассуждения нужны, чтобы модель вдумалась в ситуацию; показываем их только команде
+        b["reasoning_effort"] = json!(if think { "medium" } else { "low" });
+        b["include_reasoning"] = json!(think);
     }
     if json_mode {
         b["response_format"] = json!({ "type": "json_object" });
@@ -271,7 +272,7 @@ pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>) -> Result<String, S
     let http = client()?;
     let mut last = String::new();
     for model in pick(p.helper_models(), &s.models) {
-        let resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, false, true, 600)).send().await {
+        let resp = match http.post(format!("{}/chat/completions", p.api())).bearer_auth(&s.key).json(&body(p, model, &messages, false, true, 600, false)).send().await {
             Ok(r) => r,
             Err(e) => return Err(explain(p, None, "", Some(&e))),
         };
@@ -298,8 +299,14 @@ struct Chunk<'a> {
     delta: &'a str,
 }
 
+/// Кусочек потока: текст ответа или рассуждение модели (Groq — `reasoning`, Z.ai — `reasoning_content`)
+enum Delta {
+    Text(String),
+    Think(String),
+}
+
 /// Разобрать готовые строки потока «data: {…}» и вернуть кусочки текста
-fn take_deltas(buf: &mut String) -> Vec<String> {
+fn take_deltas(buf: &mut String) -> Vec<Delta> {
     let mut out = Vec::new();
     while let Some(nl) = buf.find('\n') {
         let line: String = buf.drain(..=nl).collect();
@@ -309,10 +316,14 @@ fn take_deltas(buf: &mut String) -> Vec<String> {
             continue;
         }
         if let Ok(v) = serde_json::from_str::<Value>(data) {
-            if let Some(d) = v["choices"][0]["delta"]["content"].as_str() {
-                if !d.is_empty() {
-                    out.push(d.to_string());
+            let d = &v["choices"][0]["delta"];
+            for key in ["reasoning", "reasoning_content"] {
+                if let Some(t) = d[key].as_str().filter(|t| !t.is_empty()) {
+                    out.push(Delta::Think(t.to_string()));
                 }
+            }
+            if let Some(t) = d["content"].as_str().filter(|t| !t.is_empty()) {
+                out.push(Delta::Text(t.to_string()));
             }
         }
     }
@@ -324,7 +335,7 @@ struct Opened {
     model: &'static str,
     resp: reqwest::Response,
     buf: String,
-    first: Vec<String>,
+    first: Vec<Delta>,
 }
 
 /// Ошибка открытия потока: код ответа (если был) и понятное сообщение
@@ -335,7 +346,7 @@ async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'st
     let mut resp = http
         .post(format!("{}/chat/completions", p.api()))
         .bearer_auth(key)
-        .json(&body(p, model, messages, true, false, 900))
+        .json(&body(p, model, messages, true, false, 2500, true))
         .send()
         .await
         .map_err(|e| (None, explain(p, None, "", Some(&e))))?;
@@ -412,9 +423,16 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<V
     let Opened { model, mut resp, mut buf, first } = opened?;
 
     let mut full = String::new();
-    let mut send = |d: &str| {
-        full.push_str(d);
-        let _ = app.emit("ai-chunk", Chunk { id: &id, delta: d });
+    let mut thought = String::new();
+    let mut send = |d: &Delta| match d {
+        Delta::Text(t) => {
+            full.push_str(t);
+            let _ = app.emit("ai-chunk", Chunk { id: &id, delta: t });
+        }
+        Delta::Think(t) => {
+            thought.push_str(t);
+            let _ = app.emit("ai-think", Chunk { id: &id, delta: t });
+        }
     };
     for d in &first {
         send(d);
@@ -431,5 +449,29 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>) -> Result<V
             Err(e) => return Err(explain(p, None, "", Some(&e))),
         }
     }
-    Ok(json!({ "text": full, "model": model }))
+    if full.trim().is_empty() {
+        return Err(format!("{} долго думала и не успела ответить. Спросите ещё раз или короче.", p.name()));
+    }
+    Ok(json!({ "text": full, "model": model, "reasoning": thought }))
+}
+
+#[cfg(test)]
+mod think_tests {
+    use super::{take_deltas, Delta};
+    #[test]
+    fn splits_thoughts_and_answer() {
+        // Groq (gpt-oss): «reasoning», Z.ai (GLM): «reasoning_content», ответ — «content»
+        let mut buf = String::from(concat!(
+            "data: {\"choices\":[{\"delta\":{\"reasoning\":\"Игрок спрашивает про 8.3. \"}}]}\n",
+            "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"Есть в двух документах.\"}}]}\n",
+            "data: {\"choices\":[{\"delta\":{\"content\":\"Пункт 8.3 есть в двух местах\"}}]}\n",
+            "data: [DONE]\n",
+            "data: {\"choices\":[{\"delta\":{\"con"
+        ));
+        let d = take_deltas(&mut buf);
+        let kinds: Vec<String> = d.iter().map(|x| match x { Delta::Think(t) => format!("думает: {t}"), Delta::Text(t) => format!("пишет: {t}") }).collect();
+        assert_eq!(kinds, ["думает: Игрок спрашивает про 8.3. ", "думает: Есть в двух документах.", "пишет: Пункт 8.3 есть в двух местах"]);
+        // Недописанная строка ждёт продолжения
+        assert!(buf.starts_with("data: {\"choices\""));
+    }
 }
