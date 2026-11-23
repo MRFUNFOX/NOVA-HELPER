@@ -1,0 +1,91 @@
+# Модели голоса для NOVA HELPER: собирает и выкладывает в выпуск `voice-models` (pre-release — игрокам как
+# обновление не приходит, «последним» выпуском не становится). Программа скачивает их один раз,
+# когда игрок включает голосовой вопрос.
+#  • asr.zip    — распознавание речи GigaAM v2 (Сбер, лицензия MIT) + шумоподавление GTCRN
+#  • tts-denis.zip — голос Piper «Денис» (CC0)
+#  • espeak.zip — eSpeak NG 1.52.0 (GPL-3.0) отдельной программой: подсказывает Piper, как произносить слова.
+#                 Лежит отдельным файлом рядом с программой, NOVA HELPER его не встраивает.
+# Запуск: вкладка Actions → «Модели голоса» → Run workflow.
+name: Модели голоса
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Скачать модели
+        run: |
+          set -e
+          mkdir -p dl out
+          cd dl
+          B=https://github.com/k2-fsa/sherpa-onnx/releases/download
+          curl -fsSL -o asr.tar.bz2 "$B/asr-models/sherpa-onnx-nemo-ctc-giga-am-v2-russian-2025-04-19.tar.bz2"
+          curl -fsSL -o denis.tar.bz2 "$B/tts-models/vits-piper-ru_RU-denis-medium.tar.bz2"
+          curl -fsSL -o gtcrn_simple.onnx "$B/speech-enhancement-models/gtcrn_simple.onnx"
+          curl -fsSL -o espeak-ng.msi "https://github.com/espeak-ng/espeak-ng/releases/download/1.52.0/espeak-ng.msi"
+          curl -fsSL -o COPYING "https://raw.githubusercontent.com/espeak-ng/espeak-ng/1.52.0/COPYING"
+          curl -fsSL -o GIGAAM_LICENSE "https://raw.githubusercontent.com/salute-developers/GigaAM/main/LICENSE"
+          tar xjf asr.tar.bz2
+          tar xjf denis.tar.bz2
+          sudo apt-get install -y -q msitools zip >/dev/null
+          mkdir espeak-msi && msiextract -C espeak-msi espeak-ng.msi >/dev/null
+          find espeak-msi -maxdepth 4 | head -40
+
+      - name: Упаковать
+        run: |
+          set -e
+          cd dl
+          # Распознавание + шумоподавление
+          mkdir -p asr
+          cp sherpa-onnx-nemo-ctc-giga-am-v2-russian-2025-04-19/model.int8.onnx asr/
+          cp sherpa-onnx-nemo-ctc-giga-am-v2-russian-2025-04-19/tokens.txt asr/
+          cp gtcrn_simple.onnx asr/
+          cp GIGAAM_LICENSE asr/LICENSE-GigaAM.txt
+          (cd asr && zip -q -r ../../out/asr.zip .)
+          # Голос Дениса
+          mkdir -p tts-denis
+          cp vits-piper-ru_RU-denis-medium/ru_RU-denis-medium.onnx tts-denis/model.onnx
+          cp vits-piper-ru_RU-denis-medium/ru_RU-denis-medium.onnx.json tts-denis/model.onnx.json
+          cp vits-piper-ru_RU-denis-medium/tokens.txt tts-denis/
+          cp vits-piper-ru_RU-denis-medium/MODEL_CARD tts-denis/MODEL_CARD.txt
+          (cd tts-denis && zip -q -r ../../out/tts-denis.zip .)
+          # eSpeak NG — отдельная программа (GPL-3.0): exe, dll, данные, лицензия и где взять исходники
+          mkdir -p espeak
+          EXE=$(find espeak-msi -iname 'espeak-ng.exe' | head -1)
+          DIR=$(dirname "$EXE")
+          cp "$EXE" espeak/
+          find "$DIR" -maxdepth 1 -iname '*.dll' -exec cp {} espeak/ \;
+          DATA=$(find espeak-msi -type d -name 'espeak-ng-data' | head -1)
+          cp -r "$DATA" espeak/espeak-ng-data
+          cp COPYING espeak/COPYING.txt
+          printf 'eSpeak NG 1.52.0 — GNU GPL v3 (COPYING.txt).\r\nОтдельная программа: NOVA HELPER запускает espeak-ng.exe, чтобы узнать произношение слов для озвучки.\r\nИсходный код: https://github.com/espeak-ng/espeak-ng/tree/1.52.0\r\nЕго можно заменить своей сборкой eSpeak NG или удалить (тогда озвучка не работает).\r\n' > espeak/README.txt
+          ls -la espeak
+          (cd espeak && zip -q -r ../../out/espeak.zip .)
+          cd ../out
+          ls -la
+          # Описание для программы: размеры и контрольные суммы
+          python3 - <<'PY'
+          import hashlib, json, os
+          files = {}
+          for f in sorted(os.listdir('.')):
+              if f.endswith('.zip'):
+                  h = hashlib.sha256(open(f, 'rb').read()).hexdigest()
+                  files[f[:-4]] = {'file': f, 'size': os.path.getsize(f), 'sha256': h}
+          json.dump({'v': 1, 'files': files}, open('voice.json', 'w'), indent=2)
+          print(open('voice.json').read())
+          PY
+
+      - name: Выложить в выпуск voice-models
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          gh release view voice-models -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
+            gh release create voice-models -R "$GITHUB_REPOSITORY" --prerelease --title "Модели голоса" \
+              --notes "Модели для голосового вопроса к ИИ. Скачиваются программой сама — вручную ничего делать не нужно. Состав и лицензии: GigaAM (MIT), Piper «Денис» (CC0), eSpeak NG 1.52.0 (GPL-3.0, отдельная программа, исходники: https://github.com/espeak-ng/espeak-ng/tree/1.52.0)."
+          gh release upload voice-models -R "$GITHUB_REPOSITORY" out/asr.zip out/tts-denis.zip out/espeak.zip out/voice.json --clobber

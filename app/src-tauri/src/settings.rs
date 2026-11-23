@@ -57,12 +57,26 @@ pub struct Settings {
     pub window: Option<WindowGeom>,
     /// Подсказку в углу передвинули в редакторе окон
     pub hint_pos: Option<HintPos>,
+    /// Голосовой вопрос к ИИ: зажать и говорить
+    pub voice_hotkey: String,
+    /// Озвучивать ответ голосом
+    pub voice_speak: bool,
+    /// Микрофон (имя устройства); None — как в Windows
+    pub voice_input: Option<String>,
+    /// Куда выводить голос ИИ; None — как в Windows
+    pub voice_output: Option<String>,
+    /// Клавиши по новой схеме (23.11.2026): окно — Alt+X, голос — Alt+Q. У старых настроек поля нет → false →
+    /// при запуске клавиша окна Alt+Q переезжает на Alt+X (Alt+Q теперь для голоса), игроку показываем подсказку.
+    #[serde(default)]
+    pub keys_v2: bool,
+    /// Клавишу окна перенесли с Alt+Q на Alt+X — показать игроку один раз
+    pub keys_moved: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            hotkey: "Alt+Q".into(),
+            hotkey: "Alt+X".into(),
             hint: HintMode::Always,
             close_to_tray: true,
             first_run_done: false,
@@ -72,6 +86,12 @@ impl Default for Settings {
             editor_hotkey: "Alt+Shift+Z".into(),
             window: None,
             hint_pos: None,
+            voice_hotkey: "Alt+Q".into(),
+            voice_speak: true,
+            voice_input: None,
+            voice_output: None,
+            keys_v2: true,
+            keys_moved: false,
         }
     }
 }
@@ -85,6 +105,43 @@ pub fn load(app: &AppHandle) -> Settings {
         .and_then(|p| fs::read_to_string(p).ok())
         .and_then(|s| serde_json::from_str(&s).ok())
         .unwrap_or_default()
+}
+
+/// Переход на новую схему клавиш (один раз): Alt+Q у окна → Alt+X, Alt+Q отдаём голосу.
+/// Игрок сам менял клавишу окна — её не трогаем, а голосу ставим Alt+Q, только если она свободна.
+pub fn migrate_keys(s: &mut Settings) -> bool {
+    if s.keys_v2 {
+        return false;
+    }
+    s.keys_v2 = true;
+    if s.hotkey == "Alt+Q" {
+        s.hotkey = "Alt+X".into();
+        s.keys_moved = true;
+    }
+    if s.voice_hotkey == s.hotkey || s.voice_hotkey == s.editor_hotkey {
+        s.voice_hotkey = String::new();
+    }
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn old_settings_move_window_key() {
+        let mut s: Settings = serde_json::from_str(r#"{"hotkey":"Alt+Q","firstRunDone":true}"#).unwrap();
+        assert!(!s.keys_v2);
+        assert!(migrate_keys(&mut s));
+        assert_eq!((s.hotkey.as_str(), s.voice_hotkey.as_str(), s.keys_moved), ("Alt+X", "Alt+Q", true));
+        assert!(!migrate_keys(&mut s));
+        // Свою клавишу окна игрок оставляет
+        let mut s: Settings = serde_json::from_str(r#"{"hotkey":"F8"}"#).unwrap();
+        migrate_keys(&mut s);
+        assert_eq!((s.hotkey.as_str(), s.voice_hotkey.as_str(), s.keys_moved), ("F8", "Alt+Q", false));
+        // Новая установка — уже по новой схеме
+        let s = Settings::default();
+        assert!(s.keys_v2 && s.hotkey == "Alt+X" && s.voice_hotkey == "Alt+Q");
+    }
 }
 
 pub fn save(app: &AppHandle, s: &Settings) -> Result<(), String> {

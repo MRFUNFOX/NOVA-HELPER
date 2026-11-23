@@ -39,7 +39,7 @@ fn get_settings(app: AppHandle) -> Settings {
 fn save_settings(app: AppHandle, new: Settings) -> Result<Settings, String> {
     let old = settings::load(&app);
     // Клавишу меняем через set_hotkey; здесь сохраняем остальное, не трогая геометрию окна
-    let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), window: old.window.clone(), hint_pos: old.hint_pos, ..new };
+    let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), voice_hotkey: old.voice_hotkey.clone(), window: old.window.clone(), hint_pos: old.hint_pos, keys_v2: old.keys_v2, ..new };
     settings::save(&app, &merged)?;
     let _ = app.emit("settings-changed", merged.clone());
     // Режим разработчика включили или выключили — меню поверх игры появляется или пропадает
@@ -206,7 +206,10 @@ pub fn run() {
         ])
         .setup(|app| {
             let handle = app.handle().clone();
-            let s = settings::load(&handle);
+            let mut s = settings::load(&handle);
+            if settings::migrate_keys(&mut s) {
+                let _ = settings::save(&handle, &s);
+            }
             if let Err(e) = register_hotkey(&handle, &s.hotkey) {
                 eprintln!("{e}");
             }

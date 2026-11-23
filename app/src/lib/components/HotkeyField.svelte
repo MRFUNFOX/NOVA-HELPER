@@ -72,7 +72,7 @@
 </div>
 {#if error}<p class="msg error" role="alert">{error}</p>
 {:else if saved}<p class="msg ok">Готово. Теперь {kind === 'editor' ? 'редактор окон' : 'окно'} открывается на {pretty(value)}.</p>
-{:else if recording}<p class="msg muted">Например, Alt + Q или F8. Esc — отмена.</p>{/if}
+{:else if recording}<p class="msg muted">Любая клавиша или сочетание, например Alt + X или F8. Одна клавиша без Alt и Ctrl перестанет работать в игре и в чате. Esc — отмена.</p>{/if}
 
 <style>
   .field { display: flex; gap: 8px; align-items: center; }

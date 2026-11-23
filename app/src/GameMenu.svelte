@@ -185,7 +185,7 @@
   });
   const isOpen = (id: WinId) => gm.open.includes(id);
   const pinLabel = $derived(gm.layout.pinned ? 'Закреплено. Нажмите, чтобы меню снова пряталось' : 'Закрепить: меню и окна останутся на экране, пока вы играете');
-  const hotkey = $derived(app.settings?.hotkey ?? 'Alt+Q');
+  const hotkey = $derived(app.settings?.hotkey ?? 'Alt+X');
 
   function setGlass(e: Event) {
     gm.layout.glass = Number((e.currentTarget as HTMLInputElement).value);

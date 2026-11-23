@@ -23,6 +23,15 @@ export interface Settings {
   analytics?: boolean | null;
   /** Клавиша редактора закреплённых окон */
   editorHotkey?: string;
+  /** Голосовой вопрос к ИИ: зажать и говорить; пусто — не назначена */
+  voiceHotkey?: string;
+  /** Озвучивать ответы */
+  voiceSpeak?: boolean;
+  /** Микрофон и вывод голоса (имена устройств); null — как в Windows */
+  voiceInput?: string | null;
+  voiceOutput?: string | null;
+  /** Клавишу окна перенесли с Alt+Q на Alt+X — показать один раз */
+  keysMoved?: boolean;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
 }
@@ -226,7 +235,7 @@ export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
 const mockListeners: Record<string, Set<(p: unknown) => void>> = {};
 const mockEmit = (event: string, payload: unknown) => mockListeners[event]?.forEach((cb) => cb(payload));
 const mockState = {
-  settings: { hotkey: 'Alt+Q', hint: 'always', closeToTray: true, firstRunDone: false, window: null } as Settings,
+  settings: { hotkey: 'Alt+X', voiceHotkey: 'Alt+Q', voiceSpeak: true, hint: 'always', closeToTray: true, firstRunDone: false, window: null } as Settings,
   autostart: true,
   dbLoaded: false,
   aiKey: '',

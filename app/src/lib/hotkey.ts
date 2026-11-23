@@ -28,13 +28,7 @@ export function recordHotkey(e: KeyboardEvent): Recorded {
   if (!key) return { ok: false, reason: 'Эту клавишу нельзя назначить. Выберите букву, цифру или F1–F12.' };
   if (e.metaKey) return { ok: false, reason: 'Сочетания с клавишей Windows заняты системой.' };
   const mods = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift'].filter(Boolean) as string[];
-  const isFn = /^F\d+$/.test(key) || key === 'Pause' || key === 'ScrollLock' || key === 'Insert';
-  if (!mods.length && !isFn) {
-    return { ok: false, reason: 'Одна буква или цифра сработает и в игре. Добавьте Alt, Ctrl или Shift — или выберите клавишу F1–F12.' };
-  }
-  if (mods.length === 1 && mods[0] === 'Shift' && !isFn) {
-    return { ok: false, reason: 'Shift + буква — это просто заглавная буква в чате игры. Используйте Alt или Ctrl.' };
-  }
+  // Любая клавиша — и одна, и сочетание (решение владельца 23.11.2026): игрок сам знает, что ему не мешает в игре
   const hotkey = [...mods, key].join('+');
   if (BLOCKED.has(hotkey)) return { ok: false, reason: `«${pretty(hotkey)}» занято Windows. Выберите другое сочетание.` };
   return { ok: true, hotkey };
