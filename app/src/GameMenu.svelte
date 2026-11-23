@@ -53,9 +53,39 @@
   }
 
   // ── Кнопки меню ──
-  type Kid = { id: WinId; label: string; sub: string; icon: IconName };
-  type Item = { sep: true } | { group: true; label: string; icon: IconName; kids: Kid[] } | { id: WinId; label: string; icon: IconName; badge?: number; yellow?: boolean; iconOnly?: boolean };
-  const items = $derived.by<Item[]>(() => {
+  /** Пункт выпадающего списка. soon — показан для примера, ещё не сделан */
+  type Kid = { id: WinId; label: string; sub: string; icon: IconName; badge?: number; yellow?: boolean; soon?: boolean };
+  type Item = { sep: true } | { group: string; label: string; icon: IconName; kids: Kid[]; iconOnly?: boolean } | { id: WinId; label: string; icon: IconName; badge?: number; yellow?: boolean; iconOnly?: boolean };
+  // Предпросмотр нового меню (все функции в выпадающих списках) — только при разработке: game.html?menu2
+  const MENU2 = import.meta.env.DEV && new URLSearchParams(location.search).has('menu2');
+  const items = $derived.by<Item[]>(() => MENU2 ? items2() : items1());
+  function items2(): Item[] {
+    const SOON = 'rules' as WinId;
+    const out: Item[] = [];
+    const rules: Kid[] = [{ id: 'rules', label: 'Правила проекта', sub: 'Общие правила NOVA RP', icon: 'scroll' }];
+    if (app.hasLaws) rules.push({ id: 'laws', label: `Законы ${app.serverName}`, sub: 'Законодательство сервера', icon: 'scale' });
+    rules.push({ id: SOON, label: 'Проверка ника', sub: 'Подходит ли ник по правилам', icon: 'idcard', soon: true });
+    rules.push({ id: SOON, label: 'Что изменилось', sub: 'Свежие правки правил и законов', icon: 'history', soon: true });
+    out.push({ group: 'rules', label: 'Правила', icon: 'scroll', kids: rules });
+    const earn: Kid[] = [];
+    if (app.buyersEnabled) earn.push({ id: 'buyers', label: 'Скупщики', sub: 'Цены скупщиков за час', icon: 'chartline' });
+    if (app.calcEnabled) earn.push({ id: 'calc', label: 'Калькулятор', sub: 'Доходы и расходы', icon: 'calc' });
+    out.push({ group: 'earn', label: 'Заработок', icon: 'coin', kids: earn });
+    out.push({ group: 'guide', label: 'Гид', icon: 'compass', kids: [
+      { id: SOON, label: 'Путеводитель', sub: 'С чего начать и что дальше', icon: 'route', soon: true },
+      { id: SOON, label: 'Организации', sub: 'Уставы и гайды фракций', icon: 'users', soon: true },
+      { id: SOON, label: 'Карта', sub: 'NPC, работы, скупщики', icon: 'map', soon: true },
+    ] });
+    if (app.aiEnabled) out.push({ sep: true }, { id: 'ai', label: 'ИИ-помощник', icon: 'chat', iconOnly: true });
+    const more: Kid[] = [];
+    if (app.pinsEnabled) more.push({ id: 'pins', label: 'Мои окна поверх игры', sub: 'Закреплённые окна', icon: 'layers', badge: app.pins.length || undefined });
+    if (learn.staff) more.push({ id: 'admin', label: 'Управление', sub: learn.pending ? `${learn.pending} на проверке` : 'Для команды', icon: 'shield', badge: learn.pending || undefined, yellow: true });
+    more.push({ id: 'settings', label: 'Настройки', sub: 'Клавиши, вид, обновления', icon: 'settings' });
+    more.push({ id: SOON, label: 'Частые вопросы', sub: 'Если что-то не работает', icon: 'question', soon: true });
+    out.push({ group: 'more', label: 'Ещё', icon: 'menu', kids: more, iconOnly: true });
+    return out;
+  }
+  function items1(): Item[] {
     const out: Item[] = [{ id: 'rules', label: 'Правила', icon: 'scroll' }];
     if (app.hasLaws) out.push({ id: 'laws', label: 'Законы', icon: 'scale' });
     // «Заработок»: скупщики и калькулятор под одной кнопкой (пока калькулятор — только в режиме разработчика)
@@ -63,7 +93,7 @@
       const kids: Kid[] = [];
       if (app.buyersEnabled) kids.push({ id: 'buyers', label: 'Скупщики', sub: 'Цены скупщиков за час', icon: 'chartline' });
       kids.push({ id: 'calc', label: 'Калькулятор', sub: 'Доходы и расходы', icon: 'calc' });
-      out.push({ sep: true }, { group: true, label: 'Заработок', icon: 'coin', kids });
+      out.push({ sep: true }, { group: 'earn', label: 'Заработок', icon: 'coin', kids });
     } else if (app.buyersEnabled) out.push({ sep: true }, { id: 'buyers', label: 'Скупщики', icon: 'chartline' });
     if (app.aiEnabled) out.push({ sep: true }, { id: 'ai', label: 'ИИ-помощник', icon: 'chat', iconOnly: true });
     out.push({ sep: true });
@@ -71,19 +101,20 @@
     if (learn.staff) out.push({ id: 'admin', label: learn.pending ? `Управление: ${learn.pending} на проверке` : 'Управление', icon: 'shield', badge: learn.pending || undefined, yellow: true, iconOnly: true });
     out.push({ id: 'settings', label: 'Настройки', icon: 'settings', iconOnly: true });
     return out;
-  });
+  }
   // Управление закрыто для игрока — его окно не держим открытым
   $effect(() => { if (!learn.staff && gm.open.includes('admin')) untrack(() => gm.close('admin')); });
   $effect(() => { if (!app.calcEnabled && gm.open.includes('calc')) untrack(() => gm.close('calc')); });
 
   // ── Выпадающий список «Заработок»: открывается при наведении, закрывается чуть позже, чем ушла мышь ──
-  let dd = $state(false);
+  /** Какой список открыт (ключ группы) */
+  let dd = $state<string | null>(null);
   let ddTimer: ReturnType<typeof setTimeout> | undefined;
-  const ddEnter = () => { clearTimeout(ddTimer); dd = true; };
-  const ddLeave = () => { clearTimeout(ddTimer); ddTimer = setTimeout(() => (dd = false), 300); };
-  const ddClick = () => { clearTimeout(ddTimer); dd = !dd; };
-  function ddPick(id: WinId) { clearTimeout(ddTimer); dd = false; gm.toggle(id); }
-  $effect(() => { if (drag || gm.passive) dd = false; });
+  const ddEnter = (g: string) => { clearTimeout(ddTimer); dd = g; };
+  const ddLeave = () => { clearTimeout(ddTimer); ddTimer = setTimeout(() => (dd = null), 300); };
+  const ddClick = (g: string) => { clearTimeout(ddTimer); dd = dd === g ? null : g; };
+  function ddPick(k: Kid) { if (k.soon) return; clearTimeout(ddTimer); dd = null; gm.toggle(k.id); }
+  $effect(() => { if (drag || gm.passive) dd = null; });
 
   // ── «+» у закреплённых окон «Итог» калькулятора: слой окон пропускает мышь в игру, поэтому кнопку рисует меню ──
   const sumPins = $derived(app.calcEnabled ? app.pins.filter((p) => p.kind === 'calc' && p.calc?.type === 'sum' && p.x !== undefined && p.y !== undefined) : []);
@@ -228,21 +259,26 @@
       {#if 'sep' in it}
         <span class="sep" aria-hidden="true"></span>
       {:else if 'group' in it}
-        {@const anyOpen = it.kids.some((k) => isOpen(k.id))}
+        {@const anyOpen = it.kids.some((k) => !k.soon && isOpen(k.id))}
+        {@const show = dd === it.group}
+        {@const gBadge = it.kids.reduce((n, k) => n + (k.yellow ? (k.badge ?? 0) : 0), 0)}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="grp" onmouseenter={ddEnter} onmouseleave={ddLeave}>
-          <button class="nb" class:icon={vertical} class:on={anyOpen || dd} class:open={anyOpen} aria-label={it.label} aria-haspopup="menu" aria-expanded={dd} onclick={ddClick}>
+        <div class="grp" onmouseenter={() => ddEnter(it.group)} onmouseleave={ddLeave}>
+          <button class="nb" class:icon={vertical || it.iconOnly} class:on={anyOpen || show} class:open={anyOpen} aria-label={it.label} aria-haspopup="menu" aria-expanded={show} onclick={() => ddClick(it.group)}>
             <Icon name={it.icon} size={18} />
-            {#if !vertical}<span>{it.label}</span><span class="chev" class:up={!dd === !barTop}><Icon name="chevron" size={13} /></span>{/if}
+            {#if !vertical && !it.iconOnly}<span>{it.label}</span><span class="chev" class:up={!show === !barTop}><Icon name="chevron" size={13} /></span>{/if}
+            {#if gBadge}<span class="badge yellow">{gBadge}</span>{/if}
           </button>
-          {#if dd}
+          {#if show}
             <span class="bridge" aria-hidden="true"></span>
-            <div class="menu" role="menu" aria-label={it.label}>
-              {#each it.kids as k (k.id)}
-                <button class="mi" class:on={isOpen(k.id)} role="menuitemcheckbox" aria-checked={isOpen(k.id)} onclick={() => ddPick(k.id)}>
+            <div class="menu" class:edge={it.iconOnly && !vertical} role="menu" aria-label={it.label}>
+              {#each it.kids as k (k.label)}
+                {@const on = !k.soon && isOpen(k.id)}
+                <button class="mi" class:on class:soon={k.soon} role="menuitemcheckbox" aria-checked={on} aria-disabled={k.soon} onclick={() => ddPick(k)}>
                   <span class="mico"><Icon name={k.icon} size={17} /></span>
-                  <span class="mt"><b>{k.label}{#if k.id === 'calc'}<em>β</em>{/if}</b><span>{isOpen(k.id) ? 'Открыто — нажмите, чтобы закрыть' : k.sub}</span></span>
-                  {#if isOpen(k.id)}<span class="mdot"></span>{/if}
+                  <span class="mt"><b>{k.label}{#if k.id === 'calc' && !k.soon}<em>β</em>{/if}{#if k.soon}<i>скоро</i>{/if}</b><span>{on ? 'Открыто — нажмите, чтобы закрыть' : k.sub}</span></span>
+                  {#if k.badge}<span class="badge static" class:yellow={k.yellow}>{k.badge}</span>{/if}
+                  {#if on}<span class="mdot"></span>{/if}
                 </button>
               {/each}
             </div>
@@ -385,6 +421,11 @@
   .mt b { font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
   .mt em { font-style: normal; padding: 0 5px; border-radius: 5px; font-size: 10.5px; font-weight: 800; background: var(--accent); color: var(--on-accent); }
   .mt span { font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+  .mt i { font-style: normal; padding: 1px 6px; border-radius: 5px; font-size: 10.5px; font-weight: 700; background: #2c2d32; color: var(--text-muted); }
+  .mi.soon { cursor: default; opacity: 0.55; }
+  .mi.soon:hover { background: transparent; }
+  .badge.static { position: static; }
+  .bar:not(.v) .menu.edge { left: auto; right: -8px; transform: none; }
   .mdot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
   .passive-tip { position: absolute; right: 24px; bottom: 18px; z-index: 59; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(20, 21, 24, 0.8); color: #d5d7dc; font-size: 12.5px; font-weight: 700; pointer-events: none; }
   .passive-tip :global(svg) { color: var(--accent); }

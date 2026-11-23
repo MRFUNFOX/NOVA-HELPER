@@ -2,7 +2,7 @@
   export type IconName =
     | 'search' | 'close' | 'minus' | 'square' | 'squares' | 'settings' | 'spark' | 'menu' | 'book' | 'history'
     | 'refresh' | 'external' | 'copy' | 'check' | 'chevron' | 'alert' | 'keyboard' | 'download' | 'window' | 'shield'
-    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast' | 'scale' | 'scroll' | 'chartline' | 'calc' | 'coin';
+    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast' | 'scale' | 'scroll' | 'chartline' | 'calc' | 'coin' | 'compass' | 'map' | 'idcard' | 'question' | 'route';
 </script>
 
 <script lang="ts">
@@ -30,6 +30,11 @@
   {:else if name === 'scale'}<path d="M10 3v14M6.5 17h7" /><path d="M4 6h12" /><path d="M4 6l-2.2 5a2.4 2.4 0 0 0 4.4 0L4 6ZM16 6l-2.2 5a2.4 2.4 0 0 0 4.4 0L16 6Z" />
   {:else if name === 'scroll'}<path d="M6 3.5h9a1.5 1.5 0 0 1 1.5 1.5v1.5H14" /><path d="M14 5v10.5a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 3 15.5V14h8.5v1.5A1.5 1.5 0 0 0 13 17" /><path d="M6 3.5A1.5 1.5 0 0 0 4.5 5v9" /><path d="M7.5 7.5h4M7.5 10.5h4" />
   {:else if name === 'calc'}<rect x="4.5" y="2.5" width="11" height="15" rx="1.8" /><path d="M7 6h6M7.2 9.5h.1M10 9.5h.1M12.8 9.5h.1M7.2 12.3h.1M10 12.3h.1M12.8 12.3h.1M7.2 15h.1M10 15h2.8" />
+  {:else if name === 'compass'}<circle cx="10" cy="10" r="7.2" /><path d="m12.9 7.1-1.7 4.1-4.1 1.7 1.7-4.1 4.1-1.7Z" />
+  {:else if name === 'map'}<path d="M3.5 5.2 7.5 3.5l5 1.8 4-1.6v11.1l-4 1.7-5-1.8-4 1.6V5.2Z" /><path d="M7.5 3.5v11.2M12.5 5.3v11.1" />
+  {:else if name === 'idcard'}<rect x="2.8" y="4.5" width="14.4" height="11" rx="1.8" /><circle cx="7.3" cy="9.3" r="1.7" /><path d="M4.9 13.2c.5-1 1.3-1.5 2.4-1.5s1.9.5 2.4 1.5M11.8 8.5h3M11.8 11.3h2.2" />
+  {:else if name === 'question'}<circle cx="10" cy="10" r="7.2" /><path d="M8 8a2 2 0 1 1 2.8 1.8c-.5.3-.8.7-.8 1.3v.4M10 13.9h.1" />
+  {:else if name === 'route'}<circle cx="5.5" cy="14.5" r="1.8" /><circle cx="14.5" cy="5.5" r="1.8" /><path d="M7.3 14.5h5.2a2.5 2.5 0 0 0 0-5h-5a2.5 2.5 0 0 1 0-5h5.2" />
   {:else if name === 'coin'}<circle cx="10" cy="10" r="7.2" /><path d="M12.3 7.6c-.4-.7-1.2-1.1-2.3-1.1-1.3 0-2.3.7-2.3 1.7s.9 1.4 2.3 1.7 2.3.7 2.3 1.7-1 1.7-2.3 1.7c-1.1 0-2-.4-2.4-1.2M10 5v1.5M10 13.5V15" />
   {:else if name === 'chartline'}<path d="M3 3.5v13h13.5" /><path d="m5.5 13 3.3-3.6 2.6 2.2L16 6.5" /><path d="M12.8 6.5H16v3.2" />
   {:else if name === 'contrast'}<circle cx="10" cy="10" r="6.5" /><path d="M10 3.5v13a6.5 6.5 0 0 0 0-13Z" fill="currentColor" stroke="none" />
