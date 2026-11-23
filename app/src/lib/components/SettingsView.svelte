@@ -5,6 +5,7 @@
   import { backend, checkAppUpdate, type HintMode } from '../backend';
   import { ai } from '../ai.svelte';
   import { voice } from '../voice.svelte';
+  import { pretty } from '../hotkey';
   import { PUBLIC, checkDevCode } from '../features';
   import { learn, LearnError } from '../learn.svelte';
 
@@ -82,6 +83,8 @@
     vstat = { ...(vstat ?? { installed: false, sizeMb: 300 }), installing: true };
     try { await backend.voiceInstall(); } catch (e) { verr = String(e); }
     await vload();
+    // Голос установлен — Alt+Q теперь работает как задумано, напоминание про перенос клавиш больше не нужно
+    if (vstat?.installed && app.settings?.keysMoved) await save({ keysMoved: false });
   }
   async function vremove() { await backend.voiceRemove().catch(() => {}); await vload(); }
   async function vtest() {
@@ -195,6 +198,9 @@
   <section>
     <h2>Голосовой вопрос</h2>
     <p class="hint">Зажмите клавишу в игре и спросите помощника голосом — ответ появится сверху экрана и прозвучит вслух. Речь распознаётся прямо на компьютере, без интернета и ключей.</p>
+    {#if app.settings?.keysMoved}
+      <p class="vmoved"><Icon name="info" size={15} /><span>Окно помощника теперь открывается на <b>{pretty(app.settings.hotkey)}</b>, а Alt + Q — голосовой вопрос.</span></p>
+    {/if}
     {#if !vstat?.installed}
       {#if voice.install || vstat?.installing}
         {@const p = voice.install}
@@ -322,6 +328,8 @@
   .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
   .segmented button { border: 0; background: none; padding: 7px 14px; transition: background 0.15s var(--ease), color 0.15s var(--ease); border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
   .segmented button.on { background: var(--accent); color: var(--on-accent); }
+  .vmoved { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--text); font-size: 13.5px; }
+  .vmoved :global(svg) { color: var(--accent); flex-shrink: 0; }
   .vprog { display: flex; flex-direction: column; gap: 6px; }
   .vbar { height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
   .vbar i { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }

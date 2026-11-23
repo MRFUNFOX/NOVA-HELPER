@@ -7,6 +7,8 @@
   import { pretty } from '../hotkey';
 
   const key = $derived(pretty(app.settings?.voiceHotkey || 'Alt+Q'));
+  /** Клавиши переехали (Alt+Q был у окна) — игрок по привычке жмёт Alt+Q и ждёт окно */
+  const moved = $derived(!!app.settings?.keysMoved);
   const bars = [0.35, 0.7, 1, 0.6, 0.85, 0.45, 0.75, 0.3, 0.55];
   const a = $derived(voice.answer);
   /** Слова ответа: прочитанные — светлые (в такт озвучке) */
@@ -40,7 +42,11 @@
     {:else if voice.stage === 'missing' || voice.stage === 'error'}
       <div class="dpill think">
         <span class="dmic warn">!</span>
-        <span class="dtxt"><b>{voice.stage === 'missing' ? 'Голос не установлен' : 'Не получилось'}</b><small>{voice.stage === 'missing' ? 'Настройки → Голосовой вопрос → Установить' : voice.error}</small></span>
+        {#if voice.stage === 'missing' && moved}
+          <span class="dtxt"><b>Окно помощника теперь — {pretty(app.settings?.hotkey || 'Alt+X')}</b><small>а {key} — голосовой вопрос: Настройки → Голосовой вопрос</small></span>
+        {:else}
+          <span class="dtxt"><b>{voice.stage === 'missing' ? 'Голос не установлен' : 'Не получилось'}</b><small>{voice.stage === 'missing' ? 'Настройки → Голосовой вопрос → Установить' : voice.error}</small></span>
+        {/if}
       </div>
     {:else if a}
       <div class="dcard">

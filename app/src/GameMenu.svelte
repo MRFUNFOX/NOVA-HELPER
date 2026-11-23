@@ -16,7 +16,6 @@
   import AiSetup from './lib/components/AiSetup.svelte';
   import News from './lib/components/News.svelte';
   import UpdateDialog from './lib/components/UpdateDialog.svelte';
-  import VoicePreview from './lib/components/game/VoicePreview.svelte';
   import { app } from './lib/state.svelte';
   import { ai } from './lib/ai.svelte';
   import { learn } from './lib/learn.svelte';
@@ -60,8 +59,6 @@
   // Предпросмотр нового меню (все функции в выпадающих списках) — только при разработке: game.html?menu2
   const MENU2 = import.meta.env.DEV && new URLSearchParams(location.search).has('menu2');
   // Предпросмотр голосового вопроса: game.html?voice=listen|think|answer
-  const VOICE = import.meta.env.DEV ? (new URLSearchParams(location.search).get('voice') as 'listen' | 'think' | 'answer' | null) : null;
-  const VOICEV = (({ b: 'b', c: 'c', d: 'd' } as const)[new URLSearchParams(location.search).get('voicev') ?? ''] ?? 'a');
   const items = $derived.by<Item[]>(() => MENU2 ? items2() : items1());
   function items2(): Item[] {
     const SOON = 'rules' as WinId;
@@ -315,7 +312,6 @@
   {/if}
   <!-- Окно «Вышла новая версия»: кнопка «Проверить» в настройках и «Обновить у себя» в «Выпусках» работают и в игре -->
   {#if !gm.passive}<UpdateDialog />{/if}
-  {#if VOICE}<VoicePreview stage={VOICE} variant={VOICEV} />{/if}
   {#if app.toast}
     {#key app.toast}
       <div class="toast" class:error={app.toast.tone === 'error'} role="status"><Icon name={app.toast.tone === 'error' ? 'alert' : 'check'} size={16} />{app.toast.text}</div>

@@ -16,7 +16,7 @@ use sherpa_onnx::{
 use std::{
     io::Write,
     path::{Path, PathBuf},
-    process::Command,
+    process::{Command, Stdio},
     sync::{
         atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
         mpsc, Arc, Mutex,
@@ -421,14 +421,26 @@ fn phonemes(app: &AppHandle, text: &str) -> Result<Vec<Vec<i32>>, String> {
     let espeak = dir(app).join("espeak");
     let exe = dir(app).join(exe_name());
     let ask = |clause: &str| -> Result<String, String> {
+        // Текст — через stdin в UTF-8, папка данных — относительно: в аргументах Windows портит кириллицу
+        // (кодовая страница 1251), а путь к папке пользователя бывает русским.
         let mut cmd = Command::new(&exe);
-        cmd.args(["-q", "-v", "ru", "--ipa"]).arg(format!("--path={}", espeak.to_string_lossy())).arg(clause);
+        cmd.current_dir(&espeak)
+            .args(["-q", "-v", "ru", "--ipa", "--path=.", "--stdin"])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
         #[cfg(windows)]
         {
             use std::os::windows::process::CommandExt;
             cmd.creation_flags(0x0800_0000); // без чёрного окна консоли
         }
-        let out = cmd.output().map_err(|_| "eSpeak не запустился — переустановите голос в настройках".to_string())?;
+        let fail = || "eSpeak не запустился — переустановите голос в настройках".to_string();
+        let mut child = cmd.spawn().map_err(|_| fail())?;
+        if let Some(mut inp) = child.stdin.take() {
+            let _ = inp.write_all(clause.as_bytes());
+            let _ = inp.write_all(b"\n");
+        }
+        let out = child.wait_with_output().map_err(|_| fail())?;
         let s = String::from_utf8_lossy(&out.stdout);
         // Метки смены языка «(en)…(ru)» — служебные
         let mut clean = String::new();

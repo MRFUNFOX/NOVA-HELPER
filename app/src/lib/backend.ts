@@ -198,7 +198,7 @@ async function newestTest(): Promise<{ version: string } | null> {
     const r = await fetch(`https://api.github.com/repos/${APP_REPO}/releases?per_page=10`, { cache: 'no-store' });
     if (!r.ok) return null;
     const list = (await r.json()) as { tag_name: string; draft: boolean; prerelease: boolean }[];
-    const v = list.filter((x) => !x.draft && x.prerelease).map((x) => x.tag_name.replace(/^v/, '')).sort(cmpVersion).pop();
+    const v = list.filter((x) => !x.draft && x.prerelease && /^v?\d+\.\d+\.\d+$/.test(x.tag_name)).map((x) => x.tag_name.replace(/^v/, '')).sort(cmpVersion).pop();
     return v ? { version: v } : null;
   } catch { return null; }
 }
@@ -309,6 +309,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
     }
     case 'get_settings':
       if (params.has('ready')) mockState.settings.firstRunDone = true;
+      if (params.has('moved') && mockState.settings.keysMoved === undefined) mockState.settings.keysMoved = true;
       // ?ready&aisetup — программа стояла до появления помощника: покажется разовая настройка
       if (params.has('ready') && !params.has('aisetup') && mockState.settings.aiSetupDone === undefined) mockState.settings.aiSetupDone = true;
       // ?dev — режим разработчика уже включён
