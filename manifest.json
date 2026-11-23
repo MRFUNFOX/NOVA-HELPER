@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.22-2228",
- "generatedAt": "2026-11-22T22:28:12.580Z",
+ "dbVersion": "2026.11.23-0145",
+ "generatedAt": "2026-11-23T01:45:20.775Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -620,16 +620,16 @@
   },
   {
    "id": "server/horizon/411145",
-   "title": "Закон \"О государственной тайне”\"",
+   "title": "Закон \"О государственной и служебной тайне”",
    "scope": "server",
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411145/",
-   "sha256": "3825d4f57f53756af968ee2279b82f7aee9191768efb40df41fbfcc898ef4a92",
-   "size": 9721,
-   "path": "docs/server_horizon_411145.65443ca17a7e.json",
+   "sha256": "a702f741739db72d1c7b53e0abd414ad6a339b6f22589693cffec5631516e1e6",
+   "size": 18132,
+   "path": "docs/server_horizon_411145.d5f365915b8a.json",
    "stats": {
-    "nodes": 11,
+    "nodes": 20,
     "punishments": 0,
     "images": 0
    }
@@ -650,22 +650,6 @@
     "images": 0
    },
    "stale": true
-  },
-  {
-   "id": "server/horizon/411139",
-   "title": "Закон \"О регулировании оборота оружия, боеприпасов и спецсредств\"",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411139/",
-   "sha256": "5678904869e796244559e0eef80f8657015db70e85f2805a629b42cb6d774da0",
-   "size": 46897,
-   "path": "docs/server_horizon_411139.214bd5c6f381.json",
-   "stats": {
-    "nodes": 45,
-    "punishments": 0,
-    "images": 0
-   }
   },
   {
    "id": "server/horizon/411148",
@@ -764,17 +748,33 @@
    }
   },
   {
+   "id": "server/horizon/411139",
+   "title": "Закон \"Об оружии\"",
+   "scope": "server",
+   "serverId": "horizon",
+   "category": "Законодательная база",
+   "sourceUrl": "https://forum.nova-rp.com/threads/411139/",
+   "sha256": "dde27523e75136e3ed9a2d1b76cd26a8e7131439e4db2e693d86aa4d5657f71a",
+   "size": 46778,
+   "path": "docs/server_horizon_411139.9c734d770b00.json",
+   "stats": {
+    "nodes": 45,
+    "punishments": 0,
+    "images": 0
+   }
+  },
+  {
    "id": "server/horizon/411141",
-   "title": "Закон «О неприкосновенности госслужащих»",
+   "title": "Закон «О правовом статусе государственных служащих»",
    "scope": "server",
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411141/",
-   "sha256": "a9394bee93997844be29c3165d89317c13eba3443d86e321e699864cde303783",
-   "size": 19475,
-   "path": "docs/server_horizon_411141.605dede59fb2.json",
+   "sha256": "3a6ec8c268c62ce4b753086911f4c604c2284f3d1d660d0a01ddf4aeb3dafea6",
+   "size": 32720,
+   "path": "docs/server_horizon_411141.6566f3395fc6.json",
    "stats": {
-    "nodes": 32,
+    "nodes": 44,
     "punishments": 0,
     "images": 0
    }
@@ -791,22 +791,6 @@
    "path": "docs/server_horizon_411149.8ee979d621be.json",
    "stats": {
     "nodes": 27,
-    "punishments": 0,
-    "images": 0
-   }
-  },
-  {
-   "id": "server/horizon/411146",
-   "title": "Закон «О Сенате»",
-   "scope": "server",
-   "serverId": "horizon",
-   "category": "Законодательная база",
-   "sourceUrl": "https://forum.nova-rp.com/threads/411146/",
-   "sha256": "3cc487f56b9734ae7813d29e1b77c8f1cb1f2fae2cb01b0dce1ad21c24557186",
-   "size": 27833,
-   "path": "docs/server_horizon_411146.553477068213.json",
-   "stats": {
-    "nodes": 53,
     "punishments": 0,
     "images": 0
    }
@@ -930,9 +914,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411130/",
-   "sha256": "423209c964b413e3cb57c58040d6cab6fe268eb2d6ce0a67b4c2ca2b17067c60",
-   "size": 29827,
-   "path": "docs/server_horizon_411130.f1d7828675f2.json",
+   "sha256": "0bbf657c28120b948d86392baa0458fb51d9109526a8eeb37767b9e6a8a89418",
+   "size": 29821,
+   "path": "docs/server_horizon_411130.01df5d2545ce.json",
    "stats": {
     "nodes": 45,
     "punishments": 0,
@@ -946,9 +930,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411151/",
-   "sha256": "1e43c27792c95f35d94b6909910f9e0ebd3a451794c798a4bee406d37db2fa10",
-   "size": 12611,
-   "path": "docs/server_horizon_411151.77f5e20ae2e7.json",
+   "sha256": "72be25b893a756169f46c200a9097ef0ea20af47b67871faeef8d61c489e1d84",
+   "size": 12554,
+   "path": "docs/server_horizon_411151.1bf327912185.json",
    "stats": {
     "nodes": 26,
     "punishments": 0,
@@ -1034,7 +1018,8 @@
     "nodes": 99,
     "punishments": 0,
     "images": 0
-   }
+   },
+   "stale": true
   },
   {
    "id": "server/horizon/411152",
@@ -1069,5 +1054,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.22-2228.json"
+ "changelog": "changelog/2026.11.23-0145.json"
 }
