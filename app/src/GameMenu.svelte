@@ -61,7 +61,7 @@
   const MENU2 = import.meta.env.DEV && new URLSearchParams(location.search).has('menu2');
   // Предпросмотр голосового вопроса: game.html?voice=listen|think|answer
   const VOICE = import.meta.env.DEV ? (new URLSearchParams(location.search).get('voice') as 'listen' | 'think' | 'answer' | null) : null;
-  const VOICEV = new URLSearchParams(location.search).get('voicev') === 'b' ? 'b' : 'a';
+  const VOICEV = (({ b: 'b', c: 'c' } as const)[new URLSearchParams(location.search).get('voicev') ?? ''] ?? 'a');
   const items = $derived.by<Item[]>(() => MENU2 ? items2() : items1());
   function items2(): Item[] {
     const SOON = 'rules' as WinId;
