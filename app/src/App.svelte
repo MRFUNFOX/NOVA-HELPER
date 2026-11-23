@@ -21,6 +21,7 @@
   import Icon from './lib/components/Icon.svelte';
   import { app, focusSearch } from './lib/state.svelte';
   import { ai } from './lib/ai.svelte';
+  import { voice } from './lib/voice.svelte';
   import AiSetup from './lib/components/AiSetup.svelte';
   import Consent from './lib/components/Consent.svelte';
   import News from './lib/components/News.svelte';
@@ -40,6 +41,8 @@
         trackErrors();
         track('app_start', startProps());
         await ai.init();
+        // Голосовой вопрос: распознанную фразу задаём помощнику здесь, в главном окне
+        void voice.startMain();
         learn.init();
         // Программа стояла до появления помощника: один раз предлагаем его настроить
         if (app.aiEnabled && app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;

@@ -8,6 +8,7 @@ mod settings;
 mod sync;
 mod update;
 mod names;
+mod voice;
 
 use overlay::OverlayState;
 use settings::Settings;
@@ -28,6 +29,55 @@ fn register_hotkey(app: &AppHandle, hotkey: &str) -> Result<(), String> {
         }
     })
     .map_err(|_| format!("Сочетание «{hotkey}» не подходит или уже занято другой программой. Выберите другое."))
+}
+
+/// Клавиша голоса: зажал — запись, отпустил — распознавание
+fn register_voice_key(app: &AppHandle, key: &str) -> Result<(), String> {
+    if key.is_empty() {
+        return Ok(());
+    }
+    app.global_shortcut()
+        .on_shortcut(key, |app, _s, e| match e.state {
+            ShortcutState::Pressed => voice::key_down(app),
+            ShortcutState::Released => voice::key_up(app),
+        })
+        .map_err(|_| format!("Сочетание «{key}» не подходит или уже занято другой программой. Выберите другое."))
+}
+
+#[tauri::command]
+fn set_voice_hotkey(app: AppHandle, hotkey: String) -> Result<Settings, String> {
+    let mut s = settings::load(&app);
+    if s.voice_hotkey == hotkey {
+        return Ok(s);
+    }
+    if !hotkey.is_empty() && (hotkey == s.hotkey || hotkey == s.editor_hotkey) {
+        return Err(format!("«{hotkey}» уже открывает {}. Выберите другую клавишу.", if hotkey == s.hotkey { "окно программы" } else { "редактор окон" }));
+    }
+    let gs = app.global_shortcut();
+    if !s.voice_hotkey.is_empty() {
+        let _ = gs.unregister(s.voice_hotkey.as_str());
+    }
+    if let Err(e) = register_voice_key(&app, &hotkey) {
+        let _ = register_voice_key(&app, &s.voice_hotkey);
+        return Err(e);
+    }
+    s.voice_hotkey = hotkey;
+    settings::save(&app, &s)?;
+    let _ = app.emit("settings-changed", s.clone());
+    Ok(s)
+}
+
+#[tauri::command]
+fn suspend_voice_hotkey(app: AppHandle, suspended: bool) -> Result<(), String> {
+    let s = settings::load(&app);
+    if s.voice_hotkey.is_empty() {
+        return Ok(());
+    }
+    if suspended {
+        app.global_shortcut().unregister(s.voice_hotkey.as_str()).map_err(|e| e.to_string())
+    } else {
+        register_voice_key(&app, &s.voice_hotkey)
+    }
 }
 
 #[tauri::command]
@@ -55,6 +105,9 @@ fn set_hotkey(app: AppHandle, hotkey: String) -> Result<Settings, String> {
     let mut s = settings::load(&app);
     if s.hotkey == hotkey {
         return Ok(s);
+    }
+    if hotkey == s.voice_hotkey {
+        return Err(format!("«{hotkey}» уже включает голосовой вопрос. Выберите другую клавишу."));
     }
     let gs = app.global_shortcut();
     let _ = gs.unregister(s.hotkey.as_str());
@@ -166,6 +219,7 @@ pub fn run() {
         ))
         .manage(OverlayState::default())
         .manage(SyncState::default())
+        .manage(voice::VoiceState::default())
         .invoke_handler(tauri::generate_handler![
             sync::db_load,
             sync::db_check,
@@ -182,6 +236,15 @@ pub fn run() {
             update::update_check,
             update::update_install,
             names::name_count,
+            set_voice_hotkey,
+            suspend_voice_hotkey,
+            voice::voice_status,
+            voice::voice_install,
+            voice::voice_remove,
+            voice::voice_devices,
+            voice::voice_say,
+            voice::voice_stop,
+            pins::voice_overlay_done,
             window_glass,
             ai::ai_status,
             ai::ai_set_key,
@@ -211,6 +274,9 @@ pub fn run() {
                 let _ = settings::save(&handle, &s);
             }
             if let Err(e) = register_hotkey(&handle, &s.hotkey) {
+                eprintln!("{e}");
+            }
+            if let Err(e) = register_voice_key(&handle, &s.voice_hotkey) {
                 eprintln!("{e}");
             }
             build_tray(&handle)?;

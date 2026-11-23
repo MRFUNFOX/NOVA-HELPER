@@ -223,17 +223,17 @@ class Assistant {
     return plainAnswer(t).replace(/\*\*/g, '');
   }
 
-  /** Вопрос игрока. Отвечаем по разделу, выбранному в меню слева: «Правила» или «Законы» */
-  ask(question: string) {
+  /** Вопрос игрока (раздел — как выбран в меню слева: «Правила» или «Законы»). Возвращает ход разговора, когда ответ готов (для голосового вопроса) */
+  ask(question: string): Promise<Turn | undefined> {
     const q = question.trim();
-    if (!q || this.busy) return;
+    if (!q || this.busy) return Promise.resolve(undefined);
     const nick = nickIn(q);
     const scope: Section = nick ? 'project' : app.hasLaws ? app.section : 'project';
     // Открытый из истории вопрос — начало нового разговора
     if (this.turns.some((x) => x.fromHistory)) this.turns = [];
     this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope, at: Date.now(), ...(nick ? { nick: { nick, format: nickFormat(nick), verdict: null, issues: [] } } : {}) });
     const t = this.turns[this.turns.length - 1]!; // реактивная копия
-    void (nick ? this.checkNick(t) : this.answer(t)).then(() => this.remember(t));
+    return (nick ? this.checkNick(t) : this.answer(t)).then(() => { this.remember(t); return t; });
   }
 
   /** Проверка ника по п. 2.13 ОП: формат — сразу, имя и фамилия — на forebears.io (так советует само правило), смысл — нейросеть */

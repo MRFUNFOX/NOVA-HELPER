@@ -4,6 +4,7 @@
   import { app, formatDate } from '../state.svelte';
   import { backend, checkAppUpdate, type HintMode } from '../backend';
   import { ai } from '../ai.svelte';
+  import { voice } from '../voice.svelte';
   import { PUBLIC, checkDevCode } from '../features';
   import { learn, LearnError } from '../learn.svelte';
 
@@ -63,6 +64,32 @@
     }
     devBusy = false;
   }
+
+  // ── Голосовой вопрос ──
+  let vstat = $state<{ installed: boolean; installing: boolean; sizeMb: number } | null>(null);
+  let devs = $state<{ inputs: string[]; outputs: string[] }>({ inputs: [], outputs: [] });
+  let verr = $state('');
+  let testing = $state(false);
+  async function vload() {
+    try { vstat = await backend.voiceStatus(); } catch { vstat = null; }
+    if (vstat?.installed) devs = await backend.voiceDevices().catch(() => devs);
+  }
+  $effect(() => { void vload(); void voice.watchInstall(); });
+  // Скачивание закончилось — обновить состояние
+  $effect(() => { if (!voice.install && vstat?.installing) void vload(); });
+  async function vinstall() {
+    verr = '';
+    vstat = { ...(vstat ?? { installed: false, sizeMb: 300 }), installing: true };
+    try { await backend.voiceInstall(); } catch (e) { verr = String(e); }
+    await vload();
+  }
+  async function vremove() { await backend.voiceRemove().catch(() => {}); await vload(); }
+  async function vtest() {
+    testing = true;
+    try { await backend.voiceSay('Привет! Так звучит голос помощника. Можно, но только по правилам.'); } catch (e) { verr = String(e); }
+    testing = false;
+  }
+  const mb = (b: number) => `${Math.round(b / 1e6)} МБ`;
 
   // Контакт автора программы (значок Discord — официальный, от владельца)
   import dsIcon from '../../assets/brand/discord-icon.png';
@@ -164,6 +191,56 @@
   </section>
   {/if}
 
+  {#if app.aiEnabled}
+  <section>
+    <h2>Голосовой вопрос</h2>
+    <p class="hint">Зажмите клавишу в игре и спросите помощника голосом — ответ появится сверху экрана и прозвучит вслух. Речь распознаётся прямо на компьютере, без интернета и ключей.</p>
+    {#if !vstat?.installed}
+      {#if voice.install || vstat?.installing}
+        {@const p = voice.install}
+        <div class="vprog">
+          <div class="vbar"><i style="width: {p && p.total ? (p.done / p.total) * 100 : 3}%"></i></div>
+          <span class="hint">{p?.stage === 'unpack' ? 'Распаковываю…' : p ? `Скачиваю ${mb(p.done)} из ${mb(p.total)}` : 'Начинаю скачивание…'}</span>
+        </div>
+      {:else}
+        <div class="row">
+          <div>
+            <p class="value">Нужно скачать один раз — около {vstat?.sizeMb ?? 300} МБ</p>
+            <p class="hint">Распознавание речи, голос «Денис» и модуль произношения. Потом всё работает без интернета.</p>
+          </div>
+          <button class="btn primary" onclick={vinstall}><Icon name="download" size={16} />Установить голос</button>
+        </div>
+      {/if}
+    {:else}
+      <div class="vgrid">
+        <span class="vl">Клавиша — зажать и говорить</span>
+        <HotkeyField kind="voice" />
+        <label class="toggle">
+          <input type="checkbox" checked={app.settings?.voiceSpeak !== false} onchange={(e) => save({ voiceSpeak: e.currentTarget.checked })} />
+          <span><b>Озвучивать ответы</b><span class="hint">Окно ответа держится, пока помощник читает. Без озвучки — столько, чтобы успеть прочитать.</span></span>
+        </label>
+        <label class="vsel"><span class="vl">Микрофон</span>
+          <select value={app.settings?.voiceInput ?? ''} onchange={(e) => save({ voiceInput: e.currentTarget.value || null })}>
+            <option value="">Как в Windows</option>
+            {#each devs.inputs as d (d)}<option value={d}>{d}</option>{/each}
+          </select>
+        </label>
+        <label class="vsel"><span class="vl">Куда выводить голос помощника</span>
+          <select value={app.settings?.voiceOutput ?? ''} onchange={(e) => save({ voiceOutput: e.currentTarget.value || null })}>
+            <option value="">Как в Windows</option>
+            {#each devs.outputs as d (d)}<option value={d}>{d}</option>{/each}
+          </select>
+        </label>
+        <div class="vbtns">
+          <button class="btn" onclick={vtest} disabled={testing}><Icon name="speaker" size={16} />{testing ? 'Говорю…' : 'Послушать голос'}</button>
+          <button class="btn ghost" onclick={vremove}>Удалить голос</button>
+        </div>
+      </div>
+    {/if}
+    {#if verr}<p class="msg-err" role="alert">{verr}</p>{/if}
+  </section>
+  {/if}
+
   <section>
     <h2>Правила</h2>
     <div class="row">
@@ -245,6 +322,16 @@
   .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
   .segmented button { border: 0; background: none; padding: 7px 14px; transition: background 0.15s var(--ease), color 0.15s var(--ease); border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
   .segmented button.on { background: var(--accent); color: var(--on-accent); }
+  .vprog { display: flex; flex-direction: column; gap: 6px; }
+  .vbar { height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+  .vbar i { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }
+  .vgrid { display: flex; flex-direction: column; gap: 14px; }
+  .vl { display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--text-dim); margin-bottom: -6px; }
+  .vsel { display: flex; flex-direction: column; gap: 6px; }
+  .vsel .vl { margin: 0; }
+  .vsel select { height: 38px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-sm); }
+  .vbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .msg-err { margin: 10px 0 0; font-size: var(--fs-xs); color: var(--danger); }
   .aiopts { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
   .toggles { display: flex; flex-direction: column; gap: 14px; }
   .toggle { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
