@@ -326,6 +326,13 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return mockStatus();
     case 'ai_complete': {
       const sys = String((args!.messages as ChatMsg[])[0]?.content ?? '');
+      if (sys.includes('проверяешь игровой ник')) {
+        const nick = String((args!.messages as ChatMsg[])[1]?.content ?? '').split('Ник: ')[1] ?? '';
+        if (/bandit|medik|killer/i.test(nick)) return JSON.stringify({ verdict: 'bad', issues: ['Отражает роль игрока: «Bandit» — бандит'] });
+        if (/papa|mama|pidr|xyi/i.test(nick)) return JSON.stringify({ verdict: 'bad', issues: ['Упоминание родных или скрытый оскорбительный смысл'] });
+        if (/kaneki|nagibator/i.test(nick)) return JSON.stringify({ verdict: 'doubt', issues: ['Похоже на имя персонажа аниме — может считаться известной личностью'] });
+        return JSON.stringify({ verdict: 'ok', issues: [] });
+      }
       if (sys.includes('проверяешь толкование')) return JSON.stringify({ ok: true, refs: 'ст. 4 ч. 1, ст. 11, ст. 15 ч. 1', reason: 'Бронежилет отнесён к спецсредствам, ст. 15 говорит только об оружии.' });
       return JSON.stringify({ keywords: [] });
     }

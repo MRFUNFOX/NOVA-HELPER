@@ -10,6 +10,7 @@ import { nodeBadge, rank, type Entry } from './search';
 import { slang } from './slang';
 import { errorKind, track } from './stats';
 import { learn, type Note } from './learn.svelte';
+import { HISTORY_KEY, nickFormat, nickIn, pushHistory, sanitizeHistory, type HistItem, type NickCheck, type Rating } from './aiExtras';
 
 export interface Source { n: number; entry: Entry }
 /** Принятое разъяснение в ответе: ссылка [N1] */
@@ -37,6 +38,14 @@ export interface Turn {
   verdict?: Verdict;
   /** Отправка довода на проверку команде */
   learnState?: 'checking' | 'sent' | 'off' | 'error';
+  /** Когда задан */
+  at?: number;
+  /** «Помог / Не помог» */
+  rating?: Rating;
+  /** Проверка ника вместо обычного ответа */
+  nick?: NickCheck;
+  /** Открыт из истории — не пишем в историю повторно */
+  fromHistory?: boolean;
 }
 
 export interface Verdict { agree: boolean; refs: string; note: string; keywords: string[] }
@@ -121,15 +130,24 @@ class Assistant {
   status = $state<AiStatus | null>(null);
   turns = $state<Turn[]>([]);
   busy = $state(false);
+  /** История вопросов — на этом компьютере, общая для окна программы и меню в игре */
+  history = $state<HistItem[]>(readHistory());
+  /** Спрашивать перед отправкой (чтобы случайный Enter не отправил вопрос) */
+  confirmSend = $state(readFlag('nova.aiConfirm'));
   /** Открыта пошаговая настройка (разовая после обновления или по кнопке «Настроить») */
   setupOpen = $state(false);
   /** С какой нейросети начать настройку (выбрали в списке ту, для которой нет ключа) */
   setupService = $state<AiProvider | null>(null);
   private chunkOff: (() => void) | null = null;
+  private listening = false;
 
   get ready() { return !!this.status?.hasKey; }
 
   async init() {
+    if (!this.listening) {
+      this.listening = true;
+      window.addEventListener('storage', (e) => { if (e.key === HISTORY_KEY) this.history = readHistory(); });
+    }
     try { this.status = await backend.aiStatus(); } catch { this.status = { hasKey: false, keyHint: '', model: null }; }
     this.chunkOff ??= await backend.on('ai-chunk', (p) => {
       const { id, delta } = p as { id: string; delta: string };
@@ -162,13 +180,89 @@ class Assistant {
 
   clear() { this.turns = []; }
 
+  setConfirm(v: boolean) { this.confirmSend = v; try { localStorage.setItem('nova.aiConfirm', v ? '1' : ''); } catch { /* без памяти */ } }
+
+  // ── История ──
+  private saveHistory(list: HistItem[]) {
+    this.history = list;
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch { /* переполнено — живём без истории */ }
+  }
+  private remember(t: Turn) {
+    if (t.fromHistory || t.error || (!t.a && !t.nick)) return;
+    const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' && p.kind === 's' ? [p.n] : [])));
+    this.saveHistory(pushHistory(this.history, {
+      id: t.id, at: t.at ?? Date.now(), q: t.q, a: answerText(t.a), scope: t.scope ?? 'project',
+      refs: t.sources.filter((s) => used.has(s.n)).map((s) => ({ n: s.n, node: s.entry.node.id })),
+      ...(t.rating ? { rating: t.rating } : {}), ...(t.nick ? { nick: $state.snapshot(t.nick) } : {}),
+    }));
+  }
+  /** Открыть вопрос из истории — без нейросети, со ссылками на пункты */
+  restore(h: HistItem) {
+    const sources = h.refs.flatMap((r) => { const entry = app.index.byId.get(r.node); return entry ? [{ n: r.n, entry }] : []; });
+    this.turns = [{ id: h.id, q: h.q, a: h.a, sources, pending: false, scope: h.scope, at: h.at, rating: h.rating, nick: h.nick, fromHistory: true }];
+  }
+  forget(id: string) { this.saveHistory(this.history.filter((h) => h.id !== id)); }
+  forgetAll() { this.saveHistory([]); }
+
+  /** «Помог / Не помог»: запоминаем у вопроса и отправляем в статистику (без текста вопроса) */
+  rate(t: Turn, v: Rating) {
+    if (t.rating === v) return;
+    t.rating = v;
+    const h = this.history.find((x) => x.id === t.id);
+    if (h) this.saveHistory(this.history.map((x) => (x.id === t.id ? { ...x, rating: v } : x)));
+    track('ai_rating', { rating: v, scope: t.scope ?? 'project', provider: this.provider, kind: t.nick ? 'nick' : 'answer' });
+  }
+
+  /** Текст ответа для копирования: ссылки — номерами пунктов */
+  copyText(t: Turn) {
+    if (t.nick) {
+      const n = t.nick;
+      const verdict = n.verdict === 'ok' ? 'подходит' : n.verdict === 'bad' ? 'не подходит' : 'спорно';
+      return [`Ник ${n.nick} — ${verdict} (п. 2.13 Общих правил).`, ...n.format.filter((f) => !f.ok).map((f) => `— ${f.label}: нет`), ...n.issues.map((i) => `— ${i}`)].join('\n');
+    }
+    return plainAnswer(t).replace(/\*\*/g, '');
+  }
+
   /** Вопрос игрока. Отвечаем по разделу, выбранному в меню слева: «Правила» или «Законы» */
   ask(question: string) {
     const q = question.trim();
     if (!q || this.busy) return;
-    const scope: Section = app.hasLaws ? app.section : 'project';
-    this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope });
-    void this.answer(this.turns[this.turns.length - 1]!); // реактивная копия
+    const nick = nickIn(q);
+    const scope: Section = nick ? 'project' : app.hasLaws ? app.section : 'project';
+    // Открытый из истории вопрос — начало нового разговора
+    if (this.turns.some((x) => x.fromHistory)) this.turns = [];
+    this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope, at: Date.now(), ...(nick ? { nick: { nick, format: nickFormat(nick), verdict: null, issues: [] } } : {}) });
+    const t = this.turns[this.turns.length - 1]!; // реактивная копия
+    void (nick ? this.checkNick(t) : this.answer(t)).then(() => this.remember(t));
+  }
+
+  /** Проверка ника по п. 2.13 ОП: формат — сразу, смысл — нейросеть */
+  private async checkNick(t: Turn) {
+    const n = t.nick!;
+    this.busy = true;
+    const rule = app.index.entries.find((e) => e.doc.scope === 'project' && e.node.number === '2.13' && /никнейм/i.test(e.node.text));
+    if (rule) t.sources = [{ n: 1, entry: rule }];
+    try {
+      const text = rule ? `${rule.node.text}\n${rule.node.annotations.map((a) => a.text).join('\n')}` : 'Никнейм в формате Имя_Фамилия, без скрытого смысла, оскорблений, имён известных людей, упоминания роли и родных.';
+      const raw = await backend.aiComplete([
+        { role: 'system', content: NICK },
+        { role: 'user', content: `Правило:\n${text}\n\nНик: ${n.nick}` },
+      ]);
+      const j = JSON.parse(raw) as { verdict?: unknown; issues?: unknown };
+      const formatOk = n.format.every((f) => f.ok);
+      const ai = j.verdict === 'bad' || j.verdict === 'doubt' ? j.verdict : 'ok';
+      n.issues = Array.isArray(j.issues) ? j.issues.filter((x): x is string => typeof x === 'string').slice(0, 5) : [];
+      n.verdict = !formatOk ? 'bad' : ai;
+      t.a = n.verdict === 'ok' ? `Ник ${n.nick} подходит по [S1].` : n.verdict === 'bad' ? `Ник ${n.nick} не подходит по [S1].` : `Ник ${n.nick} спорный — решает администрация по [S1].`;
+      track('ai_nick', { provider: this.provider, verdict: n.verdict });
+    } catch (e) {
+      // Нейросеть недоступна — показываем хотя бы формат
+      n.verdict = n.format.every((f) => f.ok) ? 'doubt' : 'bad';
+      t.error = String(e);
+    } finally {
+      t.pending = false;
+      this.busy = false;
+    }
   }
 
   private async answer(t: Turn) {
@@ -281,6 +375,14 @@ class Assistant {
   }
 }
 
+/** Проверка ника: нейросеть оценивает только смысл, формат программа уже проверила */
+const NICK = `Ты проверяешь игровой ник по правилу RP-проекта NOVA RP (GTA 5). Ник в формате Имя_Фамилия.
+Оцени смысл: скрытый смысл или звучание, близкое к оскорблениям; мат; упоминание родных (Papa, Mama…);
+имя известной личности; отражение роли (Vova_Bandit, Katya_Medik); похожесть на администрацию.
+Выдуманные и редкие имена и фамилии разрешены, как и фамилия по названию семьи.
+Не придирайся: обычные имена и фамилии любых народов — «ok». Если не уверен — «doubt».
+Ответь только JSON: {"verdict":"ok|bad|doubt","issues":["коротко, что не так — по-русски"]}. Для «ok» issues пустой.`;
+
 /** Подбор пунктов для спора: названные игроком → из прошлого ответа → поиск → документы целиком */
 function debateEntries(q: string, extra: string, last: Turn, inScope: (d: RuleDocument) => boolean, boost: Set<string>): Entry[] {
   const BUDGET = 9000; // знаков: бесплатные лимиты Groq не любят длинные запросы
@@ -391,3 +493,6 @@ export function pieces(text: string): Piece[] {
   if (last < text.length) out.push({ t: 'text', v: text.slice(last) });
   return out;
 }
+
+function readHistory(): HistItem[] { try { return sanitizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]')); } catch { return []; } }
+function readFlag(key: string) { try { return localStorage.getItem(key) === '1'; } catch { return false; } }

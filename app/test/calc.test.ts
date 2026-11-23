@@ -102,3 +102,29 @@ describe('какую версию предложить', () => {
     expect(updateUrl('0.7.15')).toBe('https://github.com/MRFUNFOX/NOVA-HELPER/releases/download/v0.7.15/latest.json');
   });
 });
+
+import { nickFormat, nickIn, pushHistory, sanitizeHistory, searchHistory, HISTORY_MAX } from '../src/lib/aiExtras';
+describe('ИИ: проверка ника и история', () => {
+  it('ник узнаётся по формату или по слову «ник»', () => {
+    expect(nickIn('Vova_Bandit')).toBe('Vova_Bandit');
+    expect(nickIn('проверь ник Ivan Petrov')).toBe('Ivan_Petrov');
+    expect(nickIn('ник: Ivan_petrov2')).toBe('Ivan_petrov2');
+    expect(nickIn('Можно ли убить человека?')).toBeNull();
+    expect(nickIn('DM')).toBeNull();
+  });
+  it('формат по п. 2.13: Имя_Фамилия, латиница, с заглавной, не капсом', () => {
+    expect(nickFormat('Layrouse_LaFleyb').every((f) => f.ok)).toBe(true);
+    expect(nickFormat('IVAN_PETROV')[2]!.ok).toBe(false);
+    expect(nickFormat('Ivan_petrov2').map((f) => f.ok)).toEqual([true, false, false]);
+    expect(nickFormat('Ivan')[0]!.ok).toBe(false);
+  });
+  it('история: новые сверху, не больше 200, поиск по словам, битые записи отбрасываются', () => {
+    const h = (id: string, q: string) => ({ id, at: 1, q, a: 'ответ', scope: 'project' as const, refs: [] });
+    let list = Array.from({ length: HISTORY_MAX }, (_, i) => h(`x${i}`, `вопрос ${i}`));
+    list = pushHistory(list, h('new', 'Можно ли грабить в зелёной зоне?'));
+    expect(list).toHaveLength(HISTORY_MAX);
+    expect(list[0]!.id).toBe('new');
+    expect(searchHistory(list, 'зеленой грабить').map((x) => x.id)).toEqual(['new']);
+    expect(sanitizeHistory([null, { id: 1 }, h('ok', 'q')])).toHaveLength(1);
+  });
+});

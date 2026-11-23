@@ -2,7 +2,7 @@
   export type IconName =
     | 'search' | 'close' | 'minus' | 'square' | 'squares' | 'settings' | 'spark' | 'menu' | 'book' | 'history'
     | 'refresh' | 'external' | 'copy' | 'check' | 'chevron' | 'alert' | 'keyboard' | 'download' | 'window' | 'shield'
-    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast' | 'scale' | 'scroll' | 'chartline' | 'calc' | 'coin' | 'compass' | 'map' | 'idcard' | 'question' | 'route' | 'mic' | 'speaker';
+    | 'gavel' | 'info' | 'users' | 'building' | 'calendar' | 'mask' | 'chat' | 'collapse' | 'list' | 'ban' | 'layers' | 'exception' | 'pin' | 'lock' | 'unlock' | 'contrast' | 'scale' | 'scroll' | 'chartline' | 'calc' | 'coin' | 'compass' | 'map' | 'idcard' | 'question' | 'route' | 'mic' | 'speaker' | 'thumbup' | 'thumbdown' | 'idcheck';
 </script>
 
 <script lang="ts">
@@ -37,6 +37,9 @@
   {:else if name === 'route'}<circle cx="5.5" cy="14.5" r="1.8" /><circle cx="14.5" cy="5.5" r="1.8" /><path d="M7.3 14.5h5.2a2.5 2.5 0 0 0 0-5h-5a2.5 2.5 0 0 1 0-5h5.2" />
   {:else if name === 'mic'}<rect x="7.3" y="2.8" width="5.4" height="9.4" rx="2.7" /><path d="M4.8 9.6a5.2 5.2 0 0 0 10.4 0M10 14.8v2.6M7.4 17.4h5.2" />
   {:else if name === 'speaker'}<path d="M3.5 7.6h2.8l4-3.3v11.4l-4-3.3H3.5V7.6Z" /><path d="M13.3 7.4a3.6 3.6 0 0 1 0 5.2M15.4 5.3a6.6 6.6 0 0 1 0 9.4" />
+  {:else if name === 'thumbup'}<path d="M6.5 8.6 9.6 3.4c.9 0 1.8.8 1.6 1.9l-.5 2.9h4.1c1 0 1.7.9 1.5 1.9l-1.1 5.2a1.6 1.6 0 0 1-1.6 1.3H6.5V8.6ZM3.3 8.6h3.2v8H3.3z" />
+  {:else if name === 'thumbdown'}<path d="M13.5 11.4 10.4 16.6c-.9 0-1.8-.8-1.6-1.9l.5-2.9H5.2c-1 0-1.7-.9-1.5-1.9l1.1-5.2a1.6 1.6 0 0 1 1.6-1.3h7.1v8ZM16.7 11.4h-3.2v-8h3.2z" />
+  {:else if name === 'idcheck'}<rect x="2.8" y="4.5" width="14.4" height="11" rx="1.8" /><circle cx="7.3" cy="9.3" r="1.7" /><path d="M4.9 13.2c.5-1 1.3-1.5 2.4-1.5s1.9.5 2.4 1.5M11.6 10l1.5 1.5 2.6-2.8" />
   {:else if name === 'coin'}<circle cx="10" cy="10" r="7.2" /><path d="M12.3 7.6c-.4-.7-1.2-1.1-2.3-1.1-1.3 0-2.3.7-2.3 1.7s.9 1.4 2.3 1.7 2.3.7 2.3 1.7-1 1.7-2.3 1.7c-1.1 0-2-.4-2.4-1.2M10 5v1.5M10 13.5V15" />
   {:else if name === 'chartline'}<path d="M3 3.5v13h13.5" /><path d="m5.5 13 3.3-3.6 2.6 2.2L16 6.5" /><path d="M12.8 6.5H16v3.2" />
   {:else if name === 'contrast'}<circle cx="10" cy="10" r="6.5" /><path d="M10 3.5v13a6.5 6.5 0 0 0 0-13Z" fill="currentColor" stroke="none" />

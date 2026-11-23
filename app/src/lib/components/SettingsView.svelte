@@ -146,6 +146,21 @@
         {#if ai.ready}<button class="btn ghost" onclick={() => ai.clearKey()}>Удалить</button>{/if}
       </div>
     </div>
+    {#if ai.ready}
+      <div class="aiopts">
+        <label class="toggle">
+          <input type="checkbox" checked={ai.confirmSend} onchange={(e) => ai.setConfirm(e.currentTarget.checked)} />
+          <span><b>Спрашивать перед отправкой</b><span class="hint">Первый Enter покажет «Отправить вопрос?», второй — отправит. Чтобы случайное нажатие не отправило недописанный вопрос.</span></span>
+        </label>
+        <div class="row">
+          <div>
+            <p class="value">История вопросов: {ai.history.length}</p>
+            <p class="hint">Только на этом компьютере, последние 200. Открыть — часы в окне помощника.</p>
+          </div>
+          {#if ai.history.length}<button class="btn ghost" onclick={() => ai.forgetAll()}>Очистить</button>{/if}
+        </div>
+      </div>
+    {/if}
   </section>
   {/if}
 
@@ -230,6 +245,7 @@
   .segmented { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
   .segmented button { border: 0; background: none; padding: 7px 14px; transition: background 0.15s var(--ease), color 0.15s var(--ease); border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
   .segmented button.on { background: var(--accent); color: var(--on-accent); }
+  .aiopts { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
   .toggles { display: flex; flex-direction: column; gap: 14px; }
   .toggle { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
   .toggle b { display: block; font-size: var(--fs-sm); }

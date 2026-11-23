@@ -6,6 +6,32 @@
   import type { Section } from '../state.svelte';
   import ModelPicker from './ModelPicker.svelte';
   import { ease, ms } from '../motion';
+  import { dayLabel, searchHistory, type HistItem } from '../aiExtras';
+
+  /** Что показано: разговор или история вопросов */
+  let view = $state<'chat' | 'history'>('chat');
+  let hq = $state('');
+  const found = $derived(searchHistory(ai.history, hq));
+  const groups = $derived.by(() => {
+    const out: { day: string; items: HistItem[] }[] = [];
+    for (const h of found) {
+      const day = dayLabel(h.at);
+      if (out.at(-1)?.day !== day) out.push({ day, items: [] });
+      out.at(-1)!.items.push(h);
+    }
+    return out;
+  });
+  const hhmm = (at: number) => new Date(at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  function openHist(h: HistItem) { ai.restore(h); view = 'chat'; }
+  /** Начало ответа для списка — без ссылок и разметки */
+  const gist = (h: HistItem) => h.a.replace(/\s*[[(](?:[SN]\d+(?:\s*[,;]\s*)?)+[\])]/g, '').replace(/\*\*/g, '').slice(0, 140);
+
+  // «Спрашивать перед отправкой»: первый Enter показывает подтверждение, второй — отправляет
+  let confirming = $state(false);
+  let copied = $state('');
+  async function copy(t: Turn) {
+    try { await navigator.clipboard.writeText(ai.copyText(t)); copied = t.id; setTimeout(() => { if (copied === t.id) copied = ''; }, 1600); } catch { /* без буфера */ }
+  }
 
   let input = $state('');
   let list: HTMLElement | undefined = $state();
@@ -43,14 +69,19 @@
   });
 
 
-  function send(text = input) {
+  function send(text = input, sure = false) {
     if (!text.trim() || ai.busy) return;
+    if (ai.confirmSend && !sure && text === input) { confirming = true; return; }
+    confirming = false;
+    view = 'chat';
     ai.ask(text);
     input = '';
   }
 
   function onKey(e: KeyboardEvent) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input, confirming); }
+    else if (e.key === 'Escape' && confirming) { e.preventDefault(); e.stopPropagation(); confirming = false; }
+    else if (confirming) confirming = false;
   }
 
   function open(s: Source) {
@@ -75,7 +106,10 @@
   <header>
     <span class="title"><Icon name="spark" size={17} /> ИИ-помощник</span>
     <span class="tools">
-      {#if ai.turns.length}
+      {#if ai.ready}
+        <button class="tool" class:on={view === 'history'} title="История вопросов" aria-label="История вопросов" aria-pressed={view === 'history'} onclick={() => (view = view === 'history' ? 'chat' : 'history')}><Icon name="history" size={16} /></button>
+      {/if}
+      {#if ai.turns.length && view === 'chat'}
         <button class="tool" title="Начать заново" aria-label="Начать заново" onclick={() => ai.clear()} disabled={ai.busy}><Icon name="refresh" size={15} /></button>
       {/if}
       <button class="tool" aria-label="Закрыть" onclick={() => (app.aiOpen = false)}><Icon name="close" size={16} /></button>
@@ -91,13 +125,37 @@
         <button class="btn primary wide" onclick={() => (ai.setupOpen = true)}>Настроить</button>
       </div>
     </div>
+  {:else if view === 'history'}
+    <div class="body hist">
+      <label class="hsearch"><Icon name="search" size={15} /><input bind:value={hq} placeholder="Найти в истории…" aria-label="Найти в истории" /></label>
+      {#if !ai.history.length}
+        <div class="hempty"><Icon name="history" size={22} /><b>Здесь будут ваши вопросы</b><span>Всё, о чём вы спросите помощника, сохранится на этом компьютере — последние 200 вопросов.</span></div>
+      {:else if !found.length}
+        <div class="hempty"><b>Ничего не нашлось</b><span>Попробуйте другое слово.</span></div>
+      {:else}
+        {#each groups as g (g.day)}
+          <p class="hday">{g.day}</p>
+          {#each g.items as h (h.id)}
+            <div class="hitem">
+              <button class="hopen" onclick={() => openHist(h)}>
+                <span class="hq">{#if h.nick}<Icon name="idcheck" size={14} />{/if}{h.q}</span>
+                <span class="ha">{h.nick ? (h.nick.verdict === 'ok' ? 'Ник подходит' : h.nick.verdict === 'bad' ? 'Ник не подходит' : 'Ник спорный') : gist(h)}</span>
+                <span class="hmeta">{hhmm(h.at)} · {h.nick ? 'проверка ника' : h.scope === 'laws' ? 'законы' : 'правила'}{#if h.rating}<span class="hrate" class:down={h.rating === 'down'}><Icon name={h.rating === 'up' ? 'thumbup' : 'thumbdown'} size={12} /></span>{/if}</span>
+              </button>
+              <button class="hdel" title="Убрать из истории" aria-label="Убрать из истории" onclick={() => ai.forget(h.id)}><Icon name="close" size={13} /></button>
+            </div>
+          {/each}
+        {/each}
+      {/if}
+    </div>
   {:else}
     <div class="body" bind:this={list}>
       {#if !ai.turns.length}
         <p class="lead">{scope === 'laws' ? 'Спросите своими словами — помощник ответит по законам штата и покажет статьи, на которые опирается.' : 'Спросите своими словами — помощник ответит по правилам проекта и покажет пункты, на которые опирается.'}</p>
         <div class="examples">
-          {#each examples as q (q)}<button onclick={() => send(q)}>{q}</button>{/each}
+          {#each examples as q (q)}<button onclick={() => send(q, true)}>{q}</button>{/each}
         </div>
+        <p class="nickhint"><Icon name="idcheck" size={15} /><span>Можно проверить ник — просто напишите его, например <b>Ivan_Petrov</b></span></p>
       {/if}
 
       {#each ai.turns as t (t.id)}
@@ -109,6 +167,38 @@
               <button class="btn sm" onclick={() => { ai.turns = ai.turns.filter((x) => x !== t); ai.ask(t.q); }} disabled={ai.busy}>Спросить снова</button>
               {#if t.error.includes('Z.ai') && ai.status?.provider !== 'Z.ai'}<button class="btn sm primary" onclick={() => (ai.setupOpen = true)}>Подключить Z.ai</button>{/if}
             </div>
+          {:else if t.nick}
+            {@const n = t.nick}
+            <div class="nick">
+              <div class="nhead">
+                <span class="nname selectable">{n.nick}</span>
+                {#if n.verdict === null}<span class="nv wait"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>проверяю</span>
+                {:else}<span class="nv {n.verdict}">{n.verdict === 'ok' ? 'Подходит' : n.verdict === 'bad' ? 'Не подходит' : 'Спорно'}</span>{/if}
+              </div>
+              <ul class="nlist">
+                {#each n.format as f (f.label)}<li class:bad={!f.ok}><Icon name={f.ok ? 'check' : 'close'} size={13} />{f.label}</li>{/each}
+                {#if n.verdict !== null}
+                  {#if n.issues.length}
+                    {#each n.issues as i (i)}<li class:bad={n.verdict === 'bad'} class:doubt={n.verdict !== 'bad'}><Icon name="alert" size={13} />{i}</li>{/each}
+                  {:else if n.verdict === 'ok'}<li><Icon name="check" size={13} />Без скрытого смысла, мата и чужих имён</li>{/if}
+                {/if}
+              </ul>
+              {#if t.sources[0] && n.verdict !== null}
+                {@const s0 = t.sources[0]}
+                <button class="src" onclick={() => open(s0)}><span class="num">{sourceLabel(s0).num}</span><span class="doc">{sourceLabel(s0).doc}</span><Icon name="chevron" size={13} /></button>
+                {#if n.verdict !== 'ok' && s0.entry.node.punishments[0]}<p class="npun"><b>Наказание:</b> {s0.entry.node.punishments[0].raw.split('|')[0]?.trim()}</p>{/if}
+              {/if}
+              {#if n.verdict === 'doubt'}<p class="nnote">Окончательно решает администрация. Смысл и звучание ника нейросеть оценивает приблизительно.</p>{/if}
+            </div>
+            {#if !t.pending}
+              <div class="acts">
+                <button class="act" onclick={() => copy(t)} title="Скопировать итог проверки"><Icon name={copied === t.id ? 'check' : 'copy'} size={14} />{copied === t.id ? 'Скопировано' : 'Копировать'}</button>
+                <span class="rate">
+                  <button class="act icon" class:on={t.rating === 'up'} onclick={() => ai.rate(t, 'up')} title="Проверка верная" aria-label="Проверка верная" aria-pressed={t.rating === 'up'}><Icon name="thumbup" size={15} /></button>
+                  <button class="act icon down" class:on={t.rating === 'down'} onclick={() => ai.rate(t, 'down')} title="Проверка ошиблась" aria-label="Проверка ошиблась" aria-pressed={t.rating === 'down'}><Icon name="thumbdown" size={15} /></button>
+                </span>
+              </div>
+            {/if}
           {:else if !t.a}
             <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
             {#if slow && waited >= 3}
@@ -147,6 +237,17 @@
                 ? 'Ваше толкование отправлено на проверку. Если его примут, помощник будет так отвечать всем игрокам.'
                 : 'Ваш довод передан на проверку команде. Если помощник ошибся, его поправят.'}</p>
             {/if}
+            {#if !t.pending && !t.debate}
+              <div class="acts">
+                <button class="act" onclick={() => copy(t)} title="Скопировать ответ — например, для репорта"><Icon name={copied === t.id ? 'check' : 'copy'} size={14} />{copied === t.id ? 'Скопировано' : 'Копировать'}</button>
+                <button class="act" onclick={() => send(t.q, true)} disabled={ai.busy} title="Задать этот вопрос снова и получить свежий ответ"><Icon name="refresh" size={14} />Спросить снова</button>
+                <span class="rate">
+                  <button class="act icon" class:on={t.rating === 'up'} onclick={() => ai.rate(t, 'up')} title="Ответ помог" aria-label="Ответ помог" aria-pressed={t.rating === 'up'}><Icon name="thumbup" size={15} /></button>
+                  <button class="act icon down" class:on={t.rating === 'down'} onclick={() => ai.rate(t, 'down')} title="Ответ не помог" aria-label="Ответ не помог" aria-pressed={t.rating === 'down'}><Icon name="thumbdown" size={15} /></button>
+                </span>
+              </div>
+              {#if t.rating === 'down'}<p class="thanks">Спасибо — так мы видим, где помощник ошибается. Если хотите поспорить с ответом, просто напишите свой довод.</p>{/if}
+            {/if}
             {#if app.devMode && !t.pending}
               <!-- Только в режиме разработчика: что выбрала нейросеть и что нашёл поиск -->
               <details class="debug">
@@ -174,9 +275,12 @@
       {#if app.hasLaws}
         <p class="scopebar"><Icon name={scope === 'laws' ? 'scale' : 'scroll'} size={14} /><span>Отвечаю по <b>{scope === 'laws' ? `законам сервера ${app.serverName}` : 'правилам проекта'}</b>. {scope === 'laws' ? 'Правила' : 'Законы'} — переключатель слева вверху</span></p>
       {/if}
-      <div class="input">
+      {#if confirming}
+        <p class="confirm"><Icon name="chat" size={14} /><span>Отправить вопрос? <b>Enter</b> — да, <b>Esc</b> — нет</span></p>
+      {/if}
+      <div class="input" class:confirm-on={confirming}>
         <textarea bind:this={field} bind:value={input} onkeydown={onKey} rows="1" placeholder={scope === 'laws' ? 'Вопрос по законам штата…' : 'Вопрос по правилам проекта…'} maxlength="600" disabled={ai.busy}></textarea>
-        <button class="send" onclick={() => send()} disabled={ai.busy || !input.trim()} aria-label="Спросить"><Icon name="chevron" size={18} /></button>
+        <button class="send" onclick={() => send(input, true)} disabled={ai.busy || !input.trim()} aria-label="Спросить"><Icon name="chevron" size={18} /></button>
       </div>
       <div class="foot">
         <p class="note">Подсказка. Окончательно решает администрация.</p>
@@ -255,6 +359,64 @@
   .scopebar b { color: var(--text); }
   .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
   .note { margin: 0 2px; font-size: 11px; line-height: 1.35; color: var(--text-muted); }
+
+  .tool.on { background: var(--accent-tint); color: var(--accent); }
+  .nickhint { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
+  .nickhint :global(svg) { color: var(--accent); flex-shrink: 0; }
+  .nickhint b { color: var(--text-dim); }
+  /* Действия под ответом */
+  .acts { display: flex; align-items: center; gap: 2px; margin: 10px -6px -4px; }
+  .act { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-muted); font-size: 12px; font-weight: 700; }
+  .act:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+  .act.icon { width: 28px; padding: 0; justify-content: center; }
+  .act.on { color: var(--success); background: var(--success-tint); }
+  .act.down.on { color: var(--danger); background: var(--danger-tint, rgba(255, 90, 95, 0.12)); }
+  .rate { margin-left: auto; display: flex; gap: 2px; }
+  .thanks { margin: 8px 0 0; font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.45; }
+  /* Проверка ника */
+  .nick { display: flex; flex-direction: column; gap: 10px; }
+  .nhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .nname { font-size: 17px; font-weight: 800; letter-spacing: 0.01em; overflow-wrap: anywhere; }
+  .nv { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+  .nv.ok { background: var(--success-tint); color: var(--success); }
+  .nv.bad { background: var(--danger-tint, rgba(255, 90, 95, 0.12)); color: var(--danger); }
+  .nv.doubt { background: var(--accent-tint); color: var(--accent-soft); }
+  .nv.wait { background: var(--surface-3); color: var(--text-muted); font-weight: 700; }
+  .nlist { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; font-size: var(--fs-xs); color: var(--text-dim); }
+  .nlist li { display: flex; align-items: flex-start; gap: 7px; line-height: 1.4; }
+  .nlist li :global(svg) { flex-shrink: 0; margin-top: 2px; color: var(--success); }
+  .nlist li.bad { color: var(--text); }
+  .nlist li.bad :global(svg) { color: var(--danger); }
+  .nlist li.doubt :global(svg) { color: var(--accent); }
+  .nick .src { margin: 0 -8px; }
+  .npun { margin: -4px 0 0; padding: 6px 9px; border-radius: var(--radius-sm); background: var(--danger-tint); color: #ffb3b6; font-size: var(--fs-xs); line-height: 1.4; }
+  .npun b { color: var(--danger); }
+  .nnote { margin: 0; font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+  /* История */
+  .hist { gap: 4px; }
+  .hsearch { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; margin-bottom: 6px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border-strong); color: var(--text-muted); flex-shrink: 0; }
+  .hsearch:focus-within { border-color: var(--accent-line); }
+  .hsearch input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); }
+  .hday { margin: 10px 2px 4px; font-size: 11.5px; font-weight: 800; color: var(--text-muted); }
+  .hday:first-of-type { margin-top: 2px; }
+  .hitem { position: relative; }
+  .hopen { width: 100%; display: flex; flex-direction: column; gap: 3px; padding: 9px 30px 9px 10px; border: 1px solid transparent; border-radius: var(--radius-sm); background: none; text-align: left; color: var(--text); }
+  .hopen:hover { background: var(--surface-2); border-color: var(--border); }
+  .hq { display: flex; align-items: center; gap: 6px; font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hq :global(svg) { flex-shrink: 0; color: var(--accent); }
+  .ha { font-size: var(--fs-xs); color: var(--text-dim); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .hmeta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+  .hrate { display: inline-grid; color: var(--success); }
+  .hrate.down { color: var(--danger); }
+  .hdel { position: absolute; top: 8px; right: 6px; display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 6px; background: none; color: var(--text-muted); opacity: 0; }
+  .hitem:hover .hdel, .hdel:focus-visible { opacity: 1; }
+  .hdel:hover { background: var(--surface-3); color: var(--text); }
+  .hempty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: var(--fs-xs); }
+  .hempty b { color: var(--text-dim); font-size: var(--fs-sm); }
+  /* Подтверждение отправки */
+  .confirm { display: flex; align-items: center; gap: 7px; margin: 0 0 8px; padding: 7px 10px; border-radius: var(--radius-sm); background: var(--accent-tint); color: var(--accent-soft); font-size: var(--fs-xs); }
+  .confirm b { color: var(--text); }
+  .input.confirm-on { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-tint); }
 
   @media (max-width: 899px) {
     .ai { position: absolute; top: 0; right: 0; bottom: 0; z-index: 30; width: min(380px, 100%); box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5); }
