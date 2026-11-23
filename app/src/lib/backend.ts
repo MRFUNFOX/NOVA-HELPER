@@ -365,7 +365,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 235 };
     case 'voice_install': {
       const total = 235e6;
-      for (const [i, stage] of ['asr', 'asr', 'tts-denis', 'espeak', 'done'].entries()) {
+      for (const [i, stage] of ['asr', 'asr', 'tts-supertonic', 'tts-supertonic', 'done'].entries()) {
         await new Promise((r) => setTimeout(r, 500));
         mockEmit('voice-install', { stage, done: Math.min(total, (i + 1) * 70e6), total });
       }

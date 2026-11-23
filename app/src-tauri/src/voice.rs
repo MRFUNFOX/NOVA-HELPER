@@ -3,20 +3,20 @@
 //! Всё работает на компьютере игрока, без ключей и серверов:
 //!  • запись с микрофона — cpal;
 //!  • шумоподавление — GTCRN, распознавание русской речи — GigaAM v2 (Сбер, MIT) через sherpa-onnx;
-//!  • озвучка ответа — Piper «Денис» (CC0) через sherpa-onnx. Как произносить слова, подсказывает eSpeak NG —
-//!    это отдельная программа (GPL-3.0): мы запускаем espeak-ng.exe и читаем ответ, а не встраиваем её.
-//! Модели (~300 МБ) скачиваются один раз из выпуска `voice-models` нашего GitHub.
+//!  • озвучка ответа — Supertonic 3 (Supertone: код MIT, веса OpenRAIL-M), голос «Мужской 5», через sherpa-onnx.
+//!    Ударения ставит сама модель; читаем по предложениям — первое звучит, пока готовится следующее.
+//! Модели скачиваются один раз из выпуска `voice-models` нашего GitHub.
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use sherpa_onnx::{
     GenerationConfig, LinearResampler, OfflineRecognizer, OfflineRecognizerConfig, OfflineSpeechDenoiser,
-    OfflineSpeechDenoiserConfig, OfflineTts, OfflineTtsConfig,
+    OfflineSpeechDenoiserConfig, OfflineTts, OfflineTtsConfig, OfflineTtsSupertonicModelConfig,
 };
 use std::{
+    collections::HashMap,
     io::Write,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
     sync::{
         atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering},
         mpsc, Arc, Mutex,
@@ -28,8 +28,12 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::settings;
 
 const BASE: &str = "https://github.com/MRFUNFOX/NOVA-HELPER/releases/download/voice-models";
-/// Наборы файлов: распознавание, голос, eSpeak
-const PACKS: [&str; 3] = ["asr", "tts-denis", "espeak"];
+/// Наборы файлов: распознавание, голос
+const PACKS: [&str; 2] = ["asr", "tts-supertonic"];
+/// Наборы прошлых версий — удаляем после установки нового голоса
+const OLD_PACKS: [&str; 2] = ["tts-denis", "espeak"];
+/// Голос «Мужской 5» в Supertonic 3 (0–4 женские, 5–9 мужские)
+const SPEAKER: i32 = 9;
 /// Дольше — останавливаем запись сами
 const MAX_SECONDS: f32 = 30.0;
 
@@ -54,11 +58,7 @@ fn dir(app: &AppHandle) -> PathBuf {
 
 fn installed(app: &AppHandle) -> bool {
     let d = dir(app);
-    d.join("asr/model.int8.onnx").exists() && d.join("tts-denis/model.onnx").exists() && d.join(exe_name()).exists()
-}
-
-fn exe_name() -> &'static str {
-    if cfg!(windows) { "espeak/espeak-ng.exe" } else { "espeak/espeak-ng" }
+    d.join("asr/model.int8.onnx").exists() && d.join("tts-supertonic/vocoder.int8.onnx").exists()
 }
 
 #[derive(Serialize)]
@@ -71,14 +71,14 @@ pub struct VoiceStatus {
 
 #[tauri::command]
 pub fn voice_status(app: AppHandle) -> VoiceStatus {
-    VoiceStatus { installed: installed(&app), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 235 }
+    VoiceStatus { installed: installed(&app), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 310 }
 }
 
 // ── Установка моделей ──
 
 #[derive(Serialize, Clone)]
 struct InstallProgress {
-    /// Какой набор качаем: asr, tts-denis, espeak; «unpack» — распаковка
+    /// Какой набор качаем: asr, tts-supertonic; «unpack» — распаковка
     stage: String,
     done: u64,
     total: u64,
@@ -163,6 +163,12 @@ async fn install(app: &AppHandle) -> Result<(), String> {
         have.insert(pack.into(), serde_json::Value::String(sha.into()));
         let _ = std::fs::write(&have_path, serde_json::Value::Object(have.clone()).to_string());
     }
+    // Старый голос (Денис + eSpeak) больше не нужен
+    for old in OLD_PACKS {
+        let _ = std::fs::remove_dir_all(root.join(old));
+        have.remove(old);
+    }
+    let _ = std::fs::write(&have_path, serde_json::Value::Object(have).to_string());
     let _ = app.emit("voice-install", InstallProgress { stage: "done".into(), done: total, total });
     Ok(())
 }
@@ -416,31 +422,90 @@ fn tts(app: &AppHandle) -> Result<Arc<OfflineTts>, String> {
     if let Some(t) = g.as_ref() {
         return Ok(t.clone());
     }
-    let d = dir(app).join("tts-denis");
+    let d = dir(app).join("tts-supertonic");
+    let p = |f: &str| Some(d.join(f).to_string_lossy().into_owned());
     let mut c = OfflineTtsConfig::default();
-    c.model.vits.model = Some(d.join("model.onnx").to_string_lossy().into_owned());
-    c.model.vits.tokens = Some(d.join("tokens.txt").to_string_lossy().into_owned());
-    c.model.vits.noise_scale = 0.667;
-    c.model.vits.noise_scale_w = 0.8;
-    c.model.vits.length_scale = 1.0;
+    c.model.supertonic = OfflineTtsSupertonicModelConfig {
+        duration_predictor: p("duration_predictor.int8.onnx"),
+        text_encoder: p("text_encoder.int8.onnx"),
+        vector_estimator: p("vector_estimator.int8.onnx"),
+        vocoder: p("vocoder.int8.onnx"),
+        tts_json: p("tts.json"),
+        unicode_indexer: p("unicode_indexer.bin"),
+        voice_style: p("voice.bin"),
+    };
     c.model.num_threads = threads();
     let t = Arc::new(OfflineTts::create(&c).ok_or("Голос не загрузился — переустановите голос в настройках")?);
     *g = Some(t.clone());
     Ok(t)
 }
 
-/// Слова, которые eSpeak прочитал бы по-английски или по буквам
+/// Число словами (именительный падеж): 230 → «двести тридцать»
+fn number_words(n: u64) -> String {
+    const ONES: [&str; 20] = [
+        "ноль", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять", "десять", "одиннадцать", "двенадцать",
+        "тринадцать", "четырнадцать", "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать",
+    ];
+    const TENS: [&str; 10] = ["", "", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто"];
+    const HUNDREDS: [&str; 10] = ["", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот"];
+    fn below_1000(n: u64, female: bool) -> Vec<&'static str> {
+        let mut w = Vec::new();
+        if n >= 100 {
+            w.push(HUNDREDS[(n / 100) as usize]);
+        }
+        let r = n % 100;
+        if r >= 20 {
+            w.push(TENS[(r / 10) as usize]);
+        }
+        let u = if r >= 20 { r % 10 } else { r };
+        if u > 0 || (n == 0) {
+            w.push(match (u, female) { (1, true) => "одна", (2, true) => "две", _ => ONES[u as usize] });
+        }
+        w
+    }
+    if n == 0 {
+        return "ноль".into();
+    }
+    if n >= 1_000_000 {
+        return n.to_string().chars().map(|c| ONES[c.to_digit(10).unwrap_or(0) as usize]).collect::<Vec<_>>().join(" ");
+    }
+    let mut w = Vec::new();
+    let th = n / 1000;
+    if th > 0 {
+        // «тысяча пятьсот», а не «одна тысяча пятьсот»
+        if th != 1 {
+            w.extend(below_1000(th, true));
+        }
+        let (l, ll) = (th % 10, th % 100);
+        w.push(if (11..=14).contains(&ll) { "тысяч" } else if l == 1 { "тысяча" } else if (2..=4).contains(&l) { "тысячи" } else { "тысяч" });
+    }
+    if n % 1000 > 0 {
+        w.extend(below_1000(n % 1000, false));
+    }
+    w.join(" ")
+}
+
+/// Текст — в то, что голос прочитает правильно: сокращения русскими буквами, числа словами, номера пунктов
 fn speakable(text: &str) -> String {
     use regex::Regex;
     use std::sync::LazyLock;
     // Числа: точка внутри номера пункта — не конец фразы («4.1» → «4 точка 1», «1.4.2» → «1 точка 4 точка 2»);
-    // «п.4.1» → «пункт 4.1»; «от 10–15» → «от 10 до 15»; «1,5» → «1 целых 5»
+    // «п.4.1» → «пункт 4.1»; «от 10–15» → «от 10 до 15»; «1,5» → «1 целых 5»; «$500» → «500 долларов»
     static ABBR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)(^|[^\p{L}])(п|ст|ч)\.\s*(\d)").unwrap());
     static DOT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\d)\.(\d)").unwrap());
     static RANGE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(^|[^\p{L}\d])(от\s+)?(\d+)\s*[-–—]\s*(\d+)").unwrap());
     static COMMA: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\d),(\d)").unwrap());
-    let mut t = ABBR
-        .replace_all(text, |c: &regex::Captures| {
+    static DOLLAR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\$\s*(\d[\d\s]*\d|\d)|(\d)\s*\$").unwrap());
+    static NUM: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\d+").unwrap());
+    let mut t = DOLLAR
+        .replace_all(text, |c: &regex::Captures| match (c.get(1), c.get(2)) {
+            (Some(n), _) => format!("{} долларов", n.as_str().replace(' ', "")),
+            (_, Some(n)) => format!("{} долларов", n.as_str()),
+            _ => String::new(),
+        })
+        .into_owned();
+    t = ABBR
+        .replace_all(&t, |c: &regex::Captures| {
             let w = match c[2].to_lowercase().as_str() { "п" => "пункт", "ст" => "статья", _ => "часть" };
             format!("{}{w} {}", &c[1], &c[3])
         })
@@ -456,17 +521,16 @@ fn speakable(text: &str) -> String {
         .into_owned();
     t = COMMA.replace_all(&t, "$1 целых $2").into_owned();
     let mut t = format!(" {t} ");
-    for (a, b) in [
-        (" п. ", " пункт "), (" ст. ", " статья "), (" ч. ", " часть "), ("$", " долларов "),
-    ] {
+    for (a, b) in [(" п. ", " пункт "), (" ст. ", " статья "), (" ч. ", " часть ")] {
         t = t.replace(a, b);
     }
-    // Сокращения — русскими буквами, как говорят игроки: DM — «дэ-эм». Только целые слова (латиница и кириллица).
+    // Сокращения — русскими буквами, как говорят игроки: DM — «дэ эм». Через пробел — так голос не сливает буквы
+    // в одно слово. Только целые слова (латиница и кириллица).
     static WORDS: LazyLock<Vec<(Regex, &str)>> = LazyLock::new(|| {
         [
             ("JAIL|Jail|ДЖЕЙЛ", "джейл"), ("WARN|Warn", "варн"), ("BAN|Ban", "бан"), ("MUTE|Mute", "мут"),
-            ("NonRP|NONRP|НонРП", "нон-эр-пэ"), ("DM|ДМ", "дэ-эм"), ("RK|РК", "эр-ка"), ("PG|ПГ", "пэ-гэ"), ("MG|МГ", "эм-гэ"),
-            ("RP|РП", "эр-пэ"), ("OOC|ООС", "о-о-эс"), ("IC", "ай-си"),
+            ("NonRP|NONRP|НонРП", "нон эр пэ"), ("DM|ДМ", "дэ эм"), ("RK|РК", "эр ка"), ("PG|ПГ", "пэ гэ"), ("MG|МГ", "эм гэ"),
+            ("RP|РП", "эр пэ"), ("OOC|ООС", "о о эс"), ("IC", "ай си"),
         ]
         .into_iter()
         .map(|(w, say)| (Regex::new(&format!(r"(^|[^\p{{L}}])(?:{w})($|[^\p{{L}}])")).unwrap(), say))
@@ -478,86 +542,43 @@ fn speakable(text: &str) -> String {
             t = re.replace_all(&t, format!("${{1}}{say}${{2}}")).into_owned();
         }
     }
-    t.trim().to_string()
+    t = NUM.replace_all(&t, |c: &regex::Captures| c[0].parse::<u64>().map(number_words).unwrap_or_else(|_| c[0].to_string())).into_owned();
+    t.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// Текст → фонемы Piper: каждую фразу отдельно спрашиваем у eSpeak, знаки препинания сохраняем (паузы и интонация)
-fn phonemes(app: &AppHandle, text: &str) -> Result<Vec<Vec<i32>>, String> {
-    let espeak = dir(app).join("espeak");
-    let exe = dir(app).join(exe_name());
-    let ask = |clause: &str| -> Result<String, String> {
-        // Текст — через stdin в UTF-8, папка данных — относительно: в аргументах Windows портит кириллицу
-        // (кодовая страница 1251), а путь к папке пользователя бывает русским.
-        let mut cmd = Command::new(&exe);
-        cmd.current_dir(&espeak)
-            .args(["-q", "-v", "ru", "--ipa", "--path=.", "--stdin"])
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null());
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt;
-            cmd.creation_flags(0x0800_0000); // без чёрного окна консоли
-        }
-        let fail = || "eSpeak не запустился — переустановите голос в настройках".to_string();
-        let mut child = cmd.spawn().map_err(|_| fail())?;
-        if let Some(mut inp) = child.stdin.take() {
-            let _ = inp.write_all(clause.as_bytes());
-            let _ = inp.write_all(b"\n");
-        }
-        let out = child.wait_with_output().map_err(|_| fail())?;
-        let s = String::from_utf8_lossy(&out.stdout);
-        // Метки смены языка «(en)…(ru)» — служебные
-        let mut clean = String::new();
-        let mut skip = false;
-        for c in s.chars() {
-            match c {
-                '(' => skip = true,
-                ')' => skip = false,
-                _ if !skip => clean.push(c),
-                _ => {}
-            }
-        }
-        // eSpeak 1.52 читает цифру «1» как «ойдин» (1, 21, 101…) — правим на обычное «один»
-        let clean = clean.replace("ojdʲˈin", "ʌdʲˈin");
-        Ok(clean.split_whitespace().collect::<Vec<_>>().join(" "))
-    };
-    let mut sentences = Vec::new();
+/// Текст для голоса → предложения. Тире и двоеточие — обычные паузы (запятая и точка): так интонация ровнее,
+/// каждое предложение читается отдельно со своим окончанием.
+fn sentences(text: &str) -> Vec<String> {
+    let t = speakable(text)
+        .replace(['«', '»', '"', '“', '”', '*'], "")
+        .replace(" — ", ", ")
+        .replace(" – ", ", ")
+        .replace(['—', '–'], ", ")
+        .replace([':', ';'], ".")
+        .replace(['(', ')'], ", ");
+    let mut out: Vec<String> = Vec::new();
     let mut cur = String::new();
-    let mut clause = String::new();
-    let flush = |clause: &mut String, punct: Option<char>, cur: &mut String| -> Result<(), String> {
-        let t = clause.trim().to_string();
-        clause.clear();
-        if !t.is_empty() {
-            let ph = ask(&t)?;
-            if !cur.is_empty() && !ph.is_empty() {
-                cur.push(' ');
-            }
-            cur.push_str(&ph);
-        }
-        if let Some(p) = punct {
-            cur.push(p);
-        }
-        Ok(())
-    };
-    for c in speakable(text).chars() {
-        match c {
-            ',' | ';' | ':' | '—' | '–' => flush(&mut clause, Some(if matches!(c, '—' | '–') { ',' } else { c }), &mut cur)?,
-            '.' | '!' | '?' | '\n' => {
-                flush(&mut clause, if c == '\n' { Some('.') } else { Some(c) }, &mut cur)?;
-                if !cur.trim().is_empty() {
-                    sentences.push(cur.chars().map(|c| c as i32).collect());
-                }
-                cur.clear();
-            }
-            _ => clause.push(c),
+    let chars: Vec<char> = t.chars().collect();
+    for (i, &c) in chars.iter().enumerate() {
+        cur.push(c);
+        let end = matches!(c, '.' | '!' | '?' | '…' | '\n') && chars.get(i + 1).is_none_or(|n| n.is_whitespace());
+        if end {
+            push_sentence(&mut out, &cur);
+            cur.clear();
         }
     }
-    flush(&mut clause, None, &mut cur)?;
-    if !cur.trim().is_empty() {
-        sentences.push(cur.chars().map(|c| c as i32).collect());
+    push_sentence(&mut out, &cur);
+    out
+}
+
+fn push_sentence(out: &mut Vec<String>, s: &str) {
+    let s = s.trim().trim_start_matches([',', '.', ' ']).trim();
+    if s.chars().any(|c| c.is_alphanumeric()) {
+        // После точки — с большой буквы, как в обычном тексте
+        let mut c = s.chars();
+        let first = c.next().map(|f| f.to_uppercase().collect::<String>()).unwrap_or_default();
+        out.push(first + c.as_str());
     }
-    Ok(sentences)
 }
 
 #[derive(Serialize, Clone)]
@@ -583,24 +604,22 @@ pub fn voice_stop(app: AppHandle) {
     app.state::<VoiceState>().say_gen.fetch_add(1, Ordering::SeqCst);
 }
 
+/// Звук, который ещё готовится: голос дописывает предложения, динамик читает с начала
+#[derive(Default)]
+struct Feed {
+    data: Mutex<Vec<f32>>,
+    /// Все предложения готовы
+    finished: AtomicBool,
+}
+
 fn say(app: &AppHandle, text: &str, gen_no: u64) -> Result<(), String> {
     let gen = app.state::<VoiceState>().say_gen.clone();
     let alive = || gen.load(Ordering::SeqCst) == gen_no;
+    let parts = sentences(text);
+    if parts.is_empty() {
+        return Ok(());
+    }
     let t = tts(app)?;
-    let mut g = GenerationConfig::default();
-    g.speed = settings::load(app).voice_rate.clamp(0.7, 1.6);
-    g.phoneme_codepoints = Some(phonemes(app, text)?);
-    if !alive() {
-        return Ok(());
-    }
-    let audio = t.generate_with_config(text, &g, None::<fn(&[f32], f32) -> bool>).ok_or("Не удалось озвучить ответ")?;
-    if !alive() {
-        return Ok(());
-    }
-    play(app, audio.samples(), audio.sample_rate(), &alive)
-}
-
-fn play(app: &AppHandle, samples: &[f32], rate: i32, alive: &dyn Fn() -> bool) -> Result<(), String> {
     let s = settings::load(app);
     let dev = find_device(false, s.voice_output.as_deref()).ok_or("Нет устройства вывода звука")?;
     let cfg = dev.default_output_config().map_err(|e| e.to_string())?;
@@ -608,25 +627,84 @@ fn play(app: &AppHandle, samples: &[f32], rate: i32, alive: &dyn Fn() -> bool) -
     let ch = cfg.channels() as usize;
     // Громкость из настроек: квадрат — чтобы ползунок звучал равномерно на слух
     let gain = (s.voice_volume.min(100) as f32 / 100.0).powi(2);
-    let mut data = if out_rate == rate {
-        samples.to_vec()
-    } else {
-        LinearResampler::create(rate, out_rate).map(|r| r.resample(samples, true)).unwrap_or_else(|| samples.to_vec())
-    };
-    data.iter_mut().for_each(|v| *v *= gain);
-    let data: Arc<Vec<f32>> = Arc::new(data);
+    let mut extra = HashMap::new();
+    extra.insert("lang".to_string(), serde_json::json!("ru"));
+    let g = GenerationConfig { sid: SPEAKER, num_steps: 8, speed: s.voice_rate.clamp(0.7, 1.6), extra: Some(extra), ..Default::default() };
+
+    let feed = Arc::new(Feed::default());
     let pos = Arc::new(AtomicUsize::new(0));
+    let total_chars: usize = parts.iter().map(|p| p.chars().count()).sum::<usize>().max(1);
+    let mut done_chars = 0usize;
+    let mut stream: Option<cpal::Stream> = None;
+    let mut resampler: Option<LinearResampler> = None;
+    let progress = |feed: &Feed, done_chars: usize| {
+        // Сколько прочитано: по готовому звуку прикидываем длину ещё не готовых предложений
+        let have = feed.data.lock().unwrap().len().max(1);
+        let est = if feed.finished.load(Ordering::Relaxed) { have } else { have * total_chars / done_chars.max(1) };
+        (pos.load(Ordering::Relaxed) as f32 / est.max(1) as f32).min(1.0)
+    };
+
+    for part in &parts {
+        if !alive() {
+            break;
+        }
+        let audio = t.generate_with_config(part, &g, None::<fn(&[f32], f32) -> bool>).ok_or("Не удалось озвучить ответ")?;
+        let rate = audio.sample_rate();
+        let mut chunk = if rate == out_rate {
+            audio.samples().to_vec()
+        } else {
+            if resampler.is_none() {
+                resampler = Some(LinearResampler::create(rate, out_rate).ok_or("Не удалось подготовить звук")?);
+            }
+            resampler.as_ref().map(|r| r.resample(audio.samples(), false)).unwrap_or_default()
+        };
+        chunk.iter_mut().for_each(|v| *v *= gain);
+        // Пауза между предложениями
+        chunk.extend(std::iter::repeat_n(0.0, (out_rate as f32 * 0.22) as usize));
+        feed.data.lock().unwrap().extend(chunk);
+        done_chars += part.chars().count();
+        if stream.is_none() {
+            stream = Some(open_output(&dev, &cfg, ch, feed.clone(), pos.clone())?);
+        }
+        let _ = app.emit("voice-say", SayProgress { p: progress(&feed, done_chars), done: false });
+    }
+    feed.finished.store(true, Ordering::Relaxed);
+    if stream.is_some() {
+        loop {
+            std::thread::sleep(Duration::from_millis(80));
+            let len = feed.data.lock().unwrap().len();
+            if !alive() || pos.load(Ordering::Relaxed) >= len {
+                break;
+            }
+            let _ = app.emit("voice-say", SayProgress { p: progress(&feed, done_chars), done: false });
+        }
+        // Хвост буфера доиграть
+        std::thread::sleep(Duration::from_millis(120));
+    }
+    drop(stream);
+    let _ = app.emit("voice-say", SayProgress { p: 1.0, done: true });
+    Ok(())
+}
+
+/// Динамик: читает из «ленты», пока она пополняется; закончилось готовое — тишина, пока не придёт следующее предложение
+fn open_output(dev: &cpal::Device, cfg: &cpal::SupportedStreamConfig, ch: usize, feed: Arc<Feed>, pos: Arc<AtomicUsize>) -> Result<cpal::Stream, String> {
     let err = |e| eprintln!("звук: {e}");
     macro_rules! out_stream {
         ($t:ty, $conv:expr) => {{
-            let (data, pos) = (data.clone(), pos.clone());
+            let (feed, pos) = (feed.clone(), pos.clone());
             dev.build_output_stream(
                 &cfg.clone().into(),
                 move |out: &mut [$t], _| {
+                    let data = feed.data.lock().unwrap();
                     let mut i = pos.load(Ordering::Relaxed);
                     for frame in out.chunks_mut(ch) {
-                        let v: f32 = data.get(i).copied().unwrap_or(0.0);
-                        i += 1;
+                        let v: f32 = match data.get(i) {
+                            Some(v) => {
+                                i += 1;
+                                *v
+                            }
+                            None => 0.0,
+                        };
                         frame.fill($conv(v));
                     }
                     pos.store(i, Ordering::Relaxed);
@@ -644,42 +722,45 @@ fn play(app: &AppHandle, samples: &[f32], rate: i32, alive: &dyn Fn() -> bool) -
     }
     .map_err(|e| e.to_string())?;
     stream.play().map_err(|e| e.to_string())?;
-    let len = data.len().max(1);
-    loop {
-        std::thread::sleep(Duration::from_millis(80));
-        let p = pos.load(Ordering::Relaxed);
-        if !alive() || p >= len {
-            break;
-        }
-        let _ = app.emit("voice-say", SayProgress { p: p as f32 / len as f32, done: false });
-    }
-    // Хвост буфера доиграть
-    std::thread::sleep(Duration::from_millis(120));
-    drop(stream);
-    let _ = app.emit("voice-say", SayProgress { p: 1.0, done: true });
-    Ok(())
+    Ok(stream)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::speakable;
+    use super::{number_words, sentences, speakable};
     #[test]
     fn reads_admin_words() {
-        assert_eq!(speakable("JAIL до 120 минут, п. 4.1"), "джейл до 120 минут, пункт 4 точка 1");
+        assert_eq!(speakable("JAIL до 120 минут, п. 4.1"), "джейл до сто двадцать минут, пункт четыре точка один");
     }
     #[test]
     fn reads_abbreviations() {
-        assert_eq!(speakable("Это DM и RK."), "Это дэ-эм и эр-ка.");
-        assert_eq!(speakable("это ДМ, а не РП-ситуация"), "это дэ-эм, а не эр-пэ-ситуация");
-        assert_eq!(speakable("NonRP поведение"), "нон-эр-пэ поведение");
+        assert_eq!(speakable("Это DM и RK."), "Это дэ эм и эр ка.");
+        assert_eq!(speakable("это ДМ, а не РП-ситуация"), "это дэ эм, а не эр пэ-ситуация");
+        assert_eq!(speakable("NonRP поведение"), "нон эр пэ поведение");
         assert_eq!(speakable("ADMIN DMV"), "ADMIN DMV");
     }
     #[test]
     fn reads_numbers() {
-        assert_eq!(speakable("По п.1.4.2 нельзя."), "По пункт 1 точка 4 точка 2 нельзя.");
-        assert_eq!(speakable("Нарушение пункта 2.13."), "Нарушение пункта 2 точка 13.");
-        assert_eq!(speakable("Мут на 10–15 минут"), "Мут на 10, 15 минут");
-        assert_eq!(speakable("от 10-15 минут, 1,5 часа"), "от 10 до 15 минут, 1 целых 5 часа");
-        assert_eq!(speakable("ст. 12 ч. 3"), "статья 12 часть 3");
+        assert_eq!(speakable("По п.1.4.2 нельзя."), "По пункт один точка четыре точка два нельзя.");
+        assert_eq!(speakable("Нарушение пункта 2.13."), "Нарушение пункта два точка тринадцать.");
+        assert_eq!(speakable("Мут на 10–15 минут"), "Мут на десять, пятнадцать минут");
+        assert_eq!(speakable("от 10-15 минут, 1,5 часа"), "от десять до пятнадцать минут, один целых пять часа");
+        assert_eq!(speakable("ст. 12 ч. 3"), "статья двенадцать часть три");
+        assert_eq!(speakable("Цена $230 или 1500$"), "Цена двести тридцать долларов или тысяча пятьсот долларов");
+    }
+    #[test]
+    fn number_words_work() {
+        assert_eq!(number_words(21), "двадцать один");
+        assert_eq!(number_words(101), "сто один");
+        assert_eq!(number_words(2000), "две тысячи");
+        assert_eq!(number_words(11000), "одиннадцать тысяч");
+        assert_eq!(number_words(45312), "сорок пять тысяч триста двенадцать");
+    }
+    #[test]
+    fn splits_sentences() {
+        assert_eq!(
+            sentences("Нет, это DM: убийство без причины — так нельзя. За это дают JAIL до 120 минут!"),
+            vec!["Нет, это дэ эм.", "Убийство без причины, так нельзя.", "За это дают джейл до сто двадцать минут!"]
+        );
     }
 }

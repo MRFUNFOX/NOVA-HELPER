@@ -91,8 +91,8 @@
   async function vremove() { await backend.voiceRemove().catch(() => {}); await save({ voiceDeclined: true }); await vload(); }
   // Громкость и скорость: двигаем — видно сразу, сохраняем, когда отпустили
   let vol = $state(100);
-  let rate = $state(1.15);
-  $effect(() => { vol = app.settings?.voiceVolume ?? 100; rate = app.settings?.voiceRate ?? 1.15; });
+  let rate = $state(1.1);
+  $effect(() => { vol = app.settings?.voiceVolume ?? 100; rate = app.settings?.voiceRate ?? 1.1; });
   async function vtest() {
     testing = true;
     try { await backend.voiceSay('Привет! Так звучит голос помощника. Можно, но только по правилам.'); } catch (e) { verr = String(e); }
@@ -222,7 +222,7 @@
               <p class="hint">Сам больше не скачается. Вернуть — около {vstat?.sizeMb ?? 235} МБ, один раз.</p>
             {:else}
               <p class="value">Голос скачается сам — один раз, около {vstat?.sizeMb ?? 235} МБ</p>
-              <p class="hint">Распознавание речи, голос «Денис» и модуль произношения. Обновления программы его не трогают, потом всё работает без интернета.</p>
+              <p class="hint">Распознавание речи и голос помощника. Обновления программы их не трогают, потом всё работает без интернета.</p>
             {/if}
           </div>
           <button class="btn primary" onclick={vinstall}><Icon name="download" size={16} />{app.settings?.voiceDeclined ? 'Установить голос' : 'Скачать сейчас'}</button>

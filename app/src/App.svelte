@@ -73,7 +73,9 @@
   // Новость «Спроси правила голосом» (голос, 0.7.18+) — всем, у кого есть ИИ-помощник, один раз; остальные новости ждут её
   const NEWS_VOICE = 'voice-1';
   let voiceSeen = $state((() => { try { return localStorage.getItem('nova.newsVoice') === NEWS_VOICE; } catch { return false; } })());
-  const voiceNewsOpen = $derived(started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.aiEnabled && !voiceSeen && !app.guideOpen);
+  // Пока выключена: вариант новости владелец не утвердил («Не очень»), голос меняется — вернёмся к ней позже
+  const VOICE_NEWS_ON = false;
+  const voiceNewsOpen = $derived(VOICE_NEWS_ON && started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.aiEnabled && !voiceSeen && !app.guideOpen);
   function closeVoiceNews(result: 'open' | 'setup' | 'later' | 'esc', tried: number) {
     track('news_voice', { result, tried, ai: ai.ready ? 1 : 0 });
     voiceSeen = true;

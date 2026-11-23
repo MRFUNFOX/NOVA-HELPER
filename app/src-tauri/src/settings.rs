@@ -75,7 +75,7 @@ pub struct Settings {
     pub voice_declined: bool,
     /// Громкость голоса ИИ, 0–100
     pub voice_volume: u8,
-    /// Скорость речи: 1 — как записан голос; по умолчанию чуть быстрее
+    /// Скорость речи: 1 — обычная; по умолчанию чуть быстрее
     pub voice_rate: f32,
 }
 
@@ -100,7 +100,7 @@ impl Default for Settings {
             keys_moved: false,
             voice_declined: false,
             voice_volume: 100,
-            voice_rate: 1.15,
+            voice_rate: 1.1,
         }
     }
 }
