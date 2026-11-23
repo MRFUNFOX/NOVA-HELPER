@@ -5,6 +5,8 @@
 #  • tts-denis.zip — голос Piper «Денис» (CC0)
 #  • espeak.zip — eSpeak NG 1.52.0 (GPL-3.0) отдельной программой: подсказывает Piper, как произносить слова.
 #                 Лежит отдельным файлом рядом с программой, NOVA HELPER его не встраивает.
+#  • tts-supertonic.zip — Supertonic 3 (Supertone, код MIT, веса OpenRAIL-M): голос «Мужской 5», с 0.7.19.
+#                 Сам ставит ударения, eSpeak ему не нужен. Денис и eSpeak остаются для 0.7.18.
 # Запуск: вкладка Actions → «Модели голоса» → Run workflow.
 name: Модели голоса
 
@@ -30,6 +32,9 @@ jobs:
           curl -fsSL -o espeak-ng.msi "https://github.com/espeak-ng/espeak-ng/releases/download/1.52.0/espeak-ng.msi"
           curl -fsSL -o COPYING "https://raw.githubusercontent.com/espeak-ng/espeak-ng/1.52.0/COPYING"
           curl -fsSL -o GIGAAM_LICENSE "https://raw.githubusercontent.com/salute-developers/GigaAM/main/LICENSE"
+          curl -fsSL -o supertonic.tar.bz2 "$B/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2"
+          tar xjf supertonic.tar.bz2
+          curl -fsSL -o SUPERTONIC_WEIGHTS_LICENSE "https://huggingface.co/Supertone/supertonic-3/raw/main/LICENSE" || echo "OpenRAIL-M: https://huggingface.co/Supertone/supertonic-3" > SUPERTONIC_WEIGHTS_LICENSE
           tar xjf asr.tar.bz2
           tar xjf denis.tar.bz2
           sudo apt-get install -y -q msitools zip >/dev/null
@@ -39,6 +44,7 @@ jobs:
       - name: Упаковать
         run: |
           set -e
+          # Архивы одинаковые от запуска к запуску (даты файлов и порядок фиксированы) — программа не качает их заново
           cd dl
           # Распознавание + шумоподавление
           mkdir -p asr
@@ -46,14 +52,22 @@ jobs:
           cp sherpa-onnx-nemo-ctc-giga-am-v2-russian-2025-04-19/tokens.txt asr/
           cp gtcrn_simple.onnx asr/
           cp GIGAAM_LICENSE asr/LICENSE-GigaAM.txt
-          (cd asr && zip -q -r ../../out/asr.zip .)
+          (cd asr && find . -exec touch -h -d '2026-01-01 00:00:00' {} + && find . -type f | LC_ALL=C sort | zip -q -X -@ ../../out/asr.zip)
           # Голос Дениса
           mkdir -p tts-denis
           cp vits-piper-ru_RU-denis-medium/ru_RU-denis-medium.onnx tts-denis/model.onnx
           cp vits-piper-ru_RU-denis-medium/ru_RU-denis-medium.onnx.json tts-denis/model.onnx.json
           cp vits-piper-ru_RU-denis-medium/tokens.txt tts-denis/
           cp vits-piper-ru_RU-denis-medium/MODEL_CARD tts-denis/MODEL_CARD.txt
-          (cd tts-denis && zip -q -r ../../out/tts-denis.zip .)
+          (cd tts-denis && find . -exec touch -h -d '2026-01-01 00:00:00' {} + && find . -type f | LC_ALL=C sort | zip -q -X -@ ../../out/tts-denis.zip)
+          # Голос Supertonic 3 (int8) — все 10 голосов в одной модели, программа берёт «Мужской 5»
+          mkdir -p tts-supertonic
+          cp sherpa-onnx-supertonic-3-tts-int8-2026-05-11/*.onnx sherpa-onnx-supertonic-3-tts-int8-2026-05-11/tts.json \
+             sherpa-onnx-supertonic-3-tts-int8-2026-05-11/unicode_indexer.bin sherpa-onnx-supertonic-3-tts-int8-2026-05-11/voice.bin tts-supertonic/
+          cp sherpa-onnx-supertonic-3-tts-int8-2026-05-11/LICENSE tts-supertonic/LICENSE-code-MIT.txt
+          cp SUPERTONIC_WEIGHTS_LICENSE tts-supertonic/LICENSE-weights-OpenRAIL-M.txt
+          printf 'Supertonic 3 (Supertone Inc.) — https://huggingface.co/Supertone/supertonic-3\r\nКод: MIT. Веса модели: OpenRAIL-M (см. LICENSE-weights). Сборка int8 для sherpa-onnx (k2-fsa).\r\n' > tts-supertonic/README.txt
+          (cd tts-supertonic && find . -exec touch -h -d '2026-01-01 00:00:00' {} + && find . -type f | LC_ALL=C sort | zip -q -X -@ ../../out/tts-supertonic.zip)
           # eSpeak NG — отдельная программа (GPL-3.0): exe, dll, данные, лицензия и где взять исходники
           mkdir -p espeak
           EXE=$(find espeak-msi -iname 'espeak-ng.exe' | head -1)
@@ -65,7 +79,7 @@ jobs:
           cp COPYING espeak/COPYING.txt
           printf 'eSpeak NG 1.52.0 — GNU GPL v3 (COPYING.txt).\r\nОтдельная программа: NOVA HELPER запускает espeak-ng.exe, чтобы узнать произношение слов для озвучки.\r\nИсходный код: https://github.com/espeak-ng/espeak-ng/tree/1.52.0\r\nЕго можно заменить своей сборкой eSpeak NG или удалить (тогда озвучка не работает).\r\n' > espeak/README.txt
           ls -la espeak
-          (cd espeak && zip -q -r ../../out/espeak.zip .)
+          (cd espeak && find . -exec touch -h -d '2026-01-01 00:00:00' {} + && find . -type f | LC_ALL=C sort | zip -q -X -@ ../../out/espeak.zip)
           cd ../out
           ls -la
           # Описание для программы: размеры и контрольные суммы
@@ -87,5 +101,5 @@ jobs:
           set -e
           gh release view voice-models -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || \
             gh release create voice-models -R "$GITHUB_REPOSITORY" --prerelease --title "Модели голоса" \
-              --notes "Модели для голосового вопроса к ИИ. Скачиваются программой сама — вручную ничего делать не нужно. Состав и лицензии: GigaAM (MIT), Piper «Денис» (CC0), eSpeak NG 1.52.0 (GPL-3.0, отдельная программа, исходники: https://github.com/espeak-ng/espeak-ng/tree/1.52.0)."
-          gh release upload voice-models -R "$GITHUB_REPOSITORY" out/asr.zip out/tts-denis.zip out/espeak.zip out/voice.json --clobber
+              --notes "Модели для голосового вопроса к ИИ. Скачиваются программой сама — вручную ничего делать не нужно. Состав и лицензии: GigaAM (MIT), Supertonic 3 (код MIT, веса OpenRAIL-M), Piper «Денис» (CC0), eSpeak NG 1.52.0 (GPL-3.0, отдельная программа, исходники: https://github.com/espeak-ng/espeak-ng/tree/1.52.0)."
+          gh release upload voice-models -R "$GITHUB_REPOSITORY" out/asr.zip out/tts-denis.zip out/espeak.zip out/tts-supertonic.zip out/voice.json --clobber
