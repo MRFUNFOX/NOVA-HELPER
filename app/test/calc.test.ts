@@ -144,3 +144,20 @@ describe('голосовой ответ', () => {
     expect(answerText(raw)).toBe('Нет, это **DM** — убийство без причины [S1]. За это дают JAIL до 120 минут [S2].');
   });
 });
+
+describe('номера пунктов и жалобы на ответ', () => {
+  it('номер без слова «пункт»', async () => {
+    const { refsIn } = await import('../src/lib/ai.svelte');
+    expect(refsIn('что значит 8.3').map((r) => r.num)).toEqual(['8.3']);
+    expect(refsIn('по п. 2.13 и 4.1?').map((r) => r.num)).toEqual(['2.13', '4.1']);
+    expect(refsIn('джейл на 120 минут')).toEqual([]);
+    expect(refsIn('ст. 12.8 ч. 2')).toEqual([{ num: '12.8', part: '2' }]);
+  });
+  it('жалоба на ответ — не спор о правилах', async () => {
+    const { looksLikeMeta } = await import('../src/lib/ai.svelte');
+    expect(looksLikeMeta('Ты в данной ситуации не прав. Ты должен был дать мне развернутый ответ')).toBe(true);
+    expect(looksLikeMeta('Тогда почему ты не дал мне сразу оба варианта или не уточнил?')).toBe(true);
+    expect(looksLikeMeta('Но ведь там сказано, что можно стрелять')).toBe(false);
+    expect(looksLikeMeta('Можно ли убить без причины?')).toBe(false);
+  });
+});

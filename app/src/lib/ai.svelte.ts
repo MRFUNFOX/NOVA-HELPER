@@ -85,7 +85,8 @@ const PLAN = `Игрок GTA 5 RP-проекта NOVA RP задаёт вопро
 1. Выбери 1–4 документа, в которых, скорее всего, есть ответ. Если речь о нарушении правил проекта (DM, NonRP, PG, MG и т. п.), общие правила проекта подходят почти всегда.
 2. Составь 5–12 слов для поиска по тексту: официальные термины и сокращения (DeathMatch DM, NonRP, PowerGaming PG, MetaGaming MG, RevengeKill RK, DriveBy DB, TeamKill TK, ООС, IC, ограбление, похищение, задержание),
    как это пишется в документах (например «растулил»/«завалил» → «убийство», «коп» → «сотрудник полиции LSPD»), номера пунктов и статей из вопроса.
-3. "dispute": true, если игрок не согласен с прошлым ответом помощника или приводит довод, что тот ошибся («но ведь…», «там не сказано…», «ты не прав»); иначе false.
+3. "dispute": true, если игрок не согласен с прошлым ответом по смыслу правил или приводит довод, что тот ошибся в правилах («но ведь…», «там не сказано…», «ты не прав, это разрешено»); иначе false.
+   Жалоба на сам ответ — «не уточнил», «дай подробнее», «должен был дать оба варианта», «это не тот пункт» — это НЕ спор: false.
 Ответ строго в JSON: {"docs": ["D3", "D12"], "keywords": ["…"], "dispute": false}`;
 
 /** Игрок спорит с прошлым ответом: честная проверка довода по тексту */
@@ -98,6 +99,7 @@ function debateSystem(scope: Section) {
 3. Не путаются ли понятия (например, оружие и спецсредство) и нет ли исключений.
 Соглашайся только если довод подтверждается текстом. Уверенный тон игрока — не аргумент. Если довод неверен — назови пункт, который ему противоречит.
 Если твой прошлый ответ был неверным — прямо скажи об этом.
+Спор — только о смысле правил. Если игрок недоволен самим ответом (неполный, не уточнил, не тот документ) — согласись, дай полный ответ на его вопрос и в ИТОГ поставь "agree": false и пустой "note". Никогда не толкуй правила о том, как должен отвечать помощник.
 
 Как отвечать:
 - Первое предложение: «Вы правы.», «Вы не правы.» или «Отчасти правы.»
@@ -122,8 +124,32 @@ export function refsIn(text: string): { num: string; part?: string }[] {
   const out: { num: string; part?: string }[] = [];
   for (const m of text.matchAll(/(?<![а-яё])(?:ст(?:атья|атье|атьи|\.)?|пункт|п\.)\s*(\d+(?:\.\d+)*)(?:\s*,?\s*(?:ч(?:асть|асти|\.)?)\s*(\d+))?/gi)) out.push({ num: m[1]!, part: m[2] });
   for (const m of text.matchAll(/(?<![а-яё])(?:ч(?:асть|асти|\.)?)\s*(\d+)\s*(?:ст(?:атьи|\.)?)\s*(\d+(?:\.\d+)*)/gi)) out.push({ num: m[2]!, part: m[1] });
+  // Номер без слова «пункт»: «что значит 8.3», «2.13?» — только с точкой внутри, чтобы не цеплять «120 минут»
+  for (const m of text.matchAll(/(?<![\d.])(\d{1,2}\.\d{1,2}(?:\.\d{1,2})?)(?![\d.]\d)/g)) {
+    if (!out.some((r) => r.num === m[1])) out.push({ num: m[1]! });
+  }
   return out;
 }
+
+/** Пункты с номерами, которые назвал игрок, — во всех документах раздела */
+export function exactEntries(q: string, inScope: (d: RuleDocument) => boolean): Entry[] {
+  const out: Entry[] = [];
+  for (const r of refsIn(q)) {
+    for (const e of app.index.entries) {
+      if (!inScope(e.doc) || out.includes(e)) continue;
+      const law = e.doc.scope === 'server';
+      const hit = law
+        ? (e.article === r.num && (!r.part || e.node.number === r.part)) || (!e.article && e.node.number === r.num && e.node.kind === 'article')
+        : e.node.number === r.num;
+      if (hit) out.push(e);
+    }
+  }
+  return out;
+}
+
+/** Игрок недоволен самим ответом (не уточнил, мало, не те варианты), а не спорит о смысле правил */
+const META = /(ты|помощник)\s+(же\s+)?(должен|долж[её]н|обязан|не\s+(дал|уточнил|спросил|объяснил|написал|ответил))|разв[её]рнут|подробн|полн(ый|ее|остью)\s+ответ|оба\s+вариант|все\s+вариант|не\s+уточнил|не\s+тот\s+(пункт|документ)|другой\s+(пункт|документ)/i;
+export const looksLikeMeta = (q: string) => META.test(q.trim());
 
 export const SCOPES: Record<Section, { label: string; hint: string }> = {
   project: { label: 'Правила проекта', hint: 'Накажет ли администрация: JAIL, WARN, BAN' },
@@ -319,12 +345,20 @@ class Assistant {
 
       if (before.length && looksLikeDispute(q)) t.debate = true;
       const last = before.at(-1);
+      // «Ты не уточнил», «дай подробнее» — не спор, а просьба ответить полнее на прошлый вопрос
+      const meta = !!last && looksLikeMeta(q);
+      if (meta) t.debate = false;
+      const asked = meta && last ? last.q : q;
 
       // 2. Подбор пунктов только в выбранном разделе: по вопросу, словам-подсказкам и прошлому вопросу.
       //    В споре — ещё пункты, названные игроком, пункты прошлого ответа и их документы целиком.
-      const entries = t.debate && last
+      const ranked = t.debate && last
         ? debateEntries(q, extra, last, inScope, boost)
-        : rank(app.index, `${q} ${extra} ${prev}`, fast ? 10 : 14, inScope, boost);
+        : rank(app.index, `${asked} ${q} ${extra} ${prev}`, fast ? 10 : 14, inScope, boost);
+      // Номера, которые назвал игрок, — первыми и во всех документах раздела (поиск мог взять только один)
+      const exact = t.debate ? [] : exactEntries(asked, inScope);
+      const entries = [...exact, ...ranked.filter((e) => !exact.includes(e))].slice(0, Math.max(exact.length, fast ? 10 : 14));
+      const sameNum = new Set(exact.map((e) => e.doc.id)).size > 1 ? exact : [];
       t.sources = entries.map((entry, n) => ({ n: n + 1, entry }));
       t.notes = learn.relevant(`${q} ${prev} ${extra}`, scope).map((note, n) => ({ n: n + 1, note }));
 
@@ -340,7 +374,7 @@ class Assistant {
       const context = parts.length ? parts.join('\n\n') : '(подходящих фрагментов не найдено)';
       const ask = t.debate
         ? `Фрагменты:\n\n${context}\n\nДовод игрока: ${q}\n\n(Разбери довод по фрагментам и не забудь служебную строку ИТОГ в конце.)`
-        : `Фрагменты:\n\n${context}\n\nВопрос игрока: ${q}\n\n(Ответь коротко: 2–4 предложения.${t.voice ? VOICE_LINE : ''})`;
+        : `Фрагменты:\n\n${context}\n\n${meta ? `Прошлый вопрос игрока: ${asked}\nИгрок недоволен прошлым ответом: «${q}». Коротко признай это и ответь на прошлый вопрос полностью.` : `Вопрос игрока: ${q}`}\n\n(${sameNum.length ? `Номер ${refsIn(asked).map((r) => r.num).join(', ')} есть в нескольких документах: ${[...new Set(sameNum.map((e) => shortTitle(e.doc.title)))].join('; ')}. Если из вопроса не ясно, о каком документе речь, — коротко объясни каждый вариант (по одному предложению, назови документ) и спроси, какой имелся в виду. ` : ''}Ответь коротко: ${sameNum.length ? 'не больше 5 предложений' : '2–4 предложения'}.${t.voice ? VOICE_LINE : ''})`;
       await backend.aiChat(t.id, [
         { role: 'system', content: t.debate ? debateSystem(scope) : system(scope) },
         ...history,
