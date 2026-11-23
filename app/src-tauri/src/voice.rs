@@ -431,7 +431,31 @@ fn tts(app: &AppHandle) -> Result<Arc<OfflineTts>, String> {
 
 /// Слова, которые eSpeak прочитал бы по-английски или по буквам
 fn speakable(text: &str) -> String {
-    let mut t = format!(" {text} ");
+    use regex::Regex;
+    use std::sync::LazyLock;
+    // Числа: точка внутри номера пункта — не конец фразы («4.1» → «4 точка 1», «1.4.2» → «1 точка 4 точка 2»);
+    // «п.4.1» → «пункт 4.1»; «от 10–15» → «от 10 до 15»; «1,5» → «1 целых 5»
+    static ABBR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?i)(^|[^\p{L}])(п|ст|ч)\.\s*(\d)").unwrap());
+    static DOT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\d)\.(\d)").unwrap());
+    static RANGE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(^|[^\p{L}\d])(от\s+)?(\d+)\s*[-–—]\s*(\d+)").unwrap());
+    static COMMA: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\d),(\d)").unwrap());
+    let mut t = ABBR
+        .replace_all(text, |c: &regex::Captures| {
+            let w = match c[2].to_lowercase().as_str() { "п" => "пункт", "ст" => "статья", _ => "часть" };
+            format!("{}{w} {}", &c[1], &c[3])
+        })
+        .into_owned();
+    while DOT.is_match(&t) {
+        t = DOT.replace_all(&t, "$1 точка $2").into_owned();
+    }
+    // «от 10–15» → «от 10 до 15»; «на 10–15» → «на 10, 15» (так и говорят вслух)
+    t = RANGE
+        .replace_all(&t, |c: &regex::Captures| {
+            if c.get(2).is_some() { format!("{}от {} до {}", &c[1], &c[3], &c[4]) } else { format!("{}{}, {}", &c[1], &c[3], &c[4]) }
+        })
+        .into_owned();
+    t = COMMA.replace_all(&t, "$1 целых $2").into_owned();
+    let mut t = format!(" {t} ");
     for (a, b) in [
         ("JAIL", "джейл"), ("Jail", "джейл"), ("WARN", "варн"), ("Warn", "варн"), ("BAN", "бан"), ("Ban", "бан"), ("MUTE", "мут"),
         ("DM", "ди-эм"), ("RK", "эр-ка"), ("PG", "пэ-гэ"), ("MG", "эм-гэ"), ("NonRP", "нон-эр-пэ"), ("RP", "эр-пэ"), ("ООС", "о-о-эс"), ("OOC", "о-о-эс"), ("IC", "ай-си"),
@@ -479,6 +503,8 @@ fn phonemes(app: &AppHandle, text: &str) -> Result<Vec<Vec<i32>>, String> {
                 _ => {}
             }
         }
+        // eSpeak 1.52 читает цифру «1» как «ойдин» (1, 21, 101…) — правим на обычное «один»
+        let clean = clean.replace("ojdʲˈin", "ʌdʲˈin");
         Ok(clean.split_whitespace().collect::<Vec<_>>().join(" "))
     };
     let mut sentences = Vec::new();
@@ -624,6 +650,14 @@ mod tests {
     use super::speakable;
     #[test]
     fn reads_admin_words() {
-        assert_eq!(speakable("JAIL до 120 минут, п. 4.1"), "джейл до 120 минут, пункт 4.1");
+        assert_eq!(speakable("JAIL до 120 минут, п. 4.1"), "джейл до 120 минут, пункт 4 точка 1");
+    }
+    #[test]
+    fn reads_numbers() {
+        assert_eq!(speakable("По п.1.4.2 нельзя."), "По пункт 1 точка 4 точка 2 нельзя.");
+        assert_eq!(speakable("Нарушение пункта 2.13."), "Нарушение пункта 2 точка 13.");
+        assert_eq!(speakable("Мут на 10–15 минут"), "Мут на 10, 15 минут");
+        assert_eq!(speakable("от 10-15 минут, 1,5 часа"), "от 10 до 15 минут, 1 целых 5 часа");
+        assert_eq!(speakable("ст. 12 ч. 3"), "статья 12 часть 3");
     }
 }
