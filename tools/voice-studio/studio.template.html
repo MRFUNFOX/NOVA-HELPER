@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Студия голоса NOVA HELPER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap">
+<style>
+  /* Студия записи голоса для NOVA HELPER: одна фраза на экране, запись, проверка, сохранение в папку.
+     Цвета — как в программе: тёмная тема, жёлтый акцент. */
+  :root {
+    --bg: #121317; --surface: #1b1d22; --surface-2: #24272e; --line: #2e323a;
+    --text: #f2f3f5; --dim: #b6bac3; --muted: #80858f;
+    --accent: #ffc300; --accent-soft: #ffd84d; --on-accent: #1a1400;
+    --ok: #6fdc9a; --warn: #ffb547; --bad: #ff7a7f;
+    --font: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--text); font: 500 15px/1.5 var(--font); }
+  button { font: inherit; color: inherit; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 20px 40px; display: flex; flex-direction: column; gap: 18px; min-height: 100%; }
+  header { display: flex; align-items: center; gap: 14px; }
+  .logo { font-weight: 800; letter-spacing: -0.01em; }
+  .logo b { color: var(--accent); }
+  .grow { flex: 1; }
+  .meta { color: var(--muted); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-weight: 700; cursor: pointer; }
+  .btn:hover { border-color: #3d424c; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--accent-soft); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  kbd { display: inline-block; min-width: 22px; padding: 1px 6px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--line); border-bottom-width: 2px; font: 700 12px/1.5 var(--font); text-align: center; color: var(--dim); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  h1 { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; }
+  h2 { margin: 0 0 10px; font-size: 17px; }
+  p { margin: 0; }
+  .lead { color: var(--dim); max-width: 62ch; }
+  ul.tips { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  ul.tips li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; color: var(--dim); }
+  ul.tips li span:first-child { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: rgba(255, 195, 0, 0.12); color: var(--accent); font-weight: 800; font-size: 13px; }
+  ul.tips b { color: var(--text); }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  select { height: 40px; min-width: 0; flex: 1; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: 600 14px var(--font); }
+  .meter { position: relative; height: 12px; border-radius: 6px; background: var(--surface-2); overflow: hidden; flex: 1; min-width: 160px; }
+  .meter i { position: absolute; inset: 0; background: linear-gradient(90deg, var(--ok) 0 70%, var(--warn) 70% 90%, var(--bad) 90%); clip-path: inset(0 100% 0 0); }
+  .meter .peak { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: 0.8; }
+  .verdict { font-size: 13.5px; font-weight: 700; }
+  .verdict.ok { color: var(--ok); } .verdict.warn { color: var(--warn); } .verdict.bad { color: var(--bad); }
+
+  /* Экран записи */
+  .booth { display: flex; flex-direction: column; gap: 16px; }
+  .prog { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  .prog i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+  .phrase { min-height: 190px; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 26px 28px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line); transition: border-color 0.2s, box-shadow 0.2s; }
+  .phrase.rec { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(255, 122, 127, 0.15); }
+  .phrase .num { color: var(--muted); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; display: flex; gap: 10px; align-items: center; }
+  .phrase .num .done { color: var(--ok); }
+  .phrase .text { font-size: clamp(22px, 3.4vw, 32px); line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; text-wrap: pretty; }
+  .phrase .say { color: var(--accent-soft); font-size: 14px; font-weight: 700; }
+  .next { color: var(--muted); font-size: 14px; }
+  .next b { color: var(--dim); font-weight: 600; }
+
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .recbtn { height: 56px; padding: 0 26px; border-radius: 14px; font-size: 16px; }
+  .recbtn .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--bad); }
+  .recbtn.on { background: var(--bad); border-color: var(--bad); color: #2a0002; }
+  .recbtn.on .dot { background: #2a0002; animation: blink 1s steps(2) infinite; }
+  .wave { width: 100%; height: 70px; display: block; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+  .checks { display: flex; gap: 8px; flex-wrap: wrap; min-height: 28px; }
+  .chip { padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: var(--surface-2); color: var(--dim); }
+  .chip.ok { background: rgba(111, 220, 154, 0.14); color: var(--ok); }
+  .chip.warn { background: rgba(255, 181, 71, 0.14); color: var(--warn); }
+  .chip.bad { background: rgba(255, 122, 127, 0.16); color: var(--bad); }
+  .foot { display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .keys { color: var(--muted); font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  .toggle input { width: 16px; height: 16px; accent-color: var(--accent); }
+  .note { padding: 12px 14px; border-radius: 12px; background: rgba(255, 195, 0, 0.08); color: var(--dim); font-size: 14px; }
+  .note b { color: var(--text); }
+  .err { padding: 12px 14px; border-radius: 12px; background: rgba(255, 122, 127, 0.12); color: var(--bad); font-weight: 600; }
+  [hidden] { display: none !important; }
+  @keyframes blink { 50% { opacity: 0.2; } }
+  @media (prefers-reduced-motion: reduce) { .recbtn.on .dot { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="logo">NOVA <b>HELPER</b> · студия голоса</span>
+    <span class="grow"></span>
+    <span class="meta" id="stat"></span>
+  </header>
+
+  <!-- 1. Подготовка -->
+  <section id="setup" class="card" style="display:flex;flex-direction:column;gap:18px">
+    <h1>Запишем ваш голос для помощника</h1>
+    <p class="lead">На экране по одной фразе. Нажимаете пробел, читаете, замолкаете — запись остановится и сохранится сама. Всего 404 фразы, около 40 минут. Можно в несколько заходов: всё, что записано, лежит в выбранной папке и не потеряется.</p>
+    <ul class="tips">
+      <li><span>1</span><span><b>Тихая комната.</b> Закройте окно, выключите вентилятор и музыку. Шум попадёт в голос помощника.</span></li>
+      <li><span>2</span><span><b>Одно расстояние до микрофона</b> — примерно ладонь, 15–20 см. Не крутите ручки микшера во время записи.</span></li>
+      <li><span>3</span><span><b>Спокойно и ровно</b>, как будто объясняете правило игроку. Без актёрства, в обычном темпе. Ошиблись — просто перезапишите.</span></li>
+      <li><span>4</span><span><b>Читайте как написано.</b> Сокращения произносите так, как подсказано под фразой: DM — «ди-эм», JAIL — «джейл».</span></li>
+    </ul>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <h2>Микрофон</h2>
+      <div class="row">
+        <select id="mic" aria-label="Микрофон"><option value="">Нажмите «Проверить микрофон»</option></select>
+        <button class="btn" id="micBtn">Проверить микрофон</button>
+      </div>
+      <div class="row" id="micRow" hidden>
+        <div class="meter" aria-hidden="true"><i id="lvl"></i><span class="peak" id="pk"></span></div>
+        <span class="verdict" id="micVerdict">Скажите что-нибудь…</span>
+      </div>
+      <p class="meta" id="noiseLine" hidden></p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <h2>Папка для записей</h2>
+      <p class="lead" id="folderHint">Создайте пустую папку, например «Голос NOVA» на рабочем столе, и выберите её. Если продолжаете — выберите ту же папку, записанное подхватится.</p>
+      <div class="row">
+        <button class="btn" id="dirBtn">Выбрать папку</button>
+        <span class="meta" id="dirName"></span>
+      </div>
+    </div>
+    <div id="setupErr" class="err" hidden></div>
+    <div class="row">
+      <button class="btn primary" id="startBtn" disabled style="height:46px;padding:0 22px">Начать запись</button>
+      <span class="meta" id="startHint">Сначала проверьте микрофон и выберите папку</span>
+    </div>
+  </section>
+
+  <!-- 2. Запись -->
+  <section id="booth" class="booth" hidden>
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="phrase" id="phrase">
+      <div class="num"><span id="pnum"></span><span class="done" id="pdone"></span></div>
+      <div class="text" id="ptext"></div>
+      <div class="say" id="psay"></div>
+    </div>
+    <p class="next" id="pnext"></p>
+    <div class="controls">
+      <button class="btn primary recbtn" id="recBtn"><span class="dot"></span><span id="recLabel">Записать</span></button>
+      <button class="btn" id="playBtn" disabled>Прослушать</button>
+      <button class="btn" id="prevBtn">← Назад</button>
+      <button class="btn" id="nextBtn">Дальше →</button>
+    </div>
+    <canvas class="wave" id="wave" width="1640" height="140" aria-label="Звук последней записи"></canvas>
+    <div class="checks" id="checks"></div>
+    <div class="foot">
+      <div class="keys">
+        <span><kbd>Пробел</kbd> записать / стоп</span>
+        <span><kbd>P</kbd> прослушать</span>
+        <span><kbd>←</kbd> <kbd>→</kbd> фразы</span>
+        <span><kbd>N</kbd> следующая незаписанная</span>
+      </div>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="autoStop" checked>Останавливать на паузе</label>
+        <label class="toggle"><input type="checkbox" id="autoNext" checked>Сразу следующая</label>
+      </div>
+    </div>
+    <div id="boothErr" class="err" hidden></div>
+    <div class="note" id="doneNote" hidden><b>Все фразы записаны!</b> Закройте студию. Дальше — обучение голоса: я пришлю пошаговую инструкцию, папку с записями нужно будет запаковать в архив.</div>
+  </section>
+</div>
+
+<script>
+'use strict';
+// [номер, что показать, как произносится (для обучения)]
+const PHRASES = /*PHRASES*/[];
+const RATE = 22050;               // частота голосов Piper
+const MAX_SEC = 25;               // дольше — останавливаем сами
+const $ = (id) => document.getElementById(id);
+
+const st = {
+  stream: null, ctx: null, src: null, proc: null, analyser: null,
+  dir: null, wavs: null, done: new Set(), idx: 0,
+  rec: false, chunks: [], inRate: 48000, startAt: 0,
+  noise: 0.002, heard: false, quietSince: 0,
+  last: null, audio: null,
+};
+
+// ── Микрофон ──
+async function listMics() {
+  const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+  const sel = $('mic'); const cur = sel.value;
+  sel.innerHTML = '';
+  for (const d of devs) {
+    const o = document.createElement('option');
+    o.value = d.deviceId; o.textContent = d.label || 'Микрофон';
+    sel.appendChild(o);
+  }
+  const fifine = devs.find((d) => /fifine|am8/i.test(d.label));
+  if (cur && devs.some((d) => d.deviceId === cur)) sel.value = cur;
+  else if (fifine) sel.value = fifine.deviceId;
+}
+
+async function openMic() {
+  closeMic();
+  const deviceId = $('mic').value;
+  // Без обработки: шумодав и автоусиление Windows портят голос для обучения
+  st.stream = await navigator.mediaDevices.getUserMedia({ audio: {
+    deviceId: deviceId ? { exact: deviceId } : undefined,
+    echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1,
+  } });
+  st.ctx = new AudioContext();
+  st.inRate = st.ctx.sampleRate;
+  st.src = st.ctx.createMediaStreamSource(st.stream);
+  st.analyser = st.ctx.createAnalyser();
+  st.analyser.fftSize = 1024;
+  st.proc = st.ctx.createScriptProcessor(2048, 1, 1);
+  st.proc.onaudioprocess = onAudio;
+  st.src.connect(st.analyser);
+  st.src.connect(st.proc);
+  st.proc.connect(st.ctx.destination); // без этого Chrome не вызывает обработчик (выход — тишина)
+}
+function closeMic() {
+  try { st.proc && st.proc.disconnect(); } catch {}
+  try { st.ctx && st.ctx.close(); } catch {}
+  st.stream && st.stream.getTracks().forEach((t) => t.stop());
+  st.stream = st.ctx = st.proc = st.src = st.analyser = null;
+}
+
+// Каждые ~45 мс: громкость, запись, остановка на паузе
+let meterPeak = 0, meterPeakAt = 0, calib = null;
+function onAudio(e) {
+  const x = e.inputBuffer.getChannelData(0);
+  const out = e.outputBuffer.getChannelData(0); out.fill(0);
+  let sum = 0, peak = 0;
+  for (let i = 0; i < x.length; i++) { const v = x[i]; sum += v * v; const a = v < 0 ? -v : v; if (a > peak) peak = a; }
+  const rms = Math.sqrt(sum / x.length);
+  drawMeter(rms, peak);
+  if (calib) { calib.push(rms); }
+  if (!st.rec) return;
+  st.chunks.push(new Float32Array(x));
+  const now = performance.now();
+  const loud = rms > Math.max(st.noise * 4, 0.006);
+  if (loud) { st.heard = true; st.quietSince = 0; }
+  else if (st.heard && !st.quietSince) st.quietSince = now;
+  if ($('autoStop').checked && st.heard && st.quietSince && now - st.quietSince > 1100) stopRec();
+  else if (now - st.startAt > MAX_SEC * 1000) stopRec();
+}
+
+function db(v) { return v > 0 ? 20 * Math.log10(v) : -100; }
+function drawMeter(rms, peak) {
+  const pct = Math.max(0, Math.min(100, (db(rms) + 60) / 60 * 100));
+  const now = performance.now();
+  if (peak > meterPeak || now - meterPeakAt > 1500) { meterPeak = peak; meterPeakAt = now; }
+  requestAnimationFrame(() => {
+    $('lvl').style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+    $('pk').style.left = Math.max(0, Math.min(99, (db(meterPeak) + 60) / 60 * 100)) + '%';
+    const v = $('micVerdict');
+    if (!st.rec && !calib && $('setup').hidden === false) {
+      if (meterPeak > 0.97) { v.textContent = 'Перегруз! Уберите усиление на микшере'; v.className = 'verdict bad'; }
+      else if (db(meterPeak) > -18) { v.textContent = 'Громкость хорошая'; v.className = 'verdict ok'; }
+      else if (db(meterPeak) > -32) { v.textContent = 'Тихо — прибавьте усиление на микшере'; v.className = 'verdict warn'; }
+      else { v.textContent = 'Скажите что-нибудь…'; v.className = 'verdict'; }
+    }
+  });
+}
+
+// Замер шума комнаты: 2 секунды тишины
+async function measureNoise() {
+  const line = $('noiseLine'); line.hidden = false;
+  line.textContent = 'Помолчите 2 секунды — меряю шум комнаты…';
+  calib = [];
+  await new Promise((r) => setTimeout(r, 2000));
+  const xs = calib.sort((a, b) => a - b); calib = null;
+  const n = xs.length ? xs[Math.floor(xs.length * 0.5)] : 0.002;
+  st.noise = n;
+  const d = Math.round(db(n));
+  line.textContent = d < -60 ? `Шум комнаты ${d} дБ — отлично, тихо.` : d < -48 ? `Шум комнаты ${d} дБ — нормально.` : `Шум комнаты ${d} дБ — шумновато. Выключите вентиляторы или уменьшите усиление.`;
+  line.style.color = d < -48 ? 'var(--ok)' : 'var(--warn)';
+}
+
+// ── Папка ──
+async function pickDir() {
+  if (!window.showDirectoryPicker) throw new Error('Этот браузер не умеет сохранять в папку. Откройте файл в Google Chrome или Microsoft Edge.');
+  const dir = await window.showDirectoryPicker({ id: 'nova-voice', mode: 'readwrite', startIn: 'desktop' });
+  st.dir = dir;
+  st.wavs = await dir.getDirectoryHandle('wavs', { create: true });
+  st.done.clear();
+  for await (const [name] of st.wavs.entries()) {
+    const m = /^(\d{4})\.wav$/.exec(name);
+    if (m) st.done.add(m[1]);
+  }
+  $('dirName').textContent = `«${dir.name}» · уже записано: ${st.done.size} из ${PHRASES.length}`;
+}
+
+async function writeFile(dir, name, data) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable();
+  await w.write(data); await w.close();
+}
+
+// metadata.csv для обучения Piper: «файл|текст как произносится»
+async function writeMeta() {
+  const lines = PHRASES.filter(([id]) => st.done.has(id)).map(([id, , say]) => `${id}.wav|${say}`);
+  await writeFile(st.dir, 'metadata.csv', lines.join('\n') + '\n');
+}
+
+// ── Запись ──
+function startRec() {
+  if (st.rec || !st.ctx) return;
+  st.audio && st.audio.pause();
+  st.chunks = []; st.heard = false; st.quietSince = 0;
+  st.startAt = performance.now();
+  st.rec = true;
+  $('phrase').classList.add('rec');
+  $('recBtn').classList.add('on'); $('recLabel').textContent = 'Стоп';
+  $('checks').innerHTML = '<span class="chip">Говорите…</span>';
+}
+
+async function stopRec() {
+  if (!st.rec) return;
+  st.rec = false;
+  $('phrase').classList.remove('rec');
+  $('recBtn').classList.remove('on'); $('recLabel').textContent = 'Записать';
+  const len = st.chunks.reduce((a, c) => a + c.length, 0);
+  const raw = new Float32Array(len); let o = 0;
+  for (const c of st.chunks) { raw.set(c, o); o += c.length; }
+  st.chunks = [];
+  const pcm = await resample(raw, st.inRate, RATE);
+  const cut = trim(pcm);
+  const checks = judge(cut, PHRASES[st.idx][2]);
+  st.last = cut;
+  drawWave(cut);
+  showChecks(checks);
+  $('playBtn').disabled = !cut.length;
+  if (!checks.save) return;
+  try {
+    const id = PHRASES[st.idx][0];
+    await writeFile(st.wavs, `${id}.wav`, wav(cut));
+    st.done.add(id);
+    await writeMeta();
+    render();
+    if ($('autoNext').checked && checks.good) setTimeout(() => goNext(), 700);
+  } catch (e) { showErr('booth', 'Не получилось сохранить запись в папку: ' + e.message); }
+}
+
+async function resample(x, from, to) {
+  if (!x.length) return x;
+  const off = new OfflineAudioContext(1, Math.ceil(x.length * to / from), to);
+  const b = off.createBuffer(1, x.length, from); b.copyToChannel(x, 0);
+  const s = off.createBufferSource(); s.buffer = b; s.connect(off.destination); s.start();
+  return (await off.startRendering()).getChannelData(0).slice();
+}
+
+// Обрезать тишину по краям, оставив немного воздуха
+function trim(x) {
+  const F = Math.round(RATE * 0.01);
+  const frames = [];
+  for (let i = 0; i + F <= x.length; i += F) {
+    let s = 0; for (let j = i; j < i + F; j++) s += x[j] * x[j];
+    frames.push(Math.sqrt(s / F));
+  }
+  const top = Math.max(0, ...frames);
+  const thr = Math.max(st.noise * 3, top * 0.04, 0.003);
+  let a = frames.findIndex((v) => v > thr);
+  let b = frames.length - 1 - [...frames].reverse().findIndex((v) => v > thr);
+  if (a < 0) return new Float32Array(0);
+  a = Math.max(0, a - 15); b = Math.min(frames.length - 1, b + 20);
+  const out = x.slice(a * F, (b + 1) * F);
+  // мягкие края, чтобы не было щелчков
+  const fade = Math.min(220, out.length >> 2);
+  for (let i = 0; i < fade; i++) { const k = i / fade; out[i] *= k; out[out.length - 1 - i] *= k; }
+  return out;
+}
+
+function judge(x, say) {
+  const res = [];
+  const sec = x.length / RATE;
+  let peak = 0; for (const v of x) { const a = Math.abs(v); if (a > peak) peak = a; }
+  const words = say.split(/\s+/).length;
+  let good = true, save = true;
+  if (!x.length || peak < 0.02) { res.push(['bad', 'Ничего не слышно — проверьте микрофон']); save = good = false; }
+  else {
+    if (peak > 0.985) { res.push(['bad', 'Перегруз — убавьте усиление и перезапишите']); good = false; }
+    else if (db(peak) < -24) { res.push(['warn', 'Тихо — говорите громче или ближе']); good = false; }
+    else res.push(['ok', 'Громкость в порядке']);
+    const rate = words / sec;
+    if (rate > 4.2) { res.push(['warn', 'Быстровато — можно спокойнее']); good = false; }
+    else if (sec > 2 && rate < 1.2) { res.push(['warn', 'Долго — может, лишняя пауза?']); good = false; }
+    else res.push(['ok', `${sec.toFixed(1)} с`]);
+    if (st.heard === false) { res.push(['warn', 'Остановлено раньше, чем вы начали?']); }
+  }
+  return { res, good, save };
+}
+
+function showChecks(c) {
+  const box = $('checks'); box.innerHTML = '';
+  for (const [k, t] of c.res) { const s = document.createElement('span'); s.className = 'chip ' + k; s.textContent = t; box.appendChild(s); }
+  if (c.save && !c.good) { const s = document.createElement('span'); s.className = 'chip'; s.textContent = 'Сохранено. Можно перезаписать пробелом'; box.appendChild(s); }
+}
+
+function drawWave(x) {
+  const cv = $('wave'), g = cv.getContext('2d');
+  g.clearRect(0, 0, cv.width, cv.height);
+  if (!x.length) return;
+  const mid = cv.height / 2, step = Math.max(1, Math.floor(x.length / cv.width));
+  g.fillStyle = '#ffc300';
+  for (let px = 0; px < cv.width; px++) {
+    let mx = 0; const i0 = px * step;
+    for (let j = i0; j < i0 + step && j < x.length; j++) { const a = Math.abs(x[j]); if (a > mx) mx = a; }
+    const h = Math.max(1, mx * mid * 0.95);
+    g.fillRect(px, mid - h, 1, h * 2);
+  }
+}
+
+// 16-бит PCM WAV, моно
+function wav(x) {
+  const buf = new ArrayBuffer(44 + x.length * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + x.length * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, RATE, true); v.setUint32(28, RATE * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, x.length * 2, true);
+  for (let i = 0; i < x.length; i++) { const s = Math.max(-1, Math.min(1, x[i])); v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+async function play() {
+  st.audio && st.audio.pause();
+  let blob;
+  if (st.last && st.last.length) blob = wav(st.last);
+  else {
+    const id = PHRASES[st.idx][0];
+    if (!st.done.has(id)) return;
+    blob = await (await st.wavs.getFileHandle(`${id}.wav`)).getFile();
+  }
+  st.audio = new Audio(URL.createObjectURL(blob));
+  st.audio.play();
+}
+
+// ── Навигация ──
+function go(i) {
+  if (st.rec) return;
+  st.idx = Math.max(0, Math.min(PHRASES.length - 1, i));
+  st.last = null; drawWave(new Float32Array(0)); $('checks').innerHTML = '';
+  render();
+}
+function goNext() {
+  for (let k = 1; k <= PHRASES.length; k++) {
+    const j = (st.idx + k) % PHRASES.length;
+    if (!st.done.has(PHRASES[j][0])) return go(j);
+  }
+  render();
+}
+
+function render() {
+  const [id, show, say] = PHRASES[st.idx];
+  $('pnum').textContent = `Фраза ${st.idx + 1} из ${PHRASES.length}`;
+  $('pdone').textContent = st.done.has(id) ? '✓ записана' : '';
+  $('ptext').textContent = show;
+  const hints = [];
+  for (const [a, b] of [['JAIL', 'джейл'], ['NonRP', 'нон-эр-пэ'], ['DM', 'ди-эм'], ['RK', 'эр-ка'], ['PG', 'пэ-гэ'], ['MG', 'эм-гэ'], ['OOC', 'о-о-эс'], ['ООС', 'о-о-эс'], ['RP', 'эр-пэ'], ['IC', 'ай-си']]) {
+    if (new RegExp('(^|[^A-Za-zА-Яа-я])' + a + '($|[^A-Za-zА-Яа-я])').test(show) && !hints.some((h) => h.startsWith(a))) hints.push(`${a} — «${b}»`);
+  }
+  $('psay').textContent = hints.length ? 'Произносите: ' + hints.join(', ') : '';
+  const nx = PHRASES[st.idx + 1];
+  $('pnext').innerHTML = '';
+  if (nx) { const b = document.createElement('b'); b.textContent = nx[1]; $('pnext').append('Дальше: ', b); }
+  $('playBtn').disabled = !st.done.has(id) && !(st.last && st.last.length);
+  const n = st.done.size;
+  $('progBar').style.width = (n / PHRASES.length * 100) + '%';
+  $('stat').textContent = `Записано ${n} из ${PHRASES.length}`;
+  $('doneNote').hidden = n < PHRASES.length;
+}
+
+function showErr(where, msg) { const e = $(where + 'Err'); e.textContent = msg; e.hidden = false; }
+
+// ── Кнопки ──
+$('micBtn').onclick = async () => {
+  $('setupErr').hidden = true;
+  try {
+    await openMic();
+    await listMics();
+    await openMic(); // уже с выбранным (после разрешения видны названия)
+    $('micRow').hidden = false;
+    $('micBtn').textContent = 'Проверить заново';
+    await measureNoise();
+    ready();
+  } catch (e) { showErr('setup', e.name === 'NotAllowedError' ? 'Браузер не дал доступ к микрофону. Нажмите на значок замка слева от адреса и разрешите микрофон.' : 'Микрофон не открылся: ' + (e.message || e.name) + '. Проверьте, что он подключён, и выберите его в списке.'); }
+};
+$('mic').onchange = async () => { if (st.ctx) { await openMic(); await measureNoise(); } };
+$('dirBtn').onclick = async () => {
+  $('setupErr').hidden = true;
+  try { await pickDir(); ready(); } catch (e) { if (e.name !== 'AbortError') showErr('setup', e.message); }
+};
+function ready() {
+  const ok = !!(st.ctx && st.dir);
+  $('startBtn').disabled = !ok;
+  $('startHint').textContent = ok ? (st.done.size ? `Продолжим с фразы, которую ещё не записали` : 'Всё готово') : 'Сначала проверьте микрофон и выберите папку';
+}
+$('startBtn').onclick = () => {
+  $('setup').hidden = true; $('booth').hidden = false;
+  st.idx = 0;
+  if (st.done.has(PHRASES[0][0])) { st.idx = PHRASES.length - 1; goNext(); } else render();
+  $('recBtn').focus();
+};
+$('recBtn').onclick = () => (st.rec ? stopRec() : startRec());
+$('playBtn').onclick = play;
+$('prevBtn').onclick = () => go(st.idx - 1);
+$('nextBtn').onclick = () => go(st.idx + 1);
+document.addEventListener('keydown', (e) => {
+  if ($('booth').hidden || e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) st.rec ? stopRec() : startRec(); }
+  else if (e.code === 'KeyP') play();
+  else if (e.code === 'ArrowLeft') go(st.idx - 1);
+  else if (e.code === 'ArrowRight') go(st.idx + 1);
+  else if (e.code === 'KeyN') goNext();
+});
+// Пробел на кнопке иначе «нажимает» её ещё раз при отпускании
+document.addEventListener('keyup', (e) => { if (e.code === 'Space' && !$('booth').hidden) e.preventDefault(); }, true);
+$('stat').textContent = `${PHRASES.length} фраз`;
+</script>
+</body>
+</html>
