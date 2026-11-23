@@ -1,0 +1,57 @@
+# Проверка сборки под Windows — ничего не выпускает: ни релиза, ни обновления игрокам.
+# Нужна, чтобы убедиться, что программа собирается (например, после добавления голосового движка),
+# до того как делать тестовую сборку для команды.
+name: Проверка сборки
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+
+      - name: Установка
+        working-directory: app
+        run: npm ci
+
+      - name: Тесты интерфейса
+        working-directory: app
+        run: npm test
+
+      - name: Интерфейс
+        working-directory: app
+        run: npm run build
+
+      - name: Тесты программы
+        working-directory: app/src-tauri
+        run: cargo test --release
+
+      - name: Сборка программы
+        working-directory: app/src-tauri
+        run: cargo build --release
+
+      - name: Что получилось
+        working-directory: app/src-tauri/target/release
+        shell: bash
+        run: |
+          ls -la *.exe
+          # Голосовой движок слинкован статически — отдельных onnxruntime.dll рядом быть не должно
+          ls *.dll 2>/dev/null || echo "DLL рядом нет — хорошо"
