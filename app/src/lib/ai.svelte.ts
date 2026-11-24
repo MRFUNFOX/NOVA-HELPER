@@ -828,6 +828,60 @@ export function pieces(text: string): Piece[] {
   return out;
 }
 
+/** Кусок текста ответа с выделением: название документа, номер пункта, суть пункта в строке списка */
+export type RichPiece = Piece | { t: 'doc' | 'num' | 'dim'; v: string };
+
+const DOC_WORD = /(правил|кодекс|закон|конституц|устав|положени|регламент)/i;
+const NUM = /(?<![\d.\p{L}])(\d{1,2}(?:\.\d{1,2}){1,2})(?![\d%]|\.\d)/gu;
+const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Ответ для показа: названия документов — жёлтым жирным, номера пунктов — плашкой,
+ * в строке списка «- Документ — суть» суть чуть приглушена. Вердикт (жирный) не трогаем.
+ * names — названия документов, которые ищем в тексте (полные и короткие).
+ */
+export function rich(text: string, names: string[] = []): RichPiece[] {
+  const known = [...new Set(names.filter((n) => n.length >= 6))].sort((a, b) => b.length - a.length);
+  const docRe = known.length ? new RegExp(`(${known.map(esc).join('|')})`, 'giu') : null;
+  // Номера и названия внутри обычного куска текста
+  const inner = (v: string, dim: boolean): RichPiece[] => {
+    const out: RichPiece[] = [];
+    const parts = docRe ? v.split(docRe) : [v];
+    parts.forEach((part, i) => {
+      if (!part) return;
+      if (i % 2 === 1) { out.push({ t: 'doc', v: part }); return; }
+      let last = 0;
+      for (const m of part.matchAll(NUM)) {
+        if (m.index! > last) out.push({ t: dim ? 'dim' : 'text', v: part.slice(last, m.index) });
+        out.push({ t: 'num', v: m[1]! });
+        last = m.index! + m[0].length;
+      }
+      if (last < part.length) out.push({ t: dim ? 'dim' : 'text', v: part.slice(last) });
+    });
+    return out;
+  };
+  const out: RichPiece[] = [];
+  // Строка списка: «- Название документа — суть». Если строка разорвана жирным или ссылкой, «суть» гасим до конца строки
+  let dimLine = false;
+  for (const p of pieces(text)) {
+    if (p.t !== 'text') { out.push(p); continue; }
+    const lines = p.v.split(/(\n)/);
+    lines.forEach((line, li) => {
+      if (line === '\n') { dimLine = false; out.push({ t: 'text', v: line }); return; }
+      if (li > 0 || out.length === 0 || (out.at(-1)?.t === 'text' && (out.at(-1) as { v: string }).v.endsWith('\n'))) {
+        const m = /^(\s*[-–•]\s+)(.{3,80}?)(\s+[—–]\s+)(.*)$/su.exec(line);
+        if (m && DOC_WORD.test(m[2]!) && !/\*\*/.test(m[2]!)) {
+          out.push({ t: 'text', v: m[1]! }, { t: 'doc', v: m[2]! }, { t: 'dim', v: m[3]! }, ...inner(m[4]!, true));
+          dimLine = true;
+          return;
+        }
+      }
+      out.push(...inner(line, dimLine));
+    });
+  }
+  return out.filter((x) => !('v' in x) || x.v !== '');
+}
+
 function readHistory(): HistItem[] { try { return sanitizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]')); } catch { return []; } }
 function readFlag(key: string) { try { return localStorage.getItem(key) === '1'; } catch { return false; } }
 
