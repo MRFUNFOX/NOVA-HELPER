@@ -347,7 +347,17 @@ impl Vad {
 
 /// Распознанное — как обычный вопрос: с большой буквы
 fn tidy(text: &str) -> String {
-    let t = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let mut words: Vec<&str> = text.split_whitespace().collect();
+    // «Э-э, вопрос к…» → «Вопрос к…»: звуки раздумья в начале фразы
+    let filler = |w: &str| {
+        let w = w.trim_matches(|c: char| !c.is_alphabetic() && c != '-').to_lowercase();
+        let letters: String = w.chars().filter(|c| c.is_alphabetic()).collect();
+        !letters.is_empty() && letters.chars().all(|c| matches!(c, 'э' | 'м' | 'а')) && letters.chars().count() <= 4 && letters != "а" && !matches!(letters.as_str(), "мама" | "ам")
+    };
+    while words.len() > 1 && filler(words[0]) {
+        words.remove(0);
+    }
+    let t = words.join(" ");
     let mut c = t.chars();
     c.next().map(|f| f.to_uppercase().collect::<String>() + c.as_str()).unwrap_or_default()
 }
@@ -451,6 +461,9 @@ mod tests {
     fn capitalizes() {
         assert_eq!(tidy("  меня  убили  это dm "), "Меня убили это dm");
         assert_eq!(tidy(""), "");
+        assert_eq!(tidy("Э-э, вопрос к кодексам."), "Вопрос к кодексам.");
+        assert_eq!(tidy("Эм... ээ можно ли грабить?"), "Можно ли грабить?");
+        assert_eq!(tidy("А что будет за DM?"), "А что будет за DM?");
     }
 }
 

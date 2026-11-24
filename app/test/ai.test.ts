@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerText, looksLikeDispute, parseVerdict, pieces, refsIn } from '../src/lib/ai.svelte';
+import { answerText, docMentioned, looksLikeDispute, parseVerdict, pieces, refsIn, spokenNumbers } from '../src/lib/ai.svelte';
 import { learn } from '../src/lib/learn.svelte';
 
 describe('ссылки в ответе', () => {
@@ -54,5 +54,27 @@ describe('разъяснения к вопросу', () => {
     expect(learn.relevant('Можно носить бронежилет?', 'project')).toEqual([]);
     expect(learn.relevant('Это был ответный огонь', 'project').map((n) => n.id)).toEqual(['b']);
     expect(learn.relevant('Сколько дают за угон?', 'laws')).toEqual([]);
+  });
+});
+
+describe('номера, сказанные голосом', () => {
+  it('числа словами превращаются в цифры', () => {
+    expect(spokenNumbers('Глава третья, статья двенадцатая, что значит?')).toBe('Глава 3, статья 12, что значит?');
+    expect(spokenNumbers('пункт четыре точка один')).toBe('пункт 4.1');
+    expect(spokenNumbers('статья двадцать третья')).toBe('статья 23');
+    expect(spokenNumbers('пункт два точка тринадцать')).toBe('пункт 2.13');
+    expect(spokenNumbers('Моя семья и семь друзей')).toBe('Моя семья и 7 друзей');
+  });
+  it('номер находится и до, и после слова «статья»', () => {
+    expect(refsIn('Э-э, вопрос к Дорожному кодексу. Глава третья, статья двенадцатая, что значит?').map((r) => r.num)).toContain('12');
+    expect(refsIn('Что значит двенадцатая статья?').map((r) => r.num)).toEqual(['12']);
+    expect(refsIn('А что по пункту четыре точка один').map((r) => r.num)).toEqual(['4.1']);
+  });
+  it('названный документ узнаётся по отличительному слову', () => {
+    const q = 'вопрос к кодексам, а конкретно к Дорожному кодексу';
+    expect(docMentioned('Дорожный Кодекс Штата San Andreas', q)).toBe(true);
+    expect(docMentioned('Уголовный Кодекс Штата San-Andreas', q)).toBe(false);
+    expect(docMentioned('Административный Кодекс Штата San Andreas', 'по административному')).toBe(true);
+    expect(docMentioned('Общие правила проекта', 'по общим правилам')).toBe(false);
   });
 });
