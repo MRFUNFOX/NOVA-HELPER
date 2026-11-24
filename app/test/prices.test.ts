@@ -70,10 +70,10 @@ describe('цены скупщиков', () => {
     expect(expectedTime(t + 2 * 60e3)).toBe(t);
     // 01:03 МСК — ещё ждём 01:05, последние положенные — 00:05
     expect(expectedTime(t + 58 * 60e3)).toBe(t);
-    // Свежий файл — следующая проверка в 01:05:50, когда сборщик обычно уже положил цены
-    expect(nextCheckIn(file, t + 10 * 60e3)).toBe(50 * 60e3 + 50e3);
-    // В 01:05:10 цен ещё не может быть — ждём до 01:05:50, а не дёргаем GitHub
-    expect(nextCheckIn(file, t + 60 * 60e3 + 10e3)).toBe(40e3);
+    // Свежий файл — следующая проверка в 01:05:15, раньше цен не бывает
+    expect(nextCheckIn(file, t + 10 * 60e3)).toBe(50 * 60e3 + 15e3);
+    // В 01:05:05 цен ещё не может быть — ждём до 01:05:15, а не дёргаем GitHub
+    expect(nextCheckIn(file, t + 60 * 60e3 + 5e3)).toBe(10e3);
     // Цены 01:05 ещё не пришли: до 01:07 — каждые 5 с, потом реже, через полчаса — редко
     expect(nextCheckIn(file, t + 61 * 60e3)).toBe(5e3);
     expect(nextCheckIn(file, t + 66 * 60e3)).toBe(30e3);
