@@ -47,6 +47,8 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: app/src-tauri -> target
+          # Новый ключ — сброс кеша: в старом остались следы сборки распознавания речи без её библиотек
+          key: voice-asr-1
 
       - name: Установка
         working-directory: app
