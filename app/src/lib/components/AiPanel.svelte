@@ -266,8 +266,11 @@
             {/if}
             {#if !t.pending && !t.debate}
               <div class="acts">
+                {#if !t.detail && t === ai.turns.at(-1)}
+                  <button class="act" onclick={() => ai.more(t)} disabled={ai.busy} title="Объяснить логику: какой пункт, почему, какие исключения"><Icon name="chat" size={14} />Подробнее</button>
+                {/if}
                 <button class="act" onclick={() => copy(t)} title="Скопировать ответ — например, для репорта"><Icon name={copied === t.id ? 'check' : 'copy'} size={14} />{copied === t.id ? 'Скопировано' : 'Копировать'}</button>
-                <button class="act" onclick={() => send(t.q, true)} disabled={ai.busy} title="Задать этот вопрос снова и получить свежий ответ"><Icon name="refresh" size={14} />Спросить снова</button>
+                <button class="act icon" onclick={() => send(t.detail ? (ai.turns.at(-2)?.q ?? t.q) : t.q, true)} disabled={ai.busy} title="Спросить снова и получить свежий ответ" aria-label="Спросить снова"><Icon name="refresh" size={14} /></button>
                 <span class="rate">
                   <button class="act icon" class:on={t.rating === 'up'} onclick={() => ai.rate(t, 'up')} title="Ответ помог" aria-label="Ответ помог" aria-pressed={t.rating === 'up'}><Icon name="thumbup" size={15} /></button>
                   <button class="act icon down" class:on={t.rating === 'down'} onclick={() => ai.rate(t, 'down')} title="Ответ не помог" aria-label="Ответ не помог" aria-pressed={t.rating === 'down'}><Icon name="thumbdown" size={15} /></button>
