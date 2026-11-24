@@ -32,14 +32,22 @@ impl Provider {
     /// при «лимит исчерпан» пробуем следующую.
     fn answer_models(self) -> &'static [&'static str] {
         match self {
-            Provider::Groq => &["openai/gpt-oss-120b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"],
+            Provider::Groq => &["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"],
+            Provider::Zai => &["glm-4.7-flash", "glm-4.5-flash"],
+        }
+    }
+    /// Перепроверка ответа: у Groq — другая сильная модель со своим лимитом,
+    /// чтобы не ждать, пока у основной освободится лимит после самого ответа
+    fn check_models(self) -> &'static [&'static str] {
+        match self {
+            Provider::Groq => &["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "llama-3.3-70b-versatile"],
             Provider::Zai => &["glm-4.7-flash", "glm-4.5-flash"],
         }
     }
     /// Для подбора ключевых слов хватает модели попроще — и лимит у неё отдельный
     fn helper_models(self) -> &'static [&'static str] {
         match self {
-            Provider::Groq => &["openai/gpt-oss-20b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"],
+            Provider::Groq => &["openai/gpt-oss-20b", "qwen/qwen3.8-27b", "llama-3.1-8b-instant", "llama-3.3-70b-versatile", "openai/gpt-oss-120b"],
             Provider::Zai => &["glm-4.5-flash", "glm-4.7-flash"],
         }
     }
@@ -237,7 +245,7 @@ pub fn ai_clear_key(app: AppHandle) -> Result<AiStatus, String> {
     Ok(status_of(&s))
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct Msg {
     role: String,
     content: String,
@@ -252,9 +260,13 @@ fn body(p: Provider, model: &str, messages: &[Msg], stream: bool, json_mode: boo
     if p == Provider::Zai {
         b["thinking"] = json!({ "type": if think > 0 { "enabled" } else { "disabled" } });
     } else if model.starts_with("openai/gpt-oss") {
-        // Рассуждения нужны, чтобы модель вдумалась в ситуацию; показываем их только команде
-        b["reasoning_effort"] = json!(match think { 0 => "low", 1 => "medium", _ => "high" });
+        // Рассуждения нужны, чтобы модель вдумалась в ситуацию; показываем их только команде.
+        // «high» не используем: на бесплатном лимите модель тратит на раздумья всё и не успевает ответить
+        b["reasoning_effort"] = json!(if think > 0 { "medium" } else { "low" });
         b["include_reasoning"] = json!(think > 0);
+    } else if model.starts_with("qwen/") {
+        // Без этого Qwen пишет раздумья прямо в ответ тегами <think>
+        b["reasoning_format"] = json!(if think > 0 && !json_mode { "parsed" } else { "hidden" });
     }
     if json_mode {
         b["response_format"] = json!({ "type": "json_object" });
@@ -278,7 +290,7 @@ pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>, level: Option<u8>) 
     let (models, think, max) = match level {
         0 => (p.helper_models(), 0, 600),
         1 => (p.helper_models(), 1, 1500),
-        _ => (p.answer_models(), 1, 2500),
+        _ => (p.check_models(), 1, 2000),
     };
     let mut last = String::new();
     for model in pick(models, &s.models) {
@@ -289,10 +301,12 @@ pub async fn ai_complete(app: AppHandle, messages: Vec<Msg>, level: Option<u8>) 
         let code = resp.status();
         let text = resp.text().await.unwrap_or_default();
         if code.is_success() {
-            let content = serde_json::from_str::<Value>(&text)
-                .ok()
-                .and_then(|v| v["choices"][0]["message"]["content"].as_str().map(String::from))
-                .unwrap_or_default();
+            let content = strip_think(
+                &serde_json::from_str::<Value>(&text)
+                    .ok()
+                    .and_then(|v| v["choices"][0]["message"]["content"].as_str().map(String::from))
+                    .unwrap_or_default(),
+            );
             if !content.trim().is_empty() {
                 return Ok(content);
             }
@@ -355,21 +369,23 @@ struct Opened {
 }
 
 /// Ошибка открытия потока: код ответа (если был) и понятное сообщение
-type OpenErr = (Option<u16>, String);
+/// Код ошибки, текст для игрока и сколько секунд просит подождать сервис (при 429)
+type OpenErr = (Option<u16>, String, Option<f32>);
 
 /// Отправить вопрос модели и дождаться первых слов ответа
 async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'static str, messages: &[Msg], think: u8) -> Result<Opened, OpenErr> {
     let mut resp = http
         .post(format!("{}/chat/completions", p.api()))
         .bearer_auth(key)
-        .json(&body(p, model, messages, true, false, if think > 1 { 3000 } else { 2000 }, think))
+        .json(&body(p, model, messages, true, false, if think > 1 { 2600 } else { 2000 }, think))
         .send()
         .await
-        .map_err(|e| (None, explain(p, None, "", Some(&e))))?;
+        .map_err(|e| (None, explain(p, None, "", Some(&e)), None))?;
     let code = resp.status();
     if !code.is_success() {
+        let wait = retry_after(resp.headers());
         let text = resp.text().await.unwrap_or_default();
-        return Err((Some(code.as_u16()), explain(p, Some(code), &text, None)));
+        return Err((Some(code.as_u16()), explain(p, Some(code), &text, None), wait.or_else(|| wait_in_text(&text))));
     }
     let mut buf = String::new();
     loop {
@@ -382,8 +398,8 @@ async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'st
                 }
             }
             // Поток закончился, а текста нет
-            Ok(None) => return Err((Some(503), format!("Пустой ответ {}", p.name()))),
-            Err(e) => return Err((None, explain(p, None, "", Some(&e)))),
+            Ok(None) => return Err((Some(503), format!("Пустой ответ {}", p.name()), None)),
+            Err(e) => return Err((None, explain(p, None, "", Some(&e)), None)),
         }
     }
 }
@@ -391,6 +407,43 @@ async fn open_stream(http: &reqwest::Client, p: Provider, key: &str, model: &'st
 /// Лимит исчерпан, запрос велик для лимита модели (413) или модель недоступна — можно попробовать другую
 fn retryable(e: &OpenErr) -> bool {
     matches!(e.0, Some(429 | 413 | 404 | 400 | 503))
+}
+
+/// Столько секунд ждём лимит лучшей модели, прежде чем перейти на следующую
+const MAX_WAIT: f32 = 20.0;
+
+/// Заголовок retry-after (секунды)
+fn retry_after(h: &reqwest::header::HeaderMap) -> Option<f32> {
+    h.get("retry-after")?.to_str().ok()?.trim().parse::<f32>().ok()
+}
+
+/// «Please try again in 7.48s» / «in 1m2.5s» в тексте ошибки Groq
+fn wait_in_text(text: &str) -> Option<f32> {
+    let i = text.find("try again in ")? + "try again in ".len();
+    let rest = &text[i..];
+    let end = rest.find(|c: char| !(c.is_ascii_digit() || c == '.' || c == 'm' || c == 's')).unwrap_or(rest.len());
+    let t = rest[..end].trim_end_matches('.');
+    let (min, sec) = match t.split_once('m') {
+        Some((m, s)) => (m.parse::<f32>().ok()?, s.trim_end_matches('s').parse::<f32>().unwrap_or(0.0)),
+        None => (0.0, t.trim_end_matches('s').parse::<f32>().ok()?),
+    };
+    Some(min * 60.0 + sec)
+}
+
+/// Раздумья Qwen и других моделей тегами <think>…</think> — не часть ответа
+fn strip_think(s: &str) -> String {
+    let mut out = s.to_string();
+    while let (Some(a), Some(b)) = (out.find("<think>"), out.find("</think>")) {
+        if b < a { break; }
+        out.replace_range(a..b + "</think>".len(), "");
+    }
+    out.trim().to_string()
+}
+
+#[derive(Serialize, Clone)]
+struct Wait<'a> {
+    id: &'a str,
+    seconds: u32,
 }
 
 /// Ответ на вопрос: текст приходит по кусочкам событиями `ai-chunk`, по мере того как нейросеть его пишет.
@@ -425,15 +478,29 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>, deep: Optio
         }
     } else {
         let mut res = Err(String::new());
-        for model in models {
+        let mut waited = false;
+        let mut i = 0;
+        while i < models.len() {
+            let model = models[i];
             match open_stream(&http, p, &s.key, model, &messages, think).await {
                 Ok(o) => { res = Ok(o); break; }
                 Err(e) => {
+                    // Лимит лучшей модели освободится через несколько секунд — лучше подождать, чем отвечать моделью слабее
+                    if e.0 == Some(429) && !waited && i == 0 {
+                        if let Some(w) = e.2.filter(|w| *w <= MAX_WAIT) {
+                            waited = true;
+                            let _ = app.emit("ai-wait", Wait { id: &id, seconds: w.ceil() as u32 });
+                            tokio::time::sleep(Duration::from_secs_f32(w + 0.5)).await;
+                            let _ = app.emit("ai-wait", Wait { id: &id, seconds: 0 });
+                            continue;
+                        }
+                    }
                     let again = retryable(&e);
                     res = Err(e.1);
                     if !again { break; }
                 }
             }
+            i += 1;
         }
         res
     };
@@ -467,9 +534,51 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>, deep: Optio
         }
     }
     if full.trim().is_empty() {
-        return Err(format!("{} долго думала и не успела ответить. Спросите ещё раз или короче.", p.name()));
+        // Модель потратила всё на раздумья. Её раздумья уже есть — просим коротко ответить по ним, без новых раздумий
+        let mut again = messages.clone();
+        if !thought.trim().is_empty() {
+            let t: String = thought.chars().rev().take(2500).collect::<Vec<_>>().into_iter().rev().collect();
+            again.push(Msg { role: "assistant".into(), content: format!("(Мои черновые рассуждения: {t})") });
+            again.push(Msg { role: "user".into(), content: "Хватит рассуждать. Дай итоговый ответ по правилам ответа, коротко.".into() });
+        }
+        let (text, used) = plain_answer(&app, &http, p, &s.key, &models, &again, &id).await
+            .map_err(|_| format!("{} долго думала и не успела ответить. Спросите ещё раз или короче.", p.name()))?;
+        let _ = app.emit("ai-chunk", Chunk { id: &id, delta: &text });
+        return Ok(json!({ "text": text, "model": used, "reasoning": thought }));
     }
-    Ok(json!({ "text": full, "model": model, "reasoning": thought }))
+    Ok(json!({ "text": strip_think(&full), "model": model, "reasoning": thought }))
+}
+
+/// Ответ без раздумий и без потока — запасной путь, когда модель «задумалась» и не ответила
+async fn plain_answer(app: &AppHandle, http: &reqwest::Client, p: Provider, key: &str, models: &[&'static str], messages: &[Msg], id: &str) -> Result<(String, &'static str), String> {
+    let mut last = String::new();
+    let mut waited = false;
+    let mut i = 0;
+    while i < models.len() {
+        let model = models[i];
+        let resp = http.post(format!("{}/chat/completions", p.api())).bearer_auth(key).json(&body(p, model, messages, false, false, 1200, 0)).send().await
+            .map_err(|e| explain(p, None, "", Some(&e)))?;
+        let code = resp.status();
+        let wait = retry_after(resp.headers());
+        let text = resp.text().await.unwrap_or_default();
+        if code.is_success() {
+            let content = strip_think(&serde_json::from_str::<Value>(&text).ok().and_then(|v| v["choices"][0]["message"]["content"].as_str().map(String::from)).unwrap_or_default());
+            if !content.is_empty() {
+                return Ok((content, model));
+            }
+        } else if code.as_u16() == 429 && !waited {
+            if let Some(w) = wait.or_else(|| wait_in_text(&text)).filter(|w| *w <= MAX_WAIT) {
+                waited = true;
+                let _ = app.emit("ai-wait", Wait { id, seconds: w.ceil() as u32 });
+                tokio::time::sleep(Duration::from_secs_f32(w + 0.5)).await;
+                let _ = app.emit("ai-wait", Wait { id, seconds: 0 });
+                continue;
+            }
+        }
+        last = explain(p, Some(code), &text, None);
+        i += 1;
+    }
+    Err(last)
 }
 
 #[cfg(test)]
@@ -490,5 +599,18 @@ mod think_tests {
         assert_eq!(kinds, ["думает: Игрок спрашивает про 8.3. ", "думает: Есть в двух документах.", "пишет: Пункт 8.3 есть в двух местах"]);
         // Недописанная строка ждёт продолжения
         assert!(buf.starts_with("data: {\"choices\""));
+    }
+
+    #[test]
+    fn wait_time_from_groq_text() {
+        assert_eq!(super::wait_in_text("Rate limit reached... Please try again in 7.48s. Need more tokens?"), Some(7.48));
+        assert_eq!(super::wait_in_text("Please try again in 1m2.5s."), Some(62.5));
+        assert_eq!(super::wait_in_text("no hint here"), None);
+    }
+
+    #[test]
+    fn think_tags_removed() {
+        assert_eq!(super::strip_think("<think>хм, крыша</think>\n**Нет.** Запрещено."), "**Нет.** Запрещено.");
+        assert_eq!(super::strip_think("Просто ответ"), "Просто ответ");
     }
 }

@@ -72,10 +72,11 @@
   // Z.ai подолгу держит вопрос в очереди — показываем, сколько уже ждём
   const slow = $derived(ai.provider === 'zai');
   let waited = $state(0);
+  let now = $state(Date.now());
   $effect(() => {
     if (!ai.busy) { waited = 0; return; }
     const started = Date.now();
-    const timer = setInterval(() => (waited = Math.floor((Date.now() - started) / 1000)), 1000);
+    const timer = setInterval(() => { now = Date.now(); waited = Math.floor((now - started) / 1000); }, 1000);
     return () => clearInterval(timer);
   });
 
@@ -220,7 +221,8 @@
               </div>
             {/if}
           {:else if !t.a}
-            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{t.stage === 'plan' ? 'Разбираю ситуацию…' : t.think ? 'Обдумываю ответ…' : t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
+            {@const left = t.waitUntil ? Math.max(1, Math.ceil((t.waitUntil - now) / 1000)) : 0}
+            <p class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>{left ? `Жду бесплатный лимит ${ai.status?.provider ?? 'Groq'}… ${left} с` : t.stage === 'plan' ? 'Разбираю ситуацию…' : t.think ? 'Обдумываю ответ…' : t.sources.length ? `Читаю ${t.sources.length} пунктов…` : `Ищу в разделе «${SCOPES[t.scope ?? 'project'].label}»…`}{#if slow && waited >= 2}<span class="secs">{waited} с</span>{/if}</p>
             {#if slow && waited >= 3}
               <p class="wait-note">Бесплатные серверы Z.ai загружены — ответ может занять до минуты. Быстрее отвечает Groq, но он не работает в России и СНГ.</p>
             {/if}
