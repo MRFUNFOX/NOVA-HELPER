@@ -115,6 +115,13 @@ export const backend = {
   aiComplete: (messages: ChatMsg[], level = 0) => invoke<string>('ai_complete', { messages, level }),
   /** Сколько людей носят имя / фамилию по forebears.io (правило 2.13 ОП советует его). null — сайт не ответил */
   nameCount: (kind: 'forenames' | 'surnames', name: string) => invoke<number | null>('name_count', { kind, name }),
+  // ── Вопрос голосом: распознавание речи на компьютере игрока ──
+  voiceStatus: () => invoke<{ installed: boolean; installing: boolean; sizeMb: number }>('voice_status'),
+  voiceInstall: () => invoke<void>('voice_install'),
+  voiceRemove: () => invoke<void>('voice_remove'),
+  voiceStart: () => invoke<void>('voice_start'),
+  voiceStop: () => invoke<void>('voice_stop'),
+  voiceCancel: () => invoke<void>('voice_cancel'),
   /** deep — длинная ситуация или спор: нейросеть рассуждает глубже */
   aiChat: (id: string, deep: boolean, messages: ChatMsg[]) => invoke<{ text: string; model: string; reasoning?: string }>('ai_chat', { id, deep, messages }),
 
@@ -228,6 +235,8 @@ export async function checkAppUpdate(staff = false): Promise<AppUpdate | null> {
 const mockListeners: Record<string, Set<(p: unknown) => void>> = {};
 const mockEmit = (event: string, payload: unknown) => mockListeners[event]?.forEach((cb) => cb(payload));
 const mockState = {
+  voice: false,
+  voiceTimer: 0 as ReturnType<typeof setTimeout> | 0,
   settings: { hotkey: 'Alt+Q', hint: 'always', closeToTray: true, firstRunDone: false, window: null } as Settings,
   autostart: true,
   dbLoaded: false,
@@ -328,6 +337,46 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       if (mockState.aiKey.startsWith('gsk_')) mockState.aiGroq = ''; else mockState.aiZai = '';
       mockState.aiKey = mockState.aiGroq || mockState.aiZai;
       return mockStatus();
+    // Голос в браузере: ?voice — модель уже скачана. Запись «слышит» заготовленную фразу
+    case 'voice_status':
+      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 156 };
+    case 'voice_install': {
+      const total = 156e6;
+      for (let i = 1; i <= 6; i++) {
+        await new Promise((r) => setTimeout(r, 400));
+        mockEmit('voice-install', { stage: i < 6 ? 'asr' : 'unpack', done: Math.min(total, i * 27e6), total });
+      }
+      mockState.voice = true;
+      mockEmit('voice-install', { stage: 'done', done: total, total });
+      return;
+    }
+    case 'voice_remove':
+      mockState.voice = false;
+      return;
+    case 'voice_start': {
+      mockEmit('voice', { stage: 'listen' });
+      let n = 0;
+      const tick = () => {
+        n++;
+        mockEmit('voice-level', n < 30 ? 0.25 + 0.6 * Math.abs(Math.sin(n / 2)) : 0.02);
+        if (n < 45) mockState.voiceTimer = setTimeout(tick, 60);
+        else finish();
+      };
+      const finish = () => {
+        mockEmit('voice', { stage: 'think' });
+        mockState.voiceTimer = setTimeout(() => mockEmit('voice', { stage: 'heard', text: 'Меня убили и через 5 минут я вернулся на то же место это нарушение' }), 900);
+      };
+      (window as unknown as { __nhVoiceFinish: () => void }).__nhVoiceFinish = () => { clearTimeout(mockState.voiceTimer || undefined); finish(); };
+      mockState.voiceTimer = setTimeout(tick, 60);
+      return;
+    }
+    case 'voice_stop':
+      (window as unknown as { __nhVoiceFinish?: () => void }).__nhVoiceFinish?.();
+      return;
+    case 'voice_cancel':
+      clearTimeout(mockState.voiceTimer || undefined);
+      mockEmit('voice', { stage: 'idle' });
+      return;
     case 'name_count': {
       const n = String(args!.name).toLowerCase();
       const known: Record<string, number> = { vova: 98_000, ivan: 4_212_000, petrov: 584_743, bandit: 4_886, katya: 61_000, alex: 1_900_000, layrouse: 0 };

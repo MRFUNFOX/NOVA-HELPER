@@ -9,6 +9,7 @@
   import { ease, ms } from '../motion';
   import { dayLabel, people, searchHistory, type HistItem } from '../aiExtras';
   import { learn } from '../learn.svelte';
+  import { mic } from '../voice.svelte';
 
   /** Рассуждения модели: [S2] → номер пункта, [N1] → «разъяснение» — как в ответе */
   function thoughts(t: Turn) {
@@ -45,6 +46,16 @@
   }
 
   let input = $state('');
+
+  // Вопрос голосом: распознанный текст — в поле, игрок правит и отправляет сам
+  $effect(() => {
+    void mic.init((text) => {
+      input = input.trim() ? `${input.trim()} ${text}` : text;
+      requestAnimationFrame(() => { field?.focus(); field?.setSelectionRange(input.length, input.length); });
+    });
+    return () => mic.cancel();
+  });
+  const mb = (b: number) => Math.round(b / 1e6);
   let list: HTMLElement | undefined = $state();
   let field: HTMLTextAreaElement | undefined = $state();
   const scope = $derived<Section>(app.hasLaws ? ai.scope : 'project');
@@ -332,8 +343,31 @@
       {#if confirming}
         <p class="confirm"><Icon name="chat" size={14} /><span>Отправить вопрос? <b>Enter</b> — да, <b>Esc</b> — нет</span></p>
       {/if}
-      <div class="input" class:confirm-on={confirming}>
-        <textarea bind:this={field} bind:value={input} onkeydown={onKey} rows="1" placeholder={scope === 'laws' ? 'Вопрос по законам штата…' : 'Вопрос по правилам проекта…'} maxlength="600" disabled={ai.busy}></textarea>
+      {#if mic.stage === 'offer'}
+        <div class="voice-pop" transition:fly={{ y: 6, duration: ms(160), easing: ease }}>
+          <p><b>Вопрос голосом.</b> Распознавание речи скачивается один раз — около {mic.sizeMb} МБ. Работает прямо на вашем компьютере: бесплатно и без лимитов. Нажмите микрофон и говорите — когда замолчите, запись остановится сама.</p>
+          {#if mic.error}<p class="voice-err">{mic.error}</p>{/if}
+          <div class="voice-row"><button class="btn primary sm" onclick={() => mic.install()}>Скачать</button><button class="voice-later" onclick={() => mic.dismiss()}>Не сейчас</button></div>
+        </div>
+      {:else if mic.stage === 'install'}
+        <div class="voice-pop">
+          <p><b>Скачиваю распознавание речи…</b> {mb(mic.progress.done)} из {mb(mic.progress.total) || mic.sizeMb} МБ</p>
+          <div class="voice-prog" role="progressbar" aria-valuemin="0" aria-valuemax={mic.progress.total} aria-valuenow={mic.progress.done}><i style="width: {mic.progress.total ? Math.min(100, (mic.progress.done / mic.progress.total) * 100) : 0}%"></i></div>
+        </div>
+      {:else if mic.stage === 'error'}
+        <p class="voice-pop voice-err-pop"><Icon name="mic" size={14} /><span>{mic.error}</span><button class="voice-later" onclick={() => mic.dismiss()}>Понятно</button></p>
+      {/if}
+      <div class="input" class:confirm-on={confirming} class:recording={mic.stage === 'listen'}>
+        {#if mic.stage === 'listen'}
+          <div class="live" aria-live="polite"><span class="rec-dot" aria-hidden="true"></span><span class="bars" aria-hidden="true">{#each mic.wave as v, i (i)}<i style="height: {4 + Math.round(v * 14)}px"></i>{/each}</span><span>Слушаю…</span></div>
+        {:else if mic.stage === 'think'}
+          <div class="live" aria-live="polite"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Распознаю речь…</span></div>
+        {:else}
+          <textarea bind:this={field} bind:value={input} onkeydown={onKey} rows="1" placeholder={scope === 'laws' ? 'Вопрос по законам штата…' : 'Вопрос по правилам проекта…'} maxlength="600" disabled={ai.busy}></textarea>
+        {/if}
+        <button class="mic" class:rec={mic.stage === 'listen'} onclick={() => mic.press()} disabled={ai.busy || mic.stage === 'think' || mic.stage === 'install'} title={mic.stage === 'listen' ? 'Остановить запись' : 'Сказать голосом'} aria-label={mic.stage === 'listen' ? 'Остановить запись' : 'Сказать голосом'}>
+          {#if mic.stage === 'listen'}<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2.5" fill="currentColor" /></svg>{:else}<Icon name="mic" size={17} />{/if}
+        </button>
         <button class="send" onclick={() => send(input, true)} disabled={ai.busy || !input.trim()} aria-label="Спросить"><Icon name="chevron" size={18} /></button>
       </div>
       <div class="foot">
@@ -418,6 +452,28 @@
   .input { display: flex; align-items: flex-end; gap: 6px; padding: 5px 5px 5px 12px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
   .input:focus-within { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-tint); }
   textarea { flex: 1; min-width: 0; min-height: 32px; max-height: 120px; padding: 6px 0; resize: none; field-sizing: content; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); line-height: 1.45; }
+  .mic { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-muted); }
+  .mic:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+  .mic.rec, .mic.rec:hover:not(:disabled) { background: var(--danger-tint); color: var(--danger-line); }
+  .voice-later { padding: 0; border: 0; background: none; color: var(--text-muted); font-size: var(--fs-xs); font-weight: 700; }
+  .voice-later:hover { color: var(--text); }
+  .mic:disabled { opacity: 0.45; }
+  .input.recording, .input.recording:focus-within { border-color: rgba(255, 90, 95, 0.45); box-shadow: 0 0 0 3px rgba(255, 90, 95, 0.08); }
+  .live { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 34px; padding-left: 2px; font-size: var(--fs-sm); color: var(--text-dim); }
+  .rec-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: var(--danger-line); box-shadow: 0 0 0 4px rgba(255, 90, 95, 0.18); animation: recpulse 1.2s ease-in-out infinite; }
+  @keyframes recpulse { 50% { opacity: 0.45; } }
+  .bars { display: flex; align-items: center; gap: 2px; height: 18px; }
+  .bars i { display: block; width: 3px; border-radius: 2px; background: var(--danger); transition: height 60ms linear; }
+  .voice-pop { margin: 0 0 8px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border-strong); font-size: var(--fs-xs); line-height: 1.5; color: var(--text-dim); }
+  .voice-pop p { margin: 0; }
+  .voice-pop b { color: var(--text); }
+  .voice-row { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+  .voice-prog { height: 6px; margin-top: 8px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+  .voice-prog i { display: block; height: 100%; background: var(--accent); transition: width 150ms linear; }
+  .voice-err { margin-top: 6px !important; color: var(--danger); }
+  .voice-err-pop { display: flex; align-items: center; gap: 8px; color: var(--danger); }
+  .voice-err-pop span { flex: 1; }
+  @media (prefers-reduced-motion: reduce) { .rec-dot { animation: none; } }
   .send { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); }
   .send:disabled { background: var(--surface-3); color: var(--text-muted); }
   .scopes { display: flex; gap: 2px; margin: 0 0 8px; padding: 3px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }

@@ -8,6 +8,7 @@ mod settings;
 mod sync;
 mod update;
 mod names;
+mod voice;
 
 use overlay::OverlayState;
 use settings::Settings;
@@ -166,6 +167,7 @@ pub fn run() {
         ))
         .manage(OverlayState::default())
         .manage(SyncState::default())
+        .manage(voice::VoiceState::default())
         .invoke_handler(tauri::generate_handler![
             sync::db_load,
             sync::db_check,
@@ -182,6 +184,12 @@ pub fn run() {
             update::update_check,
             update::update_install,
             names::name_count,
+            voice::voice_status,
+            voice::voice_install,
+            voice::voice_remove,
+            voice::voice_start,
+            voice::voice_stop,
+            voice::voice_cancel,
             window_glass,
             ai::ai_status,
             ai::ai_set_key,
