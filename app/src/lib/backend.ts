@@ -116,7 +116,7 @@ export const backend = {
   /** Сколько людей носят имя / фамилию по forebears.io (правило 2.13 ОП советует его). null — сайт не ответил */
   nameCount: (kind: 'forenames' | 'surnames', name: string) => invoke<number | null>('name_count', { kind, name }),
   // ── Вопрос голосом: распознавание речи на компьютере игрока ──
-  voiceStatus: () => invoke<{ installed: boolean; installing: boolean; sizeMb: number }>('voice_status'),
+  voiceStatus: () => invoke<{ installed: boolean; outdated?: boolean; installing: boolean; sizeMb: number }>('voice_status'),
   voiceInstall: () => invoke<void>('voice_install'),
   voiceRemove: () => invoke<void>('voice_remove'),
   voiceStart: () => invoke<void>('voice_start'),
@@ -339,7 +339,7 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return mockStatus();
     // Голос в браузере: ?voice — модель уже скачана. Запись «слышит» заготовленную фразу
     case 'voice_status':
-      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 164 };
+      return { installed: mockState.voice || params.has('voice'), outdated: !mockState.voice && params.has('voiceold'), installing: false, sizeMb: 164 };
     case 'voice_install': {
       const total = 164e6;
       for (let i = 1; i <= 6; i++) {

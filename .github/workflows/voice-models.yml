@@ -1,0 +1,63 @@
+# Модель распознавания речи для вопроса голосом в помощнике: собирает и выкладывает в выпуск `voice-models`
+# (pre-release — игрокам как обновление не приходит, «последним» выпуском не становится).
+# Программа скачивает её один раз, когда игрок нажимает микрофон.
+#  • asr.zip — GigaAM v3 e2e CTC с пунктуацией (Сбер, лицензия MIT) + шумоподавление GTCRN.
+#    Файл VERSION — по нему программа понимает, что стоит нужная модель (старую v2 без пунктуации предлагает обновить).
+# Запуск: вкладка Actions → «Модели голоса» → Run workflow.
+name: Модели голоса
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Скачать модели
+        run: |
+          set -e
+          mkdir -p dl out
+          cd dl
+          B=https://github.com/k2-fsa/sherpa-onnx/releases/download
+          M=sherpa-onnx-nemo-ctc-punct-giga-am-v3-russian-2025-12-16
+          curl -fsSL -o asr.tar.bz2 "$B/asr-models/$M.tar.bz2"
+          curl -fsSL -o gtcrn_simple.onnx "$B/speech-enhancement-models/gtcrn_simple.onnx"
+          tar xjf asr.tar.bz2
+          mv "$M" model
+          sudo apt-get install -y -q zip >/dev/null
+
+      - name: Упаковать
+        run: |
+          set -e
+          # Архив одинаковый от запуска к запуску (даты файлов и порядок фиксированы)
+          cd dl
+          mkdir -p asr
+          cp model/model.int8.onnx model/tokens.txt gtcrn_simple.onnx asr/
+          cp model/LICENSE asr/LICENSE-GigaAM.txt
+          printf 'gigaam-v3-e2e-ctc-punct\n' > asr/VERSION
+          (cd asr && find . -exec touch -h -d '2026-01-01 00:00:00' {} + && find . -type f | LC_ALL=C sort | zip -q -X -@ ../../out/asr.zip)
+          cd ../out
+          ls -la
+          python3 - <<'PY'
+          import hashlib, json, os
+          f = 'asr.zip'
+          h = hashlib.sha256(open(f, 'rb').read()).hexdigest()
+          json.dump({'v': 2, 'files': {'asr': {'file': f, 'size': os.path.getsize(f), 'sha256': h}}}, open('voice.json', 'w'), indent=2)
+          print(open('voice.json').read())
+          PY
+
+      - name: Выложить в выпуск voice-models
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          NOTES="Модель распознавания речи для вопроса голосом в помощнике. Программа скачивает её сама — вручную ничего делать не нужно. GigaAM v3 (Сбер, лицензия MIT) + шумоподавление GTCRN."
+          if gh release view voice-models -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit voice-models -R "$GITHUB_REPOSITORY" --title "Модель распознавания речи" --notes "$NOTES"
+          else
+            gh release create voice-models -R "$GITHUB_REPOSITORY" --prerelease --title "Модель распознавания речи" --notes "$NOTES"
+          fi
+          gh release upload voice-models -R "$GITHUB_REPOSITORY" out/asr.zip out/voice.json --clobber

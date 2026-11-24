@@ -3,7 +3,8 @@
 //!
 //! Всё работает на компьютере игрока, без ключей и серверов:
 //!  • запись с микрофона — cpal;
-//!  • шумоподавление — GTCRN, распознавание русской речи — GigaAM v2 (Сбер, MIT) через sherpa-onnx.
+//!  • шумоподавление — GTCRN, распознавание русской речи — GigaAM v3 e2e (Сбер, MIT) через sherpa-onnx:
+//!    сразу со знаками препинания, заглавными буквами и «ё».
 //! Модель скачивается один раз из выпуска `voice-models` нашего GitHub (набор `asr`).
 //! Озвучки ответов нет — от неё отказались 24.11.2026.
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
@@ -50,14 +51,20 @@ fn dir(app: &AppHandle) -> PathBuf {
     app.path().app_local_data_dir().unwrap_or_else(|_| std::env::temp_dir()).join("voice")
 }
 
+/// Какая модель нужна программе: GigaAM v3 с пунктуацией. Старую v2 (без знаков препинания) предлагаем скачать заново
+const MODEL_VERSION: &str = "gigaam-v3-e2e-ctc-punct";
+
 fn installed(app: &AppHandle) -> bool {
-    dir(app).join("asr/model.int8.onnx").exists()
+    let d = dir(app).join(PACK);
+    d.join("model.int8.onnx").exists() && std::fs::read_to_string(d.join("VERSION")).is_ok_and(|v| v.trim() == MODEL_VERSION)
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VoiceStatus {
     installed: bool,
+    /// Стоит старая модель (без знаков препинания) — предложить обновить
+    outdated: bool,
     installing: bool,
     /// Сколько скачивать (МБ) — чтобы предупредить заранее
     size_mb: u32,
@@ -65,7 +72,7 @@ pub struct VoiceStatus {
 
 #[tauri::command]
 pub fn voice_status(app: AppHandle) -> VoiceStatus {
-    VoiceStatus { installed: installed(&app), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 164 }
+    VoiceStatus { installed: installed(&app), outdated: !installed(&app) && dir(&app).join(PACK).join("model.int8.onnx").exists(), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 163 }
 }
 
 // ── Установка модели ──
@@ -444,5 +451,30 @@ mod tests {
     fn capitalizes() {
         assert_eq!(tidy("  меня  убили  это dm "), "Меня убили это dm");
         assert_eq!(tidy(""), "");
+    }
+}
+
+#[cfg(test)]
+mod model_check {
+    /// Проверка модели на записи: NH_ASR_DIR=<папка модели> NH_WAV=<файл.wav> cargo test --lib voice::model_check -- --ignored --nocapture
+    #[test]
+    #[ignore]
+    fn decode_wav() {
+        let dir = std::env::var("NH_ASR_DIR").expect("NH_ASR_DIR");
+        let wav = std::fs::read(std::env::var("NH_WAV").expect("NH_WAV")).unwrap();
+        // Простой WAV: 16 бит, моно — ищем блок data
+        let rate = u32::from_le_bytes(wav[24..28].try_into().unwrap()) as i32;
+        let pos = wav.windows(4).position(|w| w == b"data").unwrap() + 8;
+        let samples: Vec<f32> = wav[pos..].chunks_exact(2).map(|b| i16::from_le_bytes([b[0], b[1]]) as f32 / 32768.0).collect();
+        let mut rc = sherpa_onnx::OfflineRecognizerConfig::default();
+        rc.model_config.nemo_ctc.model = Some(format!("{dir}/model.int8.onnx"));
+        rc.model_config.tokens = Some(format!("{dir}/tokens.txt"));
+        rc.model_config.num_threads = 2;
+        let rec = sherpa_onnx::OfflineRecognizer::create(&rc).expect("модель не загрузилась");
+        let t = std::time::Instant::now();
+        let s = rec.create_stream();
+        s.accept_waveform(rate, &samples);
+        rec.decode(&s);
+        println!("{} с записи, {:.2} с на распознавание:\n{}", samples.len() as f32 / rate as f32, t.elapsed().as_secs_f32(), s.get_result().map(|x| x.text).unwrap_or_default());
     }
 }

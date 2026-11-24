@@ -13,6 +13,8 @@ class Mic {
   /** Последние значения громкости — «волна» на плашке записи */
   wave = $state<number[]>(Array(10).fill(0));
   installed = $state(false);
+  /** Стоит старая модель без знаков препинания */
+  outdated = $state(false);
   sizeMb = $state(164);
   progress = $state({ done: 0, total: 0 });
   error = $state('');
@@ -28,6 +30,7 @@ class Mic {
       try {
         const s = await backend.voiceStatus();
         this.installed = s.installed;
+        this.outdated = !!s.outdated;
         this.sizeMb = s.sizeMb;
         if (s.installing) this.stage = 'install';
       } catch { /* старый бэкенд — просто без голоса */ }
@@ -38,7 +41,7 @@ class Mic {
       });
       await backend.on('voice-install', (p) => {
         const v = p as { stage: string; done: number; total: number };
-        if (v.stage === 'done') { this.installed = true; this.stage = 'idle'; track('voice_installed', {}); return; }
+        if (v.stage === 'done') { this.installed = true; this.outdated = false; this.stage = 'idle'; track('voice_installed', {}); return; }
         if (v.stage === 'error') { if (this.stage === 'install') this.stage = 'offer'; return; }
         this.stage = 'install';
         this.progress = { done: v.done, total: v.total };
@@ -82,6 +85,7 @@ class Mic {
     try {
       await backend.voiceInstall();
       this.installed = true;
+      this.outdated = false;
       this.stage = 'idle';
     } catch (e) {
       this.stage = 'offer';
