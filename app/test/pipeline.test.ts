@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { buildIndex, rank, type Entry } from '../src/lib/search';
-import { analysisText, mergeGroups, otherScope, parseAnalysis, parseCheck } from '../src/lib/ai.svelte';
+import { analysisText, looksLikeMeta, mergeGroups, otherScope, parseAnalysis, parseCheck, strayNumbers } from '../src/lib/ai.svelte';
 import { EXAM, citesRef, examScore, type ExamResult } from '../src/lib/exam';
 import { slang } from '../src/lib/slang';
 import type { RuleDocument } from '@shared/types';
@@ -62,6 +62,24 @@ describe('самопроверка ответа', () => {
   });
 });
 
+describe('перепроверка не выдумывает пункты', () => {
+  it('номер, которого нет среди найденных, ловим; ссылки [S#] и минуты не считаем', () => {
+    expect(strayNumbers('**Нарушил госник.** Нарушают п. 5.1 и 5.8, JAIL 180 мин [S3][S7].', ['5.1', '1.6'])).toEqual(['5.8']);
+    expect(strayNumbers('**Нарушил госник.** Злоупотребление полномочиями [S3], JAIL 180 минут.', ['5.1'])).toEqual([]);
+    expect(strayNumbers('По ст. 6.2 ч. 1 — 4 года.', ['6.2'])).toEqual([]);
+  });
+});
+
+describe('упрёк «почему не написал» — это претензия к ответу, а не новый вопрос', () => {
+  it('узнаём упрёки', () => {
+    expect(looksLikeMeta('Почему тогда и это не вписал?')).toBe(true);
+    expect(looksLikeMeta('Почему ты не написал про штраф?')).toBe(true);
+    expect(looksLikeMeta('Ты забыл про ник')).toBe(true);
+    expect(looksLikeMeta('Почему нельзя ездить по встречке?')).toBe(false);
+    expect(looksLikeMeta('Это DM?')).toBe(false);
+  });
+});
+
 describe('экзамен', () => {
   it('ссылка на нужный пункт: 4.1 — не 4.10 и не 14.1', () => {
     expect(citesRef(['4.1 · Общие правила проекта'], ['4.1'])).toBe(true);
@@ -106,6 +124,15 @@ describe('экзамен', () => {
     }
     console.log('Без разбора не нашлось:', missed.join(', ') || 'всё нашлось');
     expect(missed.length).toBeLessThanOrEqual(Math.floor(EXAM.length / 3));
+  });
+
+  it('требование «показать сиськи» находит запрет сексуальных отыгровок 4.20, а «до смены ника» — пункт о никах', () => {
+    const story = 'Госники остановили меня аргументировав остановку 41-м ДК. Когда я спросил что это значит, ответ не дали. Но дали вариант оплатить штраф или показать сиськи. После чего одного из них откинули в деморган до смена ника.';
+    const top = rank(index, `${story} ${slang(story)}`, 8, inScope('project')).map(num);
+    expect(top).toContain('4.20');
+    expect(top).toContain('2.13');
+    const follow = 'А то-что заставляли обнажиться? Это тоже же нарушение';
+    expect(rank(index, `${follow} ${slang(follow)}`, 6, inScope('project')).map(num)).toContain('4.20');
   });
 
   it('с разбором каждая часть ситуации получает свои пункты', () => {

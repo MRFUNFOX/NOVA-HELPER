@@ -255,7 +255,11 @@
             {#if t.stage === 'check'}
               <p class="learn wait"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Перепроверяю ответ…</p>
             {:else if t.checked?.fixed && !t.pending}
-              <p class="learn"><Icon name="check" size={14} /><span>Ответ поправлен после перепроверки{#if learn.staffHere}: {t.checked.problems.join('; ')}{/if}</span></p>
+              {#if learn.staffHere && t.checked.problems.length}
+                <details class="learn fixed"><summary><Icon name="check" size={14} /><span>Ответ поправлен после перепроверки</span></summary><ul>{#each t.checked.problems as p}<li>{p}</li>{/each}</ul></details>
+              {:else}
+                <p class="learn"><Icon name="check" size={14} /><span>Ответ поправлен после перепроверки</span></p>
+              {/if}
             {/if}
             {#if t.learnState === 'checking'}
               <p class="learn wait"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Сверяю довод с законом…</p>
@@ -374,6 +378,13 @@
   .src.note .num { background: var(--info-tint); color: var(--info); }
   .learn { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--success-tint); color: var(--success); font-size: var(--fs-xs); line-height: 1.45; }
   .learn :global(svg) { flex-shrink: 0; margin-top: 1px; }
+  .learn.fixed { display: block; }
+  .learn.fixed summary { display: flex; gap: 8px; align-items: center; cursor: pointer; list-style: none; }
+  .learn.fixed summary::-webkit-details-marker { display: none; }
+  .learn.fixed summary::after { content: 'почему'; margin-left: auto; white-space: nowrap; flex-shrink: 0; font-size: 11px; opacity: 0.75; text-decoration: underline; }
+  .learn.fixed[open] summary::after { content: 'скрыть'; }
+  .learn.fixed ul { margin: 6px 0 0; padding-left: 22px; color: var(--text-dim); }
+  .learn.fixed li + li { margin-top: 3px; }
   .learn.wait { background: var(--surface-3); color: var(--text-muted); align-items: center; }
   .sources { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
   .src { display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin: 0 -8px; border: 0; border-radius: var(--radius-sm); background: none; text-align: left; color: var(--text-dim); font-size: var(--fs-xs); }
