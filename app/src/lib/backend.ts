@@ -339,9 +339,9 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return mockStatus();
     // Голос в браузере: ?voice — модель уже скачана. Запись «слышит» заготовленную фразу
     case 'voice_status':
-      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 156 };
+      return { installed: mockState.voice || params.has('voice'), installing: false, sizeMb: 164 };
     case 'voice_install': {
-      const total = 156e6;
+      const total = 164e6;
       for (let i = 1; i <= 6; i++) {
         await new Promise((r) => setTimeout(r, 400));
         mockEmit('voice-install', { stage: i < 6 ? 'asr' : 'unpack', done: Math.min(total, i * 27e6), total });
