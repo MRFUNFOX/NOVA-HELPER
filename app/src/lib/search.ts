@@ -44,12 +44,21 @@ export function normalize(s: string): string {
 
 const WORD = /[\p{L}\p{N}]+/gu;
 
+/** Основы уже разобранных слов: в правилах одни и те же слова повторяются тысячи раз */
+const STEMS = new Map<string, string>();
+
 /** Основы слов текста: русские — через стеммер, латиница и числа — как есть */
 export function terms(text: string): string[] {
   const out: string[] = [];
   for (const m of normalize(text).matchAll(WORD)) {
     const w = m[0];
-    out.push(/[а-я]/.test(w) ? stem(w) : w);
+    if (!/[а-я]/.test(w)) { out.push(w); continue; }
+    let s = STEMS.get(w);
+    if (s === undefined) {
+      s = stem(w);
+      if (STEMS.size < 200_000) STEMS.set(w, s);
+    }
+    out.push(s);
   }
   return out;
 }

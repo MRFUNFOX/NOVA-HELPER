@@ -170,6 +170,7 @@ pub fn run() {
         .manage(voice::VoiceState::default())
         .invoke_handler(tauri::generate_handler![
             sync::db_load,
+            sync::db_version,
             sync::db_check,
             sync::db_update,
             get_settings,
@@ -248,8 +249,7 @@ pub fn run() {
             pins::sync(&handle);
             // Следим, в игре ли игрок (тоже пока только в режиме разработчика)
             game::watch(handle.clone());
-            // Меню поверх игры (пока только в режиме разработчика): слой готовим заранее
-            gamemenu::prepare(&handle);
+            // Меню поверх игры создаётся, когда игрок заходит в GTA (game::watch → gamemenu::game_changed)
             let minimized = std::env::args().any(|a| a == "--minimized");
             if minimized && s.first_run_done {
                 overlay::show_hint(&handle);

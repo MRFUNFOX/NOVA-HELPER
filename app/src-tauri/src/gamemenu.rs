@@ -95,13 +95,38 @@ fn layer(app: &AppHandle) -> Option<WebviewWindow> {
     Some(w)
 }
 
-/// Создать слой заранее (скрытым), чтобы меню открывалось сразу, без загрузки
+/// Создать слой заранее (скрытым), чтобы меню открывалось сразу, без загрузки.
+/// Только пока игра запущена: вне игры окно меню не держим — программа неделями висит в трее,
+/// и лишнее скрытое окно занимало бы память впустую.
 pub fn prepare(app: &AppHandle) {
-    if enabled(app) {
+    if enabled(app) && crate::game::in_game() {
         let _ = layer(app);
-    } else if let Some(w) = app.get_webview_window(LABEL) {
-        let _ = w.destroy();
+    } else if !enabled(app) {
+        if let Some(w) = app.get_webview_window(LABEL) {
+            let _ = w.destroy();
+        }
     }
+}
+
+/// Номер «выхода из игры»: новый вход или выход отменяют прошлую отложенную уборку
+static LEFT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+/// Сколько ждать после выхода из игры, прежде чем убрать окно меню из памяти (вдруг игрок свернулся на минуту)
+const UNLOAD_AFTER: std::time::Duration = std::time::Duration::from_secs(10 * 60);
+
+/// Игрок вне игры уже 10 минут — окно меню убираем из памяти. Вернётся в игру — создастся заново
+fn unload_later(app: &AppHandle) {
+    let gen = LEFT.fetch_add(1, Ordering::SeqCst) + 1;
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(UNLOAD_AFTER);
+        // Закреплённое меню ждёт возвращения игрока — его не трогаем
+        if LEFT.load(Ordering::SeqCst) != gen || crate::game::in_game() || visible(&app) || RESTORE.load(Ordering::Relaxed) {
+            return;
+        }
+        if let Some(w) = app.get_webview_window(LABEL) {
+            let _ = w.destroy();
+        }
+    });
 }
 
 pub fn visible(app: &AppHandle) -> bool {
@@ -172,7 +197,17 @@ pub fn game_changed(app: &AppHandle, in_game: bool) {
         // Закреплённое меню вернём, когда игрок вернётся в игру
         RESTORE.store(visible(app) && pinned(app), Ordering::Relaxed);
         hide(app);
-    } else if RESTORE.swap(false, Ordering::Relaxed) {
+        unload_later(app);
+        return;
+    }
+    LEFT.fetch_add(1, Ordering::SeqCst);
+    if !enabled(app) {
+        return;
+    }
+    // Игра запущена — готовим меню заранее, чтобы клавиша открывала его сразу
+    if !RESTORE.swap(false, Ordering::Relaxed) {
+        let _ = layer(app);
+    } else {
         let Some(w) = layer(app) else { return };
         crate::pins::cover(&w);
         set_passive(app, &w, true);

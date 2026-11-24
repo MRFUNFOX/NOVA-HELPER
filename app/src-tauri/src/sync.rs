@@ -289,6 +289,18 @@ pub async fn db_update(app: AppHandle, state: State<'_, SyncState>) -> Result<St
     db_load(app).await
 }
 
+/// Версия локальной базы (generatedAt манифеста) — без чтения документов.
+/// Меню в игре сверяет её при каждом открытии и перечитывает базу, только если она правда изменилась.
+#[tauri::command]
+pub fn db_version(app: AppHandle) -> String {
+    db_dir(&app)
+        .ok()
+        .and_then(|d| fs::read(d.join("current").join("manifest.json")).ok())
+        .and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).ok())
+        .and_then(|v| v["generatedAt"].as_str().map(str::to_string))
+        .unwrap_or_default()
+}
+
 /// Отдать интерфейсу локальную базу одной JSON-строкой: {manifest, docs, changelogs}
 #[tauri::command]
 pub async fn db_load(app: AppHandle) -> Result<String, String> {

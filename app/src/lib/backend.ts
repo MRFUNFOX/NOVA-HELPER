@@ -68,6 +68,8 @@ export const backend = {
   async loadDb(): Promise<Db> {
     return JSON.parse(await invoke<string>('db_load')) as Db;
   },
+  /** Только версия локальной базы — чтобы не перечитывать мегабайты правил зря */
+  dbVersion: () => invoke<string>('db_version'),
   checkDb: () => invoke<CheckResult>('db_check'),
   async updateDb(): Promise<Db> {
     return JSON.parse(await invoke<string>('db_update')) as Db;
@@ -271,6 +273,8 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
   const params = new URLSearchParams(location.search);
   await new Promise((r) => setTimeout(r, 120));
   switch (cmd) {
+    case 'db_version':
+      return mockState.dbLoaded || !params.has('empty') ? 'mock' : '';
     case 'db_load': {
       // ?slow — медленный диск/первый запуск: посмотреть скелетную загрузку
       if (params.has('slow')) await new Promise((r) => setTimeout(r, Number(params.get('slow')) || 4000));

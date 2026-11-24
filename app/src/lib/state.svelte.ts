@@ -281,10 +281,12 @@ class AppState {
    *  Перечитать с диска и заменить, только если они правда изменились. */
   async reloadDbIfChanged() {
     try {
-      const db = await backend.loadDb();
+      // Сначала только версия (маленький файл): сами правила — несколько мегабайт, читаем их лишь при изменении
+      const now = await backend.dbVersion();
       const was = this.db.manifest?.generatedAt ?? '';
-      const now = db.manifest?.generatedAt ?? '';
-      if (now && (now !== was || !this.ready)) {
+      if (now && now === was && this.ready) return;
+      const db = await backend.loadDb();
+      if ((db.manifest?.generatedAt ?? '') && (db.manifest?.generatedAt !== was || !this.ready)) {
         // Закрепки после обновления правил поправляет основное окно — здесь только показываем
         this.setDb(db);
       }

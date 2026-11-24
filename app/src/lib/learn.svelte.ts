@@ -88,16 +88,28 @@ class Learn {
     } catch { /* нет кэша */ }
     this.token = store.get('nh-staff-token');
     try { this.me = JSON.parse(store.get('nh-staff-me') || 'null'); } catch { this.me = null; }
-    void this.refresh();
+    void this.refresh(false);
     if (this.token) void this.checkSession();
-    this.timer ??= setInterval(() => void this.refresh(), REFRESH);
+    // Проверяем часто, а качаем, только если сохранённым больше часа: окна программы делят один кэш
+    this.timer ??= setInterval(() => void this.refresh(false), 10 * 60e3);
   }
 
-  async refresh() {
+  /** force — скачать сразу (команда только что изменила разъяснения); иначе — только если кэш старше часа.
+   *  Основное окно и меню в игре делят кэш, поэтому сервер не получает двойных запросов. */
+  async refresh(force = true) {
+    if (!force) {
+      try {
+        const c = JSON.parse(store.get('nh-notes') || 'null') as { at?: number; learning?: boolean; notes?: Note[] } | null;
+        if (c?.at && Date.now() - c.at < REFRESH) {
+          if (c.notes) { this.notes = c.notes; this.learning = c.learning !== false; }
+          return;
+        }
+      } catch { /* кэш испорчен — скачаем */ }
+    }
     try {
       const r = await api<{ learning: boolean; notes: Note[] }>('notes');
       this.notes = r.notes; this.learning = r.learning;
-      store.set('nh-notes', JSON.stringify(r));
+      store.set('nh-notes', JSON.stringify({ ...r, at: Date.now() }));
     } catch { /* без связи — работаем с сохранёнными */ }
   }
 
