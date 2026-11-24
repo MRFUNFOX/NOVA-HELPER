@@ -19,6 +19,8 @@ const CACHE = 'nova.prices';
 const GOALS = 'nova.buyerGoals';
 const SOUND = 'nova.buyerSound';
 const GUIDE = 'nova.buyerGuide';
+/** Когда любое окно программы последний раз ходило за ценами */
+const FETCH_AT = 'nova.pricesFetchAt';
 
 export interface GuideState { hidden: boolean; editor: boolean }
 
@@ -96,8 +98,14 @@ class Prices {
     this.timer = setTimeout(() => void this.tick(), nextCheckIn(this.file));
   }
 
-  async fetchNow() {
+  async fetchNow(force = false) {
     if (this.loading) return;
+    // Основное окно и меню в игре — два окна программы с общим кэшем: если другое окно только что
+    // сходило за ценами, второй запрос не нужен (новые цены придут через событие storage). Так меньше
+    // запросов к GitHub, у которого лимит 60 в час на компьютер.
+    const last = read<number>(FETCH_AT, 0);
+    if (!force && Date.now() - last < 8e3) return;
+    write(FETCH_AT, Date.now());
     this.loading = true;
     try {
       const headers: Record<string, string> = { Accept: 'application/vnd.github.raw+json' };

@@ -124,7 +124,7 @@
         {#each [70, 55, 82, 60] as w, i (i)}<span class="sk" style:width="{w}%" style:height="14px"></span>{/each}
       {:else}
         <p>{prices.error || 'Цены ещё не загружены'}</p>
-        <button class="btn" onclick={() => prices.fetchNow()}><Icon name="refresh" size={16} />Попробовать снова</button>
+        <button class="btn" onclick={() => prices.fetchNow(true)}><Icon name="refresh" size={16} />Попробовать снова</button>
       {/if}
     </div>
   {:else}
