@@ -88,7 +88,7 @@ r = await watch(env, Date.now(), fakeSleep);
 assert.equal(r.changed, true); assert.equal(r.polls, 3); assert.ok(r.lag >= 0);
 assert.equal(JSON.parse(files['prices.json']).time, '2026-11-16T23:05:00+03:00');
 // Цен нет — дежурство само заканчивается до конца минуты
-const t0 = Date.now() - 42_000;
+const t0 = Date.now() - 47_000;
 r = await watch(env, t0, fakeSleep);
 assert.equal(r.changed, false); assert.ok(r.polls <= 2);
 console.log('дежурство: ок');

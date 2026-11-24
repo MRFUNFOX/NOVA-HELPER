@@ -149,7 +149,7 @@ export function expectedTime(now = Date.now()) {
  * с одного компьютера, а ответ «не изменилось» (304) в этот лимит не считается.
  * Свежие — ждём следующего часа (+20 секунд на работу сборщика).
  */
-/** Сборщик кладёт новые цены на GitHub примерно через 50–70 с после :05 (так по истории коммитов):
+/** Цены появляются в Discord около :05:50–:06:10, сборщик кладёт их на GitHub через ~5 с (так по истории коммитов):
  *  раньше :05:50 ходить незачем, а с этого момента — часто, чтобы игрок увидел цены через секунды после сборщика. */
 export const FIRST_CHECK = 50e3;
 
@@ -158,7 +158,8 @@ export function nextCheckIn(file: PricesFile | null, now = Date.now()) {
   if (!file || Date.parse(file.time) < due) {
     const late = now - due;
     if (late < FIRST_CHECK) return FIRST_CHECK - late;
-    return late < 3 * 60e3 ? 10e3 : late < 10 * 60e3 ? 30e3 : late < 25 * 60e3 ? 2 * 60e3 : 5 * 60e3;
+    // До :07 — каждые 5 с (цены выходят в Discord около :05:50–:06:10, сборщик кладёт их через ~5 с)
+    return late < 2 * 60e3 ? 5e3 : late < 10 * 60e3 ? 30e3 : late < 25 * 60e3 ? 2 * 60e3 : 5 * 60e3;
   }
   return Math.max(10e3, due + 3600e3 + FIRST_CHECK - now);
 }

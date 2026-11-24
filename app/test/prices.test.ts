@@ -74,8 +74,8 @@ describe('цены скупщиков', () => {
     expect(nextCheckIn(file, t + 10 * 60e3)).toBe(50 * 60e3 + 50e3);
     // В 01:05:10 цен ещё не может быть — ждём до 01:05:50, а не дёргаем GitHub
     expect(nextCheckIn(file, t + 60 * 60e3 + 10e3)).toBe(40e3);
-    // Цены 01:05 ещё не пришли: первые минуты — каждые 10 с, потом реже, через полчаса — редко
-    expect(nextCheckIn(file, t + 61 * 60e3)).toBe(10e3);
+    // Цены 01:05 ещё не пришли: до 01:07 — каждые 5 с, потом реже, через полчаса — редко
+    expect(nextCheckIn(file, t + 61 * 60e3)).toBe(5e3);
     expect(nextCheckIn(file, t + 66 * 60e3)).toBe(30e3);
     expect(nextCheckIn(file, t + 75 * 60e3)).toBe(2 * 60e3);
     expect(nextCheckIn(file, t + 95 * 60e3)).toBe(5 * 60e3);
