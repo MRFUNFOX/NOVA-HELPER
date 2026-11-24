@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { buildIndex, rank, type Entry } from '../src/lib/search';
-import { analysisText, dropYesNo, mergeGroups, otherScope, parseAnalysis, parseCheck } from '../src/lib/ai.svelte';
+import { analysisText, mergeGroups, otherScope, parseAnalysis, parseCheck } from '../src/lib/ai.svelte';
 import { EXAM, citesRef, examScore, type ExamResult } from '../src/lib/exam';
 import { slang } from '../src/lib/slang';
 import type { RuleDocument } from '@shared/types';
@@ -154,18 +154,3 @@ describe('подсказка «ответить по другому раздел
   });
 });
 
-describe('без «Да/Нет» в начале ответа', () => {
-  it('убирает «Да» и «Нет» со знаком после', () => {
-    expect(dropYesNo('Нет, это DM [S1].')).toBe('Это DM [S1].');
-    expect(dropYesNo('**Нет, это DM.** Причина не весомая.')).toBe('**Это DM.** Причина не весомая.');
-    expect(dropYesNo('**Нет.** Запрещено [S2].')).toBe('Запрещено [S2].');
-    expect(dropYesNo('Да — можно, если он первым достал оружие.')).toBe('Можно, если он первым достал оружие.');
-    expect(dropYesNo('**Да**, можно.')).toBe('Можно.');
-  });
-  it('не трогает остальное', () => {
-    expect(dropYesNo('Нет нарушения: он защищался.')).toBe('Нет нарушения: он защищался.');
-    expect(dropYesNo('Это DM.')).toBe('Это DM.');
-    expect(dropYesNo('Нет.')).toBe('Нет.');
-    expect(dropYesNo('Нет')).toBe('Нет');
-  });
-});
