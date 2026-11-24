@@ -120,15 +120,16 @@ export async function run(env) {
 }
 
 /**
- * Дежурство: цены подписаны «:05», но в Discord на деле появляются около :05:50–:06:10.
- * В минуты :05 и :06 не ждём следующего запуска, а заглядываем в Discord каждые 5 секунд,
- * пока цены не появятся (до :X:50 — чтобы не пересечься со следующим запуском).
+ * Дежурство: цены подписаны «:05», а в Discord появляются около :05:20–:06:10.
+ * Cloudflare запускает задание не в начале минуты, а около :X:50 — поэтому дежурим в запуски
+ * :04, :05 и :06 и отсчитываем 50 секунд от настоящего начала: так Discord под присмотром
+ * каждые 5 секунд примерно с :04:50 до :07:40.
  * Это только чтение Discord и KV — лимит записей KV не тратится.
  */
-export const WATCH_MINUTES = [5, 6];
+export const WATCH_MINUTES = [4, 5, 6];
 export const WATCH_EVERY = 5000;
 export async function watch(env, startedAt, sleep = (ms) => new Promise((r) => setTimeout(r, ms))) {
-  const end = startedAt + 50_000; // к :X:50 заканчиваем, чтобы не пересечься со следующим запуском
+  const end = startedAt + 50_000; // через 50 с заканчиваем, чтобы не пересечься со следующим запуском
   let r = await run(env);
   let polls = 1;
   while (!r.changed && Date.now() + WATCH_EVERY < end) {
@@ -148,7 +149,7 @@ export default {
     const minute = new Date(at).getUTCMinutes();
     const tick = minute % 10 === 0;
     ctx.waitUntil(
-      (WATCH_MINUTES.includes(minute) ? watch(env, at) : run(env))
+      (WATCH_MINUTES.includes(minute) ? watch(env, Date.now()) : run(env))
         .then((r) => (r.changed || r.skipped || tick
           ? env.STATE.put('lastRun', JSON.stringify({ at: new Date().toISOString(), ...r }))
           : undefined))
