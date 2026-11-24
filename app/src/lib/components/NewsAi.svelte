@@ -56,6 +56,8 @@
   </div>
   <p class="also">Новое: вопрос голосом <Icon name="mic" size={12} />, переключатель «Правила проекта / Законы», проверка ника, история вопросов.</p>
 
+  <p class="honest"><Icon name="info" size={14} /><span>Он всё ещё может ошибаться — окончательно решает администрация. Увидел неверный ответ — нажми <Icon name="thumbdown" size={12} /> или напиши, в чём он не прав: мы его поправим.</span></p>
+
   <div class="cta">
     {#if ai.ready}
       <button class="btn primary" onclick={() => onDone('open')}><Icon name="chat" size={16} />Спросить помощника</button>
@@ -110,6 +112,9 @@
   .fi.green { color: var(--success); background: var(--success-tint); }
   .also { margin: 0; font-size: var(--fs-xs); line-height: 1.5; color: var(--text-muted); }
   .also :global(svg) { vertical-align: -2px; color: var(--danger-line); }
+  .honest { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 9px 11px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: var(--fs-xs); line-height: 1.5; color: var(--text-dim); }
+  .honest > :global(svg) { flex-shrink: 0; margin-top: 2px; color: var(--text-muted); }
+  .honest span :global(svg) { vertical-align: -2px; color: var(--text); }
   .cta { display: flex; gap: 6px; margin-top: 4px; }
   .cta .primary { flex: 1; height: 42px; font-size: 14px; }
   .cta .ghost { height: 42px; }
