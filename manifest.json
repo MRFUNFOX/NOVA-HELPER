@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.23-1246",
- "generatedAt": "2026-11-23T12:46:22.243Z",
+ "dbVersion": "2026.11.24-0220",
+ "generatedAt": "2026-11-24T02:20:02.387Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -738,9 +738,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411419/",
-   "sha256": "9194dd5c8e0768a3bb23b66162c67916b469475444866a4ef7920ff7111e4f8d",
-   "size": 43361,
-   "path": "docs/server_horizon_411419.ca1f50ad6c17.json",
+   "sha256": "d636ff47de0777b755c4e65bde607f45236412d49d5dce6448eda2e0439ae350",
+   "size": 43360,
+   "path": "docs/server_horizon_411419.aa928987da66.json",
    "stats": {
     "nodes": 52,
     "punishments": 0,
@@ -809,6 +809,22 @@
     "nodes": 21,
     "punishments": 0,
     "images": 0
+   }
+  },
+  {
+   "id": "server/horizon/413544",
+   "title": "Закон о взаимодействии силовых структур штата Сан-Андреас",
+   "scope": "server",
+   "serverId": "horizon",
+   "category": "Законодательная база",
+   "sourceUrl": "https://forum.nova-rp.com/threads/413544/",
+   "sha256": "d550a1866242b175987e41e4ddb2eafe834a0bcb7208e1b9224cda6fae656707",
+   "size": 19047,
+   "path": "docs/server_horizon_413544.75fe6e3e8a54.json",
+   "stats": {
+    "nodes": 19,
+    "punishments": 1,
+    "images": 1
    }
   },
   {
@@ -956,6 +972,22 @@
    }
   },
   {
+   "id": "server/horizon/413545",
+   "title": "Избирательный кодекс штата Сан-Андреас",
+   "scope": "server",
+   "serverId": "horizon",
+   "category": "Законодательная база",
+   "sourceUrl": "https://forum.nova-rp.com/threads/413545/",
+   "sha256": "2b0b55e0ee755d3a8cfdc5e551fa6c9c1945c6400852c9de7f0223a319484db8",
+   "size": 19176,
+   "path": "docs/server_horizon_413545.c5f37656803b.json",
+   "stats": {
+    "nodes": 20,
+    "punishments": 0,
+    "images": 0
+   }
+  },
+  {
    "id": "server/horizon/411159",
    "title": "Конституция Штата San-Andreas",
    "scope": "server",
@@ -967,6 +999,38 @@
    "path": "docs/server_horizon_411159.46862d3b5e92.json",
    "stats": {
     "nodes": 126,
+    "punishments": 0,
+    "images": 0
+   }
+  },
+  {
+   "id": "server/horizon/413542",
+   "title": "Положение о медицинских проверках государственных организаций",
+   "scope": "server",
+   "serverId": "horizon",
+   "category": "Законодательная база",
+   "sourceUrl": "https://forum.nova-rp.com/threads/413542/",
+   "sha256": "c22e984833c2b1bf3f658cc855030cf30066bd343d355fc004e58206a4e2fa6d",
+   "size": 36548,
+   "path": "docs/server_horizon_413542.d675d6d285c5.json",
+   "stats": {
+    "nodes": 64,
+    "punishments": 2,
+    "images": 0
+   }
+  },
+  {
+   "id": "server/horizon/413543",
+   "title": "Положение о прокурорских проверках государственных организаций",
+   "scope": "server",
+   "serverId": "horizon",
+   "category": "Законодательная база",
+   "sourceUrl": "https://forum.nova-rp.com/threads/413543/",
+   "sha256": "7f359c1198556c15ace3996ea499a4d0bc99b0c0a8f1bb7210d11e398ba2ff48",
+   "size": 23381,
+   "path": "docs/server_horizon_413543.7bb8dbd8a8a4.json",
+   "stats": {
+    "nodes": 41,
     "punishments": 0,
     "images": 0
    }
@@ -995,9 +1059,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411155/",
-   "sha256": "85dd951dc6d211b962b4b8b187efe75ced07ceb29fe0a4e8f7bda4609200d200",
-   "size": 306564,
-   "path": "docs/server_horizon_411155.eb671aca0f21.json",
+   "sha256": "14bc632fe67cf854c603efcb86cc9661b5f16761deeb613d3d35facc1ac85218",
+   "size": 305768,
+   "path": "docs/server_horizon_411155.24f455c641bb.json",
    "stats": {
     "nodes": 373,
     "punishments": 0,
@@ -1055,5 +1119,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.23-1246.json"
+ "changelog": "changelog/2026.11.24-0220.json"
 }
