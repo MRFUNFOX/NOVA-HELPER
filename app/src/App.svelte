@@ -14,6 +14,7 @@
   import AdminView from './lib/components/AdminView.svelte';
   import { learn } from './lib/learn.svelte';
   import NewsBuyers from './lib/components/NewsBuyers.svelte';
+  import NewsAi from './lib/components/NewsAi.svelte';
   import { prices } from './lib/prices.svelte';
   import Wizard from './lib/components/Wizard.svelte';
   import UpdateDialog from './lib/components/UpdateDialog.svelte';
@@ -76,7 +77,18 @@
     try { localStorage.setItem('nova.newsBuyers', NEWS_BUYERS); } catch { /* покажем ещё раз — не страшно */ }
     if (result === 'open') { app.query = ''; app.view = { kind: 'buyers' }; app.sidebarOpen = false; }
   }
-  const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen && !buyersNewsOpen));
+  // Новость «ИИ-помощник стал быстрее» — всем, у кого есть помощник, один раз; после новости о скупщиках
+  const NEWS_AI = 'ai-0.8.0';
+  let aiNewsSeen = $state((() => { try { return localStorage.getItem('nova.newsAi') === NEWS_AI; } catch { return false; } })());
+  const aiNewsOpen = $derived(started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.aiEnabled && !aiNewsSeen && !buyersNewsOpen && !app.guideOpen);
+  function closeAiNews(result: 'open' | 'setup' | 'later' | 'esc') {
+    track('news_ai', { result, ready: ai.ready ? 1 : 0 });
+    aiNewsSeen = true;
+    try { localStorage.setItem('nova.newsAi', NEWS_AI); } catch { /* покажем ещё раз — не страшно */ }
+    if (result === 'open') app.aiOpen = true;
+    if (result === 'setup') ai.setupOpen = true;
+  }
+  const newsOpen = $derived(app.guideOpen || (started && !!app.settings?.firstRunDone && !consentOpen && !ai.setupOpen && !app.updateDialog && app.pinsEnabled && !newsSeen && !buyersNewsOpen && !aiNewsOpen));
   function closeNews(result: string, step: number) {
     track('guide', { from: app.guideOpen ? 'settings' : 'auto', result, step });
     newsSeen = true;
@@ -130,7 +142,7 @@
       e.preventDefault();
       focusSearch();
     }
-    if (e.key === 'Escape' && !app.updateDialog && !firstRun && !ai.setupOpen && !newsOpen) {
+    if (e.key === 'Escape' && !app.updateDialog && !firstRun && !ai.setupOpen && !newsOpen && !aiNewsOpen) {
       if (app.query) app.query = '';
       else if (app.aiOpen) app.aiOpen = false;
       else if (app.sidebarOpen) app.sidebarOpen = false;
@@ -221,6 +233,13 @@
     <div class="backdrop" transition:fade={{ duration: ms(160) }}>
       <div class="dialog news-buyers" role="dialog" aria-modal="true" aria-label="Новое: цены скупщиков" transition:scale={{ start: 0.96, duration: ms(220) }}>
         <NewsBuyers onDone={closeBuyersNews} />
+      </div>
+    </div>
+  {/if}
+  {#if aiNewsOpen}
+    <div class="backdrop" transition:fade={{ duration: ms(160) }}>
+      <div class="dialog news-buyers" role="dialog" aria-modal="true" aria-label="Новое в ИИ-помощнике" transition:scale={{ start: 0.96, duration: ms(220) }}>
+        <NewsAi onDone={closeAiNews} />
       </div>
     </div>
   {/if}
