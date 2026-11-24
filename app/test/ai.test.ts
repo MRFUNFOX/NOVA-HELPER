@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerText, looksLikeDispute, parseVerdict, pieces, refsIn, rich } from '../src/lib/ai.svelte';
+import { answerText, looksLikeDispute, parseVerdict, pieces, refsIn } from '../src/lib/ai.svelte';
 import { learn } from '../src/lib/learn.svelte';
 
 describe('ссылки в ответе', () => {
@@ -54,25 +54,5 @@ describe('разъяснения к вопросу', () => {
     expect(learn.relevant('Можно носить бронежилет?', 'project')).toEqual([]);
     expect(learn.relevant('Это был ответный огонь', 'project').map((n) => n.id)).toEqual(['b']);
     expect(learn.relevant('Сколько дают за угон?', 'laws')).toEqual([]);
-  });
-});
-
-describe('выделение в ответе', () => {
-  const names = ['Общие правила проекта', 'Общие правила государственных структур', 'Правила криминальных организаций'];
-  it('строка списка: документ, приглушённая суть, номер плашкой; вердикт не трогаем', () => {
-    const r = rich('**Неясно, о каком 8.1 речь?**\n- Общие правила проекта — администратор замораживает RP-ситуацию.\n- Правила криминальных организаций — «Война за граффити» действует постоянно.\n\nКакой пункт 8.1 вас интересует?', names);
-    expect(r[0]).toEqual({ t: 'bold', v: 'Неясно, о каком 8.1 речь?' });
-    expect(r.filter((x) => x.t === 'doc').map((x) => (x as { v: string }).v)).toEqual(['Общие правила проекта', 'Правила криминальных организаций']);
-    expect(r.some((x) => x.t === 'dim' && /замораживает/.test((x as { v: string }).v))).toBe(true);
-    expect(r.filter((x) => x.t === 'num')).toEqual([{ t: 'num', v: '8.1' }]);
-    expect(r.some((x) => x.t === 'dim' && /интересует/.test((x as { v: string }).v))).toBe(false);
-  });
-  it('в обычном ответе: название документа и номер, минуты и ссылки не ломаем', () => {
-    const r = rich('**Это DM.** Нарушен п. 4.1 Общих правил проекта, JAIL 120 минут [S1].', names);
-    expect(r.filter((x) => x.t === 'num')).toEqual([{ t: 'num', v: '4.1' }]);
-    expect(r.some((x) => x.t === 'ref')).toBe(true);
-    expect(r.some((x) => x.t === 'dim')).toBe(false);
-    // Строка с дефисом, но не про документ — обычный текст
-    expect(rich('- если он первым достал оружие — можно', names).every((x) => x.t === 'text')).toBe(true);
   });
 });

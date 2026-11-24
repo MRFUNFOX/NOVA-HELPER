@@ -1,9 +1,9 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
-  import { app, shortTitle } from '../state.svelte';
+  import { app } from '../state.svelte';
   import { backend } from '../backend';
-  import { ai, answerText, otherScope, pieces, rich, sourceLabel, SCOPES, type NoteSource, type Source, type Turn } from '../ai.svelte';
+  import { ai, answerText, otherScope, pieces, sourceLabel, SCOPES, type NoteSource, type Source, type Turn } from '../ai.svelte';
   import type { Section } from '../state.svelte';
   import ModelPicker from './ModelPicker.svelte';
   import { ease, ms } from '../motion';
@@ -17,14 +17,6 @@
       const src = t.sources.find((x) => x.n === Number(n));
       return src ? `(${sourceLabel(src).num} ${sourceLabel(src).doc})` : '';
     });
-  }
-
-  /** Названия документов для выделения в ответе: полные и короткие */
-  const docNames = $derived((app.db?.docs ?? []).flatMap((d) => [d.title, shortTitle(d.title)]));
-  /** Номер пункта в тексте → пункт, если среди найденных он такой один (иначе непонятно, какой открыть) */
-  function numSource(t: Turn, n: string) {
-    const hit = t.sources.filter((s) => (s.entry.article ?? s.entry.node.number) === n);
-    return hit.length === 1 ? hit[0] : undefined;
   }
 
   /** Что показано: разговор или история вопросов */
@@ -237,13 +229,8 @@
           {:else}
             {#if t.debate}<p class="kind"><Icon name="scale" size={13} />Разбор вашего довода</p>{/if}
             <p class="text selectable">
-              {#each rich(answerText(t.a), docNames) as p, i (i)}
+              {#each pieces(answerText(t.a)) as p, i (i)}
                 {#if p.t === 'bold'}<b>{p.v}</b>
-                {:else if p.t === 'doc'}<span class="docname">{p.v}</span>
-                {:else if p.t === 'dim'}<span class="dim">{p.v}</span>
-                {:else if p.t === 'num'}
-                  {@const s = numSource(t, p.v)}
-                  {#if s}<button class="ref" onclick={() => open(s)} title="{sourceLabel(s).doc}, {sourceLabel(s).num}">{p.v}</button>{:else}<span class="ref plain">{p.v}</span>{/if}
                 {:else if p.t === 'ref' && p.kind === 'n'}
                   {@const ns = t.notes?.find((x) => x.n === p.n)}
                   {#if ns}<span class="ref note" title={ns.note.text}>Разъяснение</span>{/if}
@@ -383,9 +370,6 @@
   .text b { color: var(--accent-soft); }
   .ref { display: inline-flex; align-items: center; height: 20px; margin: 0 2px; padding: 0 6px; vertical-align: 1px; border: 0; border-radius: 5px; background: var(--accent-tint); color: var(--accent); font-size: 11.5px; font-weight: 800; font-variant-numeric: tabular-nums; }
   .ref:hover { background: var(--accent); color: var(--on-accent); }
-  .ref.plain:hover { background: var(--accent-tint); color: var(--accent); }
-  .text .docname { font-weight: 800; color: var(--accent-soft); }
-  .text .dim { color: var(--text-dim); }
   .ref.note { background: var(--info-tint); color: var(--info); cursor: help; }
   .kind { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; font-size: 11.5px; font-weight: 800; color: var(--text-muted); }
   .kind :global(svg) { color: var(--accent); }
