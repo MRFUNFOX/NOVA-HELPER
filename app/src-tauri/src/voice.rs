@@ -72,7 +72,7 @@ pub struct VoiceStatus {
 
 #[tauri::command]
 pub fn voice_status(app: AppHandle) -> VoiceStatus {
-    VoiceStatus { installed: installed(&app), outdated: !installed(&app) && dir(&app).join(PACK).join("model.int8.onnx").exists(), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 163 }
+    VoiceStatus { installed: installed(&app), outdated: !installed(&app) && dir(&app).join(PACK).join("model.int8.onnx").exists(), installing: app.state::<VoiceState>().installing.load(Ordering::Relaxed), size_mb: 159 }
 }
 
 // ── Установка модели ──
