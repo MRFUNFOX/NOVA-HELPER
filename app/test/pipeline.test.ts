@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { buildIndex, rank, type Entry } from '../src/lib/search';
-import { analysisText, mergeGroups, parseAnalysis, parseCheck } from '../src/lib/ai.svelte';
+import { analysisText, mergeGroups, otherScope, parseAnalysis, parseCheck } from '../src/lib/ai.svelte';
 import { EXAM, citesRef, examScore, type ExamResult } from '../src/lib/exam';
 import { slang } from '../src/lib/slang';
 import type { RuleDocument } from '@shared/types';
@@ -129,5 +129,27 @@ describe('экзамен', () => {
       { check: 'дача взятки должностному лицу', words: ['дача взятки', 'должностному лицу'] },
     ]);
     expect(bribe.some((e) => num(e) === '15.5' || /дача взятки/i.test(e.node.text))).toBe(true);
+  });
+});
+
+describe('подсказка «ответить по другому разделу»', () => {
+  it('в правилах спросили про закон — предлагаем законы', () => {
+    expect(otherScope('Сколько лет дают по УК за убийство?', 'project')).toBe('laws');
+    expect(otherScope('Какая статья за угон машины?', 'project')).toBe('laws');
+    expect(otherScope('Что будет на суде за взятку?', 'project')).toBe('laws');
+  });
+  it('в законах спросили про DM и деморган — предлагаем правила', () => {
+    expect(otherScope('Это DM или нет?', 'laws')).toBe('project');
+    expect(otherScope('Меня откинули в деморган, справедливо?', 'laws')).toBe('project');
+    expect(otherScope('Можно ли достать оружие в зелёной зоне?', 'laws')).toBe('project');
+  });
+  it('вопрос о своём разделе, смешанный или общий — молчим', () => {
+    expect(otherScope('Это DM?', 'project')).toBeNull();
+    expect(otherScope('Статья 6.2 УК', 'laws')).toBeNull();
+    expect(otherScope('Админ дал деморган за нарушение статьи УК', 'project')).toBeNull();
+    expect(otherScope('Можно ли грабить на улице?', 'project')).toBeNull();
+    expect(otherScope('Как получить штраф?', 'project')).toBeNull();
+    expect(otherScope('Мутный тип угнал машину', 'laws')).toBeNull();
+    expect(otherScope('Как сделать так, чтобы не убили', 'laws')).toBeNull();
   });
 });

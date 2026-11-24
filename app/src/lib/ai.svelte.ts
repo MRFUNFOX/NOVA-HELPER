@@ -398,12 +398,21 @@ class Assistant {
     return plainAnswer(t).replace(/\*\*/g, '');
   }
 
-  /** Вопрос игрока (раздел — как выбран в меню слева: «Правила» или «Законы»). Возвращает ход разговора, когда ответ готов (для голосового вопроса) */
-  ask(question: string): Promise<Turn | undefined> {
+  /** По чему отвечает помощник — свой переключатель в панели помощника, не зависит от меню слева (в игровом меню его не видно) */
+  scope = $state<Section>(readScope());
+  setScope(s: Section) {
+    this.scope = s;
+    try { localStorage.setItem(SCOPE_KEY, s); } catch { /* без памяти */ }
+    track('ai_scope', { scope: s });
+  }
+
+  /** Вопрос игрока по выбранному в помощнике разделу. other — тот же вопрос по другому разделу («Ответить по законам») */
+  ask(question: string, as?: Section): Promise<Turn | undefined> {
     const q = question.trim();
     if (!q || this.busy || this.exam.running) return Promise.resolve(undefined);
+    if (as && as !== this.scope) this.setScope(as);
     const nick = nickIn(q);
-    const scope: Section = nick ? 'project' : app.hasLaws ? app.section : 'project';
+    const scope: Section = nick ? 'project' : app.hasLaws ? this.scope : 'project';
     // Открытый из истории вопрос — начало нового разговора
     if (this.turns.some((x) => x.fromHistory)) this.turns = [];
     this.turns.push({ id: `${Date.now()}`, q, a: '', sources: [], pending: true, scope, at: Date.now(), ...(nick ? { nick: { nick, format: nickFormat(nick), verdict: null, issues: [] } } : {}) });
@@ -798,4 +807,21 @@ function saveExam(x: ExamState) { try { localStorage.setItem(EXAM_KEY, JSON.stri
 async function sleep(ms: number, stop: () => boolean) {
   const end = Date.now() + ms;
   while (Date.now() < end && !stop()) await new Promise((r) => setTimeout(r, 500));
+}
+
+const SCOPE_KEY = 'nova.aiScope';
+function readScope(): Section {
+  try { return localStorage.getItem(SCOPE_KEY) === 'laws' ? 'laws' : 'project'; } catch { return 'project'; }
+}
+
+/** Похоже, вопрос про другой раздел: в «Правилах» спросили про УК и суд, в «Законах» — про DM и деморган.
+ *  Тогда под ответом предлагаем ответить по другому разделу. «Штраф» и «задержание» есть и там и там — их не считаем. */
+const LAWISH = /(^|[^а-яё])(ук|ак|дк|упк)([^а-яё]|$)|уголовн|административн\S* кодекс|дорожн\S* кодекс|кодекс|стать[яиеюй]|лишени\S* свобод|срок\S* (тюрьм|заключ)|([^а-яё]|^)суд(е|а|у|ом|ах|ов|ья|ьи|ье|ьёй|ей)?([^а-яё]|$)|адвокат|прокурор|лицензи|розыск|конституци/i;
+const RULEISH = /(^|[^a-zа-яё])(dm|дм|nonrp|нонрп|pg|пг|mg|мг|rk|рк|nlr|db|дб|tk|ооc|оос|ooc|ic)([^a-zа-яё]|$)|деморган|jail|джейл|варн|warn|([^а-яё]|^)бан([^а-яё]|$)|([^а-яё]|^)(мут|мьют)([^а-яё]|$)|администрац|админ|репорт|никнейм|([^а-яё]|^)ник([^а-яё]|$)|зелён\S* зон|зелен\S* зон/i;
+export function otherScope(q: string, scope: Section): Section | null {
+  const law = LAWISH.test(q);
+  const rule = RULEISH.test(q);
+  if (scope === 'project' && law && !rule) return 'laws';
+  if (scope === 'laws' && rule && !law) return 'project';
+  return null;
 }

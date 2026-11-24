@@ -3,7 +3,7 @@
   import Icon from './Icon.svelte';
   import { app } from '../state.svelte';
   import { backend } from '../backend';
-  import { ai, answerText, pieces, sourceLabel, SCOPES, type NoteSource, type Source, type Turn } from '../ai.svelte';
+  import { ai, answerText, otherScope, pieces, sourceLabel, SCOPES, type NoteSource, type Source, type Turn } from '../ai.svelte';
   import type { Section } from '../state.svelte';
   import ModelPicker from './ModelPicker.svelte';
   import { ease, ms } from '../motion';
@@ -47,7 +47,7 @@
   let input = $state('');
   let list: HTMLElement | undefined = $state();
   let field: HTMLTextAreaElement | undefined = $state();
-  const scope = $derived<Section>(app.hasLaws ? app.section : 'project');
+  const scope = $derived<Section>(app.hasLaws ? ai.scope : 'project');
   const examples = $derived(scope === 'laws' ? [
     'Что грозит за убийство полицейского?',
     'Сколько дают за угон машины?',
@@ -80,12 +80,12 @@
   });
 
 
-  function send(text = input, sure = false) {
+  function send(text = input, sure = false, as?: Section) {
     if (!text.trim() || ai.busy) return;
     if (ai.confirmSend && !sure && text === input) { confirming = true; return; }
     confirming = false;
     view = 'chat';
-    ai.ask(text);
+    ai.ask(text, as);
     input = '';
   }
 
@@ -271,6 +271,10 @@
                   <button class="act icon down" class:on={t.rating === 'down'} onclick={() => ai.rate(t, 'down')} title="Ответ не помог" aria-label="Ответ не помог" aria-pressed={t.rating === 'down'}><Icon name="thumbdown" size={15} /></button>
                 </span>
               </div>
+              {@const other = app.hasLaws && !t.nick && t.scope && t === ai.turns.at(-1) ? otherScope(t.q, t.scope) : null}
+              {#if other}
+                <p class="other"><Icon name={other === 'laws' ? 'scale' : 'scroll'} size={14} /><span>Похоже, это вопрос о {other === 'laws' ? 'законах штата' : 'правилах проекта'}.</span><button class="link" onclick={() => send(t.q, true, other)} disabled={ai.busy}>Ответить по {other === 'laws' ? 'законам' : 'правилам'}</button></p>
+              {/if}
               {#if t.rating === 'down'}<p class="thanks">Спасибо — так мы видим, где помощник ошибается. Если хотите поспорить с ответом, просто напишите свой довод.</p>{/if}
             {/if}
             {#if t.think && learn.staffHere && !t.pending}
@@ -311,7 +315,10 @@
 
     <footer>
       {#if app.hasLaws}
-        <p class="scopebar"><Icon name={scope === 'laws' ? 'scale' : 'scroll'} size={14} /><span>Отвечаю по <b>{scope === 'laws' ? `законам сервера ${app.serverName}` : 'правилам проекта'}</b>. {scope === 'laws' ? 'Правила' : 'Законы'} — переключатель слева вверху</span></p>
+        <div class="scopes" role="radiogroup" aria-label="По чему отвечать">
+          <button role="radio" aria-checked={scope === 'project'} class:on={scope === 'project'} onclick={() => ai.setScope('project')} disabled={ai.busy} title="Правила проекта: DM, NonRP, деморган, варны, баны — то, за что наказывает администрация"><Icon name="scroll" size={14} />Правила проекта</button>
+          <button role="radio" aria-checked={scope === 'laws'} class:on={scope === 'laws'} onclick={() => ai.setScope('laws')} disabled={ai.busy} title="Законы штата: Уголовный, Административный, Дорожный кодекс — то, за что персонажа судят в игре"><Icon name="scale" size={14} />Законы {app.serverName}</button>
+        </div>
       {/if}
       {#if confirming}
         <p class="confirm"><Icon name="chat" size={14} /><span>Отправить вопрос? <b>Enter</b> — да, <b>Esc</b> — нет</span></p>
@@ -397,9 +404,16 @@
   textarea { flex: 1; min-width: 0; min-height: 32px; max-height: 120px; padding: 6px 0; resize: none; field-sizing: content; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: var(--fs-sm); line-height: 1.45; }
   .send { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); }
   .send:disabled { background: var(--surface-3); color: var(--text-muted); }
-  .scopebar { display: flex; align-items: flex-start; gap: 7px; margin: 0 0 8px; padding: 7px 10px; border-radius: var(--radius-sm); background: var(--accent-tint); color: var(--accent-soft); font-size: var(--fs-xs); line-height: 1.4; }
-  .scopebar :global(svg) { flex-shrink: 0; margin-top: 1px; }
-  .scopebar b { color: var(--text); }
+  .scopes { display: flex; gap: 2px; margin: 0 0 8px; padding: 3px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border-strong); }
+  .scopes button { flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 30px; padding: 0 8px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-dim); font-size: var(--fs-xs); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.15s var(--ease), color 0.15s var(--ease); }
+  .scopes button:hover:not(.on):not(:disabled) { background: var(--surface-3); color: var(--text); }
+  .scopes button.on { background: var(--accent); color: var(--on-accent); }
+  .scopes button:disabled:not(.on) { opacity: 0.5; }
+  .scopes button:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 1px; }
+  .other { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 7px; margin: 10px 0 0; font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.4; }
+  .other :global(svg) { color: var(--accent); flex-shrink: 0; }
+  .other .link { border: 0; padding: 0; background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }
+  .other .link:hover:not(:disabled) { text-decoration: underline; }
   .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
   .note { margin: 0 2px; font-size: 11px; line-height: 1.35; color: var(--text-muted); }
 
