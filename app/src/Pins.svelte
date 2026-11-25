@@ -65,7 +65,8 @@
     } catch { askPin = null; }
   }
   /** Что рисуем: закреплённые окна, а в редакторе — ещё и образец окна ответа */
-  const shown = $derived(editor && askPin ? [...pins, askPin] : pins);
+  // Образец — под настоящими окнами: закреплённый ответ встаёт на то же место, и его крестик должен оставаться доступным
+  const shown = $derived(editor && askPin ? [askPin, ...pins] : pins);
 
   /** Новые окна — слева под чатом игры, стопкой; не влезли — следующей колонкой */
   function place() {
@@ -337,10 +338,11 @@
       {:else if p.kind === 'calc' && p.calc}
         <CalcPin d={p.calc} />
       {:else if p.key === ASK}
+        {#if editor}<span class="sample-tag">Образец окна ответа</span>{/if}
         <p class="askq">🎙 Человек навёл на меня оружие, я его убил. Это DM?</p>
         <p class="text"><b class="askb">Не DM.</b> Прицеливание оружием — весомая IC-причина для убийства.</p>
         <div class="h askref"><span class="badge">4.1</span><span class="doc">Общие правила проекта</span></div>
-        <p class="askfoot">Так будет выглядеть ответ на вопрос голосом</p>
+        <p class="askfoot">Образец: здесь появятся ответы на вопрос голосом. Это не закреплённое окно — двигай и настраивай его вид</p>
       {:else}
         <div class="h"><span class="badge">{p.badge}</span><span class="doc">{p.doc}</span></div>
         <p class="text">{p.text}</p>
@@ -389,6 +391,7 @@
   .askq { margin: 0 0 0.5em; font-size: 0.85em; line-height: 1.4; color: rgba(255, 255, 255, 0.8); }
   .askb { color: var(--accent-soft); }
   .askref { margin: 0.55em 0 0; }
+  .sample-tag { position: absolute; top: -30px; left: -2px; padding: 4px 9px; border-radius: 7px; background: var(--accent); color: var(--on-accent); font-size: 11.5px; font-weight: 800; white-space: nowrap; }
   .askfoot { margin: 0.6em 0 0; padding-top: 0.5em; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 11.5px; color: rgba(255, 255, 255, 0.6); }
   .layer { position: fixed; inset: 0; pointer-events: none; }
   .layer.editor { pointer-events: auto; }
