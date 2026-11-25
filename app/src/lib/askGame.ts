@@ -8,6 +8,7 @@ import { backend, type AskState } from './backend';
 import { ai, answerText, pieces, sourceLabel, type Turn } from './ai.svelte';
 import { app } from './state.svelte';
 import { track } from './stats';
+export { autoSeconds } from './askTime';
 
 /** Что показать в окне по готовому ответу: текст с **жирным** и номера пунктов отдельными плашками */
 export function answerState(t: Turn): AskState {

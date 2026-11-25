@@ -8,6 +8,7 @@
    */
   import { backend, type AskLayout, type AskState } from './lib/backend';
   import { PIN_W, type Pin } from './lib/pins';
+  import { autoSeconds } from './lib/askTime';
   import Icon from './lib/components/Icon.svelte';
   import { untrack } from 'svelte';
 
@@ -26,12 +27,13 @@
   let card: HTMLElement | undefined = $state();
 
   const words = (v: View) => (v.stage === 'answer' ? v.parts.map((p) => p.v).join(' ').split(/\s+/).filter(Boolean).length : 0);
-  /** «Авто»: короткий ответ ~8 секунд, длинный — до 30 */
+  /** «Авто» — по длине: в игре читают урывками, поэтому медленно — 8 с на то, чтобы заметить ответ,
+   *  и почти секунда на слово (вместе с вопросом). Не меньше 15 с и не больше минуты. */
   function duration(v: View) {
-    if (v.stage === 'error') return 6000;
+    if (v.stage === 'error') return 8000;
     if (v.stage !== 'answer') return 0;
     if (showFor > 0) return showFor * 1000;
-    return Math.round(Math.min(30, Math.max(8, 4 + words(v) * 0.45)) * 1000);
+    return Math.round(autoSeconds(words(v), v.q.split(/\s+/).filter(Boolean).length) * 1000);
   }
 
   function set(v: View | null) {

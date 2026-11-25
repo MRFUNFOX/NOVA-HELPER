@@ -18,3 +18,13 @@ describe('ответ для окна поверх игры', () => {
     expect(answerState(t)).toEqual({ stage: 'error', error: 'Нет связи', q: 'Вопрос' });
   });
 });
+
+describe('сколько показывать ответ («Авто»)', () => {
+  it('короткий — около 20 секунд, длинный — до минуты', async () => {
+    const { autoSeconds } = await import('../src/lib/askTime');
+    expect(autoSeconds(3, 5)).toBe(15);
+    expect(autoSeconds(10, 10)).toBe(20);
+    expect(autoSeconds(40, 10)).toBe(47);
+    expect(autoSeconds(80, 20)).toBe(60);
+  });
+});
