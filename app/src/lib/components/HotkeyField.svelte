@@ -4,10 +4,10 @@
   import { keys, pretty, recordHotkey } from '../hotkey';
   import { track } from '../stats';
 
-  /** main — клавиша вызова программы, editor — клавиша редактора закреплённых окон */
-  let { kind = 'main' }: { kind?: 'main' | 'editor' } = $props();
-  const value = $derived(kind === 'editor' ? (app.settings?.editorHotkey ?? 'Alt+Shift+Z') : (app.settings?.hotkey ?? ''));
-  const suspend = (on: boolean) => (kind === 'editor' ? backend.suspendEditorHotkey(on) : backend.suspendHotkey(on));
+  /** main — клавиша вызова программы, editor — клавиша редактора закреплённых окон, ask — «держи и говори» в игре */
+  let { kind = 'main' }: { kind?: 'main' | 'editor' | 'ask' } = $props();
+  const value = $derived(kind === 'editor' ? (app.settings?.editorHotkey ?? 'Alt+Shift+Z') : kind === 'ask' ? (app.settings?.askHotkey ?? 'Alt+E') : (app.settings?.hotkey ?? ''));
+  const suspend = (on: boolean) => (kind === 'editor' ? backend.suspendEditorHotkey(on) : kind === 'ask' ? backend.suspendAskHotkey(on) : backend.suspendHotkey(on));
 
   let recording = $state(false);
   let error = $state('');
@@ -41,8 +41,8 @@
     }
     recording = false;
     try {
-      app.settings = kind === 'editor' ? await backend.setEditorHotkey(r.hotkey) : await backend.setHotkey(r.hotkey);
-      track(kind === 'editor' ? 'editor_key' : 'main_key', { key: r.hotkey });
+      app.settings = kind === 'editor' ? await backend.setEditorHotkey(r.hotkey) : kind === 'ask' ? await backend.setAskHotkey(r.hotkey) : await backend.setHotkey(r.hotkey);
+      track(kind === 'editor' ? 'editor_key' : kind === 'ask' ? 'ask_key' : 'main_key', { key: r.hotkey });
       if (kind === 'editor') app.editorKey = r.hotkey;
       saved = true;
     } catch (err) {
@@ -60,7 +60,7 @@
     onclick={() => (recording ? stop() : start())}
     onkeydown={onKey}
     onblur={() => recording && stop()}
-    aria-label={recording ? 'Нажмите новое сочетание клавиш' : `${kind === 'editor' ? 'Клавиша редактора' : 'Клавиша вызова'}: ${pretty(value)}. Нажмите, чтобы изменить`}
+    aria-label={recording ? 'Нажмите новое сочетание клавиш' : `${kind === 'editor' ? 'Клавиша редактора' : kind === 'ask' ? 'Клавиша вопроса голосом' : 'Клавиша вызова'}: ${pretty(value)}. Нажмите, чтобы изменить`}
   >
     {#if recording}
       <span class="wait">Нажмите сочетание…</span>
@@ -71,7 +71,7 @@
   <button class="btn" onclick={() => (recording ? stop() : start())}>{recording ? 'Отмена' : 'Изменить'}</button>
 </div>
 {#if error}<p class="msg error" role="alert">{error}</p>
-{:else if saved}<p class="msg ok">Готово. Теперь {kind === 'editor' ? 'редактор окон' : 'окно'} открывается на {pretty(value)}.</p>
+{:else if saved}<p class="msg ok">Готово. {kind === 'ask' ? `Теперь вопрос голосом — держи ${pretty(value)}.` : `Теперь ${kind === 'editor' ? 'редактор окон' : 'окно'} открывается на ${pretty(value)}.`}</p>
 {:else if recording}<p class="msg muted">Любая клавиша или сочетание, например Alt + Q или F8. Одна клавиша без Alt и Ctrl будет срабатывать и в игре, и в чате. Esc — отмена.</p>{/if}
 
 <style>

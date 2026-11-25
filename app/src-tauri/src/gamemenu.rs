@@ -158,11 +158,14 @@ pub fn show(app: &AppHandle) {
     // Подсказка в углу не нужна, пока меню на экране (у закреплённого меню — своя)
     crate::overlay::hide_hint(app);
     let _ = w.emit("game-menu-shown", ());
+    // Ответ помощника становится кликабельным (закрыть, закрепить) и ставит таймер на паузу
+    crate::ask::menu(app, true);
 }
 
 /// Закреплённое меню: оставить на экране, а мышь и клавиатуру вернуть в игру
 fn release(app: &AppHandle, w: &WebviewWindow) {
     set_passive(app, w, true);
+    crate::ask::menu(app, false);
     win::activate(PREVIOUS.load(Ordering::Relaxed));
 }
 
@@ -174,6 +177,7 @@ pub fn hide(app: &AppHandle) {
     }
     let was_active = !PASSIVE.load(Ordering::Relaxed);
     let _ = w.hide();
+    crate::ask::menu(app, false);
     set_passive(app, &w, false);
     if was_active {
         win::activate(PREVIOUS.swap(0, Ordering::Relaxed));

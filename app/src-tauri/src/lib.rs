@@ -1,4 +1,5 @@
 mod ai;
+mod ask;
 mod game;
 mod gamemenu;
 mod stats;
@@ -40,7 +41,8 @@ fn get_settings(app: AppHandle) -> Settings {
 fn save_settings(app: AppHandle, new: Settings) -> Result<Settings, String> {
     let old = settings::load(&app);
     // Клавишу меняем через set_hotkey; здесь сохраняем остальное, не трогая геометрию окна
-    let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), window: old.window.clone(), hint_pos: old.hint_pos, ..new };
+    let merged = Settings { hotkey: old.hotkey.clone(), editor_hotkey: old.editor_hotkey.clone(), window: old.window.clone(), hint_pos: old.hint_pos,
+        ask_hotkey: old.ask_hotkey.clone(), ask_on: old.ask_on, ask_layout: old.ask_layout, ..new };
     settings::save(&app, &merged)?;
     let _ = app.emit("settings-changed", merged.clone());
     // Режим разработчика включили или выключили — меню поверх игры появляется или пропадает
@@ -212,6 +214,14 @@ pub fn run() {
             overlay::hint_move,
             ai::ai_complete,
             ai::ai_chat,
+            ask::ask_show,
+            ask::ask_hide,
+            ask::ask_size,
+            ask::ask_layout,
+            ask::ask_layout_save,
+            ask::set_ask_hotkey,
+            ask::set_ask_on,
+            ask::suspend_ask_hotkey,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

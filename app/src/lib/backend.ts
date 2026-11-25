@@ -25,7 +25,24 @@ export interface Settings {
   editorHotkey?: string;
   /** Сервер, с которым игрок играет (на будущее — законы серверов) */
   window?: { x: number; y: number; width: number; height: number } | null;
+  /** Вопрос помощнику голосом в игре: включён ли */
+  askOn?: boolean;
+  /** Клавиша «держи и говори» */
+  askHotkey?: string;
+  /** Сколько секунд показывать ответ; 0 — по длине */
+  askShow?: number;
+  askLayout?: AskLayout | null;
 }
+
+/** Окно ответа на голосовой вопрос в игре: место (логические пиксели на мониторе игры), ширина, фон 0–100, шрифт */
+export interface AskLayout { x: number; y: number; w: number; bg: number; font: number; locked: boolean }
+/** Что показывает окно ответа */
+export type AskState =
+  | { stage: 'listen' }
+  | { stage: 'think'; q: string; step?: 'plan' | 'answer' | 'check' }
+  | { stage: 'answer'; q: string; parts: { t: 'text' | 'bold'; v: string }[]; refs: { num: string; doc: string }[] }
+  | { stage: 'error'; error: string; q?: string };
+export interface AskInfo { layout: AskLayout; show: number; on: boolean; menuKey: string; key: string; menu: boolean; state?: AskState | null }
 
 export interface Db {
   manifest: Manifest | null;
@@ -124,6 +141,15 @@ export const backend = {
   voiceStart: () => invoke<void>('voice_start'),
   voiceStop: () => invoke<void>('voice_stop'),
   voiceCancel: () => invoke<void>('voice_cancel'),
+  // ── Вопрос голосом прямо в игре: окно ответа поверх игры ──
+  askShow: (state: AskState) => invoke<void>('ask_show', { state }),
+  askHide: () => invoke<void>('ask_hide'),
+  askSize: (height: number) => invoke<void>('ask_size', { height }),
+  askLayout: () => invoke<AskInfo>('ask_layout'),
+  askLayoutSave: (layout: AskLayout) => invoke<void>('ask_layout_save', { layout }),
+  setAskHotkey: (hotkey: string) => invoke<Settings>('set_ask_hotkey', { hotkey }),
+  setAskOn: (on: boolean) => invoke<Settings>('set_ask_on', { on }),
+  suspendAskHotkey: (suspended: boolean) => invoke<void>('suspend_ask_hotkey', { suspended }),
   /** deep — длинная ситуация или спор: нейросеть рассуждает глубже */
   aiChat: (id: string, deep: boolean, messages: ChatMsg[]) => invoke<{ text: string; model: string; reasoning?: string }>('ai_chat', { id, deep, messages }),
 
@@ -513,6 +539,27 @@ async function mock(cmd: string, args?: Record<string, unknown>): Promise<unknow
       return { ...mockState.settings };
     case 'suspend_editor_hotkey':
       return;
+    case 'ask_show':
+      mockEmit('ask-state', args!.state);
+      return;
+    case 'ask_hide':
+    case 'ask_size':
+    case 'suspend_ask_hotkey':
+      return;
+    case 'ask_layout':
+      return { layout: mockState.settings.askLayout ?? { x: Math.max(0, innerWidth - 420), y: 120, w: 380, bg: 88, font: 15, locked: false },
+        show: mockState.settings.askShow ?? 0, on: !!mockState.settings.askOn || params.has('askon'), menuKey: mockState.settings.hotkey, key: mockState.settings.askHotkey ?? 'Alt+E', menu: params.has('menu') };
+    case 'ask_layout_save':
+      mockState.settings = { ...mockState.settings, askLayout: args!.layout as AskLayout };
+      mockEmit('ask-layout', args!.layout);
+      return;
+    case 'set_ask_hotkey':
+      if (args!.hotkey === mockState.settings.hotkey || args!.hotkey === mockState.settings.editorHotkey) throw 'Это сочетание уже занято другой клавишей программы. Выберите другое.';
+      mockState.settings = { ...mockState.settings, askHotkey: String(args!.hotkey) };
+      return { ...mockState.settings };
+    case 'set_ask_on':
+      mockState.settings = { ...mockState.settings, askOn: !!args!.on };
+      return { ...mockState.settings };
     case 'game_menu_layout': { try { return JSON.parse(localStorage.getItem('mock.gamemenu') ?? 'null'); } catch { return null; } }
     case 'game_menu_save': { try { localStorage.setItem('mock.gamemenu', JSON.stringify(args?.layout)); } catch { /* браузер без хранилища */ } return; }
     case 'game_menu_hide': return;

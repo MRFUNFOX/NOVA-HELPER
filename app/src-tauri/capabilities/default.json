@@ -6,7 +6,8 @@
     "main",
     "hint",
     "pins",
-    "game"
+    "game",
+    "ask"
   ],
   "permissions": [
     "core:default",

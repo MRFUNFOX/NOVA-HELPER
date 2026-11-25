@@ -106,6 +106,11 @@ mod win {
 }
 
 /// Поднять окно наверх среди окон «поверх всех», не забирая фокус
+/// Открыт ли редактор окон
+pub fn editor_open() -> bool {
+    EDITOR.load(Ordering::Relaxed)
+}
+
 pub fn raise_window(w: &WebviewWindow) {
     win::raise(hwnd_of(w));
 }

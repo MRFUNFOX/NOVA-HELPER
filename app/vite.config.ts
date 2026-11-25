@@ -3,7 +3,8 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
 
 // Окна: основное (index.html), подсказка о клавише в углу экрана (hint.html),
-// слой закреплённых пунктов поверх игры (pins.html) и меню поверх игры (game.html)
+// слой закреплённых пунктов поверх игры (pins.html), меню поверх игры (game.html)
+// и ответ на вопрос голосом в игре (ask.html)
 export default defineConfig({
   plugins: [svelte()],
   clearScreen: false,
@@ -23,6 +24,7 @@ export default defineConfig({
         hint: fileURLToPath(new URL('./hint.html', import.meta.url)),
         pins: fileURLToPath(new URL('./pins.html', import.meta.url)),
         game: fileURLToPath(new URL('./game.html', import.meta.url)),
+        ask: fileURLToPath(new URL('./ask.html', import.meta.url)),
       },
     },
   },

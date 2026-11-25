@@ -4,7 +4,7 @@
    * Обычно мышь проходит сквозь него в игру. В режиме редактора окна можно таскать мышкой за любое место,
    * менять ширину за уголок (высота — всегда по тексту), фон, шрифт, залочить и открепить.
    */
-  import { backend, type HintInfo } from './lib/backend';
+  import { backend, type AskLayout, type HintInfo } from './lib/backend';
   import { keys } from './lib/hotkey';
   import { BUYER_W, CALC_W, PIN_BG_DEFAULT, PIN_FONT, PIN_W, type Pin } from './lib/pins';
   import CalcPin from './lib/components/CalcPin.svelte';
@@ -43,8 +43,29 @@
     return { key: p.key, x: p.x, y: p.y, w: p.w, bg: p.bg, font: p.font, locked: p.locked };
   }
   function save(list: Pin[]) {
-    void backend.pinsLayout(list.map(layoutOf)).catch(() => {});
+    const a = list.find((p) => p.key === ASK);
+    if (a) {
+      const l: AskLayout = { x: Math.round(a.x ?? 0), y: Math.round(a.y ?? 0), w: W(a), bg: BG(a), font: FONT(a), locked: !!a.locked };
+      void backend.askLayoutSave(l).catch(() => {});
+    }
+    const rest = list.filter((p) => p.key !== ASK);
+    if (rest.length) void backend.pinsLayout(rest.map(layoutOf)).catch(() => {});
   }
+
+  // ── Окно ответа на вопрос голосом в игре: в редакторе его образец двигают и настраивают как обычное окно ──
+  const ASK = '__ask';
+  let askPin = $state<Pin | null>(null);
+  async function loadAsk() {
+    try {
+      const i = await backend.askLayout();
+      if (!i.on) { askPin = null; return; }
+      const l = i.layout;
+      askPin = { key: ASK, docId: '', nodeId: '', kind: 'answer', badge: '4.1', doc: 'Общие правила проекта', law: false, text: '', punish: [],
+        x: l.x, y: l.y, w: l.w, bg: l.bg, font: l.font, locked: l.locked };
+    } catch { askPin = null; }
+  }
+  /** Что рисуем: закреплённые окна, а в редакторе — ещё и образец окна ответа */
+  const shown = $derived(editor && askPin ? [...pins, askPin] : pins);
 
   /** Новые окна — слева под чатом игры, стопкой; не влезли — следующей колонкой */
   function place() {
@@ -96,14 +117,14 @@
 
   $effect(() => {
     const offs: (() => void)[] = [];
-    backend.pinsGet().then((s) => { editorKey = s.editorKey; editor = s.editor; hint = s.hint ?? null; apply(s.pins); if (editor) sessionStart(); }).catch(() => {});
+    backend.pinsGet().then((s) => { editorKey = s.editorKey; editor = s.editor; hint = s.hint ?? null; apply(s.pins); if (editor) { sessionStart(); void loadAsk(); } }).catch(() => {});
     backend.on('pins-changed', (p) => apply(p as Pin[])).then((u) => offs.push(u));
     backend.on('pins-editor', (open) => {
       const was = editor;
       editor = !!open;
       if (!editor) selected = null;
       if (editor) backend.pinsGet().then((s) => { if (!hintDrag) hint = s.hint ?? null; }).catch(() => {});
-      if (editor && !was) sessionStart();
+      if (editor && !was) { sessionStart(); void loadAsk(); }
       else if (!editor && was) sessionEnd();
     }).then((u) => offs.push(u));
     backend.on('settings-changed', (s) => { const k = (s as { editorHotkey?: string }).editorHotkey; if (k) editorKey = k; }).then((u) => offs.push(u));
@@ -232,7 +253,7 @@
     stat('editor', { via, seconds: Math.round((Date.now() - t) / 1000), pins: pins.length, moved, resized, styled, locked });
   }
 
-  const sel = $derived(pins.find((p) => p.key === selected));
+  const sel = $derived(shown.find((p) => p.key === selected));
   /** Ползунки — под выбранным окном; нет места — над ним; окно на весь экран — сбоку */
   const panelPos = $derived.by(() => {
     if (!sel || sel.x === undefined || sel.y === undefined) return null;
@@ -258,12 +279,12 @@
       <span class="k">Esc</span>
       <button class="done" onclick={() => backend.pinsEditor(false)}>Готово</button>
     </div>
-    {#if !pins.length}
+    {#if !pins.length && !askPin}
       <p class="empty">Закреплённых пунктов нет. Нажмите булавку у пункта в программе.</p>
     {/if}
   {/if}
 
-  {#each pins as p (p.key)}
+  {#each shown as p (p.key)}
     <div
       class="pin"
       class:buyer={p.kind === 'buyer'}
@@ -284,7 +305,7 @@
           <button class="c lock" class:on={p.locked} onclick={() => toggleLock(p)} title={p.locked ? 'Разлочить — можно будет двигать' : 'Залочить положение и размер'} aria-label={p.locked ? 'Разлочить' : 'Залочить'}>
             <Icon name={p.locked ? 'lock' : 'unlock'} size={13} />
           </button>
-          <button class="c" onclick={() => unpin(p)} title="Открепить" aria-label="Открепить"><Icon name="close" size={13} /></button>
+          {#if p.key !== ASK}<button class="c" onclick={() => unpin(p)} title="Открепить" aria-label="Открепить"><Icon name="close" size={13} /></button>{/if}
         </div>
         {#if !p.locked}<span class="rz" style:top="{rzTop(p)}px" onpointerdown={(e) => resizeW(e, p)} title="Тяните, чтобы поменять ширину" aria-hidden="true"></span>{/if}
       {/if}
@@ -315,6 +336,11 @@
         {/if}
       {:else if p.kind === 'calc' && p.calc}
         <CalcPin d={p.calc} />
+      {:else if p.key === ASK}
+        <p class="askq">🎙 Человек навёл на меня оружие, я его убил. Это DM?</p>
+        <p class="text"><b class="askb">Не DM.</b> Прицеливание оружием — весомая IC-причина для убийства.</p>
+        <div class="h askref"><span class="badge">4.1</span><span class="doc">Общие правила проекта</span></div>
+        <p class="askfoot">Так будет выглядеть ответ на вопрос голосом</p>
       {:else}
         <div class="h"><span class="badge">{p.badge}</span><span class="doc">{p.doc}</span></div>
         <p class="text">{p.text}</p>
@@ -360,6 +386,10 @@
 
 <style>
   :global(html), :global(body) { background: transparent !important; overflow: hidden; }
+  .askq { margin: 0 0 0.5em; font-size: 0.85em; line-height: 1.4; color: rgba(255, 255, 255, 0.8); }
+  .askb { color: var(--accent-soft); }
+  .askref { margin: 0.55em 0 0; }
+  .askfoot { margin: 0.6em 0 0; padding-top: 0.5em; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 11.5px; color: rgba(255, 255, 255, 0.6); }
   .layer { position: fixed; inset: 0; pointer-events: none; }
   .layer.editor { pointer-events: auto; }
   .dim {

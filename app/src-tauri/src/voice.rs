@@ -172,35 +172,50 @@ pub fn voice_remove(app: AppHandle) -> Result<(), String> {
 struct Stage {
     /// listen — слушаю, think — распознаю, heard — готово (text), idle — отменено, error
     stage: &'static str,
+    /// Откуда запись: app — кнопка микрофона в помощнике, game — клавиша «спросить голосом» в игре
+    origin: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
     text: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<String>,
 }
 
-fn emit(app: &AppHandle, stage: &'static str, text: Option<String>, error: Option<String>) {
-    let _ = app.emit("voice", Stage { stage, text, error });
+fn emit(app: &AppHandle, origin: &'static str, stage: &'static str, text: Option<String>, error: Option<String>) {
+    let _ = app.emit("voice", Stage { stage, origin, text, error });
 }
 
 /// Кнопка микрофона: начать запись. Остановится сама, когда игрок замолчит
 #[tauri::command]
 pub fn voice_start(app: AppHandle) -> Result<(), String> {
-    if !installed(&app) {
+    match start(&app, "app", false) {
+        Err(e) if e == "busy" => Ok(()),
+        r => r,
+    }
+}
+
+/// Начать запись. hold — «держи и говори» (клавиша в игре): тишина запись не останавливает,
+/// конец — когда клавишу отпустили (voice_stop) или через MAX_SECONDS.
+pub fn start(app: &AppHandle, origin: &'static str, hold: bool) -> Result<(), String> {
+    if !installed(app) {
         return Err("missing".into());
     }
     let st = app.state::<VoiceState>();
     let mut rec = st.rec.lock().unwrap();
     if rec.is_some() {
-        return Ok(());
+        return Err("busy".into());
     }
     let (ctrl_tx, ctrl_rx) = mpsc::channel::<Ctrl>();
     let (ready_tx, ready_rx) = mpsc::channel::<Result<(), String>>();
     let a = app.clone();
-    std::thread::spawn(move || record(a, ctrl_rx, ready_tx));
+    std::thread::spawn(move || record(a, ctrl_rx, ready_tx, origin, hold));
     ready_rx.recv_timeout(Duration::from_secs(3)).map_err(|_| "Микрофон не ответил".to_string())??;
     *rec = Some(ctrl_tx);
-    emit(&app, "listen", None, None);
+    emit(app, origin, "listen", None, None);
     Ok(())
+}
+
+pub fn installed_now(app: &AppHandle) -> bool {
+    installed(app)
 }
 
 /// «Стоп» — закончить запись раньше и распознать
@@ -220,7 +235,7 @@ pub fn voice_cancel(app: AppHandle) {
 }
 
 /// Поток записи: владеет потоком cpal (его нельзя передавать между потоками), сам решает, когда речь кончилась
-fn record(app: AppHandle, ctrl: mpsc::Receiver<Ctrl>, ready: mpsc::Sender<Result<(), String>>) {
+fn record(app: AppHandle, ctrl: mpsc::Receiver<Ctrl>, ready: mpsc::Sender<Result<(), String>>, origin: &'static str, hold: bool) {
     let host = cpal::default_host();
     let Some(dev) = host.default_input_device() else {
         let _ = ready.send(Err("Микрофон не найден — подключите его и попробуйте ещё раз".into()));
@@ -284,7 +299,8 @@ fn record(app: AppHandle, ctrl: mpsc::Receiver<Ctrl>, ready: mpsc::Sender<Result
                 let lvl = f32::from_bits(level.load(Ordering::Relaxed));
                 let _ = app.emit("voice-level", (lvl * 6.0).min(1.0));
                 let t = started.elapsed().as_secs_f32();
-                let end = vad.feed(lvl, t);
+                // «Держи и говори»: паузы в речи запись не обрывают — конец, когда отпустили клавишу
+                let end = if hold { None } else { vad.feed(lvl, t) };
                 if end == Some(true) || t > MAX_SECONDS {
                     break;
                 }
@@ -292,7 +308,7 @@ fn record(app: AppHandle, ctrl: mpsc::Receiver<Ctrl>, ready: mpsc::Sender<Result
                     // Так и не заговорили
                     drop(stream);
                     *app.state::<VoiceState>().rec.lock().unwrap() = None;
-                    emit(&app, "error", None, Some("Не услышал вас — проверьте микрофон и скажите ещё раз".into()));
+                    emit(&app, origin, "error", None, Some("Не услышал вас — проверьте микрофон и скажите ещё раз".into()));
                     return;
                 }
             }
@@ -301,15 +317,15 @@ fn record(app: AppHandle, ctrl: mpsc::Receiver<Ctrl>, ready: mpsc::Sender<Result
     drop(stream);
     *app.state::<VoiceState>().rec.lock().unwrap() = None;
     if cancelled {
-        emit(&app, "idle", None, None);
+        emit(&app, origin, "idle", None, None);
         return;
     }
-    emit(&app, "think", None, None);
+    emit(&app, origin, "think", None, None);
     let samples = std::mem::take(&mut *buf.lock().unwrap());
     match recognize(&app, &samples, rate) {
-        Ok(text) if !text.trim().is_empty() => emit(&app, "heard", Some(tidy(&text)), None),
-        Ok(_) => emit(&app, "error", None, Some("Не расслышал — скажите ещё раз".into())),
-        Err(e) => emit(&app, "error", None, Some(e)),
+        Ok(text) if !text.trim().is_empty() => emit(&app, origin, "heard", Some(tidy(&text)), None),
+        Ok(_) => emit(&app, origin, "error", None, Some("Не расслышал — скажите ещё раз".into())),
+        Err(e) => emit(&app, origin, "error", None, Some(e)),
     }
 }
 

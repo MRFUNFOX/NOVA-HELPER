@@ -10,6 +10,7 @@
   import CategoryView from './lib/components/CategoryView.svelte';
   import SettingsView from './lib/components/SettingsView.svelte';
   import BuyersView from './lib/components/BuyersView.svelte';
+  import { initAskGame } from './lib/askGame';
   import CalcView from './lib/components/CalcView.svelte';
   import AdminView from './lib/components/AdminView.svelte';
   import { learn } from './lib/learn.svelte';
@@ -41,6 +42,7 @@
         trackErrors();
         track('app_start', startProps());
         await ai.init();
+        initAskGame();
         learn.init();
         // Программа стояла до появления помощника: один раз предлагаем его настроить
         if (app.aiEnabled && app.settings?.firstRunDone && !app.settings.aiSetupDone && !ai.ready) ai.setupOpen = true;

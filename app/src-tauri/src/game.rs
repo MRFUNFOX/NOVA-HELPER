@@ -159,6 +159,7 @@ fn apply(app: &AppHandle) {
     // Ушли из игры — меню поверх игры прячем; закреплённое вернётся, когда игрок вернётся
     crate::gamemenu::game_changed(app, game);
     crate::pins::sync(app);
+    crate::ask::sync(app);
     crate::overlay::show_hint_if_hidden(app);
     let _ = app.emit("game-state", json_state());
 }

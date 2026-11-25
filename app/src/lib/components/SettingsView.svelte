@@ -22,6 +22,30 @@
     app.settings = await backend.saveSettings({ ...app.settings, ...patch });
   }
 
+  // ── Вопрос помощнику голосом в игре ──
+  let voice = $state<{ installed: boolean; sizeMb: number } | null>(null);
+  let voiceLoad = $state<number | null>(null);
+  $effect(() => {
+    backend.voiceStatus().then((v) => (voice = v)).catch(() => (voice = null));
+    let off: (() => void) | undefined;
+    backend.on('voice-install', (p) => {
+      const v = p as { stage: string; done: number; total: number };
+      if (v.stage === 'done') { voiceLoad = null; if (voice) voice.installed = true; }
+      else if (v.stage === 'error') voiceLoad = null;
+      else voiceLoad = v.total ? Math.round((v.done / v.total) * 100) : 0;
+    }).then((u) => (off = u));
+    return () => off?.();
+  });
+  async function installVoice() {
+    voiceLoad = 0;
+    try { await backend.voiceInstall(); if (voice) voice.installed = true; } catch (e) { app.notify(String(e), 'error'); }
+    voiceLoad = null;
+  }
+  async function setAskOn(on: boolean) {
+    try { app.settings = await backend.setAskOn(on); } catch (e) { app.notify(String(e), 'error'); }
+  }
+  const ASK_SHOW = [{ v: 0, l: 'Авто' }, { v: 10, l: '10 с' }, { v: 20, l: '20 с' }, { v: 30, l: '30 с' }];
+
   async function toggleAutostart() {
     autostart = await backend.autostart(!autostart);
   }
@@ -165,6 +189,47 @@
   </section>
   {/if}
 
+  {#if app.aiEnabled}
+  <section>
+    <label class="toggle">
+      <input type="checkbox" checked={!!app.settings?.askOn} onchange={(e) => setAskOn(e.currentTarget.checked)} />
+      <span><b>Вопрос помощнику голосом в игре</b><span class="hint">Зажми клавишу, задай вопрос и отпусти — ответ появится поверх игры и сам исчезнет. Окно программы открывать не нужно.</span></span>
+    </label>
+    {#if app.settings?.askOn}
+      <div class="aiopts">
+        {#if !ai.ready}
+          <div class="row"><p class="hint">Сначала подключи ИИ-помощника — без него отвечать некому.</p><button class="btn" onclick={() => (ai.setupOpen = true)}><Icon name="spark" size={16} />Подключить</button></div>
+        {/if}
+        {#if voice && !voice.installed}
+          <div class="row">
+            <div><p class="value">Нужно распознавание речи</p><p class="hint">Скачивается один раз ({voice.sizeMb} МБ) и работает на этом компьютере — голос никуда не отправляется.</p></div>
+            <button class="btn" onclick={installVoice} disabled={voiceLoad !== null}><Icon name="download" size={16} />{voiceLoad !== null ? `Скачиваю… ${voiceLoad}%` : 'Скачать'}</button>
+          </div>
+        {/if}
+        <div>
+          <p class="value">Клавиша: держи и говори</p>
+          <p class="hint">Работает только в игре. Пока функция включена, это сочетание не доходит до самой игры.</p>
+          <HotkeyField kind="ask" />
+        </div>
+        <div>
+          <p class="value">Сколько показывать ответ</p>
+          <div class="segmented" role="radiogroup" aria-label="Сколько показывать ответ">
+            {#each ASK_SHOW as o (o.v)}
+              <button role="radio" aria-checked={(app.settings?.askShow ?? 0) === o.v} class:on={(app.settings?.askShow ?? 0) === o.v} onclick={() => save({ askShow: o.v })}>{o.l}</button>
+            {/each}
+          </div>
+          <p class="hint after">«Авто» — по длине ответа: короткий около 8 секунд, длинный до 30. Пока открыто меню ({app.settings?.hotkey ?? 'Alt+Q'}), время стоит на паузе, а у ответа есть кнопки «закрыть» и «закрепить».</p>
+        </div>
+        <div class="row">
+          <div><p class="value">Место, ширина, фон и шрифт</p><p class="hint">Как у закреплённых окон — в редакторе окон.</p></div>
+          <button class="btn" onclick={() => backend.pinsEditor(true)}><Icon name="window" size={16} />Настроить</button>
+        </div>
+        <p class="warn"><Icon name="alert" size={15} /><span>Если голосовой чат в GTA включается голосом, а не по кнопке, вопрос услышат игроки рядом. Лучше включить в игре «нажми и говори».</span></p>
+      </div>
+    {/if}
+  </section>
+  {/if}
+
   <section>
     <h2>Правила</h2>
     <div class="row">
@@ -255,6 +320,9 @@
   .toggle input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-dim); transition: transform 0.2s var(--ease), background 0.15s; }
   .toggle input:checked { background: var(--accent); }
   .toggle input:checked::after { transform: translateX(16px); background: var(--on-accent); }
+  .hint.after { margin: 8px 0 0; }
+  .warn { display: flex; gap: 9px; margin: 0; padding: 10px 12px; border-radius: var(--radius); background: var(--orange-tint); font-size: var(--fs-xs); line-height: 1.5; color: var(--text-dim); }
+  .warn :global(svg) { flex-shrink: 0; margin-top: 1px; color: var(--orange); }
   .row { display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
   .value { margin: 4px 0 2px; font-size: var(--fs-sm); font-weight: 700; }
   .row .hint { margin: 0; }

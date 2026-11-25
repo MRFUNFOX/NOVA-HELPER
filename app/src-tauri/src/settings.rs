@@ -36,6 +36,24 @@ pub struct HintPos {
     pub bottom: f64,
 }
 
+/// Окно ответа на голосовой вопрос в игре: место (логические пиксели на мониторе игры), ширина, фон 0–100, шрифт
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
+#[serde(default)]
+pub struct AskLayout {
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub bg: u32,
+    pub font: u32,
+    pub locked: bool,
+}
+
+impl Default for AskLayout {
+    fn default() -> Self {
+        Self { x: 40.0, y: 120.0, w: 380.0, bg: 88, font: 15, locked: false }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Settings {
@@ -57,6 +75,14 @@ pub struct Settings {
     pub window: Option<WindowGeom>,
     /// Подсказку в углу передвинули в редакторе окон
     pub hint_pos: Option<HintPos>,
+    /// Вопрос помощнику голосом в игре: включён ли (клавиша «съедает» сочетание в игре — по умолчанию выключено)
+    pub ask_on: bool,
+    /// Клавиша «держи и говори»
+    pub ask_hotkey: String,
+    /// Сколько секунд показывать ответ; 0 — по длине ответа
+    pub ask_show: u32,
+    /// Место и вид окна ответа (передвинули в редакторе окон)
+    pub ask_layout: Option<AskLayout>,
     /// Метка тестовых сборок с голосом (0.7.18–0.7.19, окно было на Alt+X). Только читаем — чтобы вернуть
     /// окно на Alt+Q; в файл больше не пишем.
     #[serde(default, skip_serializing)]
@@ -76,6 +102,10 @@ impl Default for Settings {
             editor_hotkey: "Alt+Shift+Z".into(),
             window: None,
             hint_pos: None,
+            ask_on: false,
+            ask_hotkey: "Alt+E".into(),
+            ask_show: 0,
+            ask_layout: None,
             keys_v2: false,
         }
     }
