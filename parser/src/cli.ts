@@ -52,7 +52,11 @@ async function scrape() {
 async function scrapeWith(fetcher: Fetcher, outDir: string, now: Date, firecrawl?: FirecrawlFetcher) {
 
   log('▶ Обход форума');
-  const plan = await discover(fetcher, log);
+  // --law-servers "horizon,mirage,new era" — с каких серверов брать законы (для пробного сбора; по умолчанию CONFIG.lawServers)
+  const ls = arg('law-servers');
+  const lawServers = ls ? ls.split(',').map((x) => x.trim()).filter(Boolean).map((x) => new RegExp(x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s*'), 'i')) : undefined;
+  if (lawServers) log(`  законы серверов: ${lawServers.map(String).join(', ')}`);
+  const plan = await discover(fetcher, log, { lawServers });
   log(`  документов найдено: ${plan.docs.length}, серверов: ${plan.servers.length}`);
 
   log('▶ Загрузка и разбор тем');

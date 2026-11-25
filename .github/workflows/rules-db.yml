@@ -20,6 +20,10 @@ on:
         description: 'Только проверка: собрать, но не публиковать (результат — в ветке data-preview)'
         type: boolean
         default: false
+      law_servers:
+        description: 'Законы каких серверов собрать, через запятую (пусто — как в настройках парсера). Только вместе с проверкой!'
+        type: string
+        default: ''
 
 concurrency:
   group: rules-db
@@ -72,7 +76,7 @@ jobs:
         env:
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           NOVA_SIGNING_KEY: ${{ secrets.NOVA_SIGNING_KEY }}
-        run: npx tsx src/cli.ts scrape --out ../out --via ${{ inputs.via || 'auto' }} ${{ inputs.accept_shrink && '--accept-shrink' || '' }}
+        run: npx tsx src/cli.ts scrape --out ../out --via ${{ inputs.via || 'auto' }} ${{ inputs.accept_shrink && '--accept-shrink' || '' }} ${{ inputs.dry_run && inputs.law_servers && format('--law-servers "{0}"', inputs.law_servers) || '' }}
 
       - name: Результат проверки — в ветку data-preview (основная база не трогается)
         if: ${{ inputs.dry_run }}
