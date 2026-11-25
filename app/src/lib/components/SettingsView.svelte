@@ -44,7 +44,7 @@
   async function setAskOn(on: boolean) {
     try { app.settings = await backend.setAskOn(on); } catch (e) { app.notify(String(e), 'error'); }
   }
-  const ASK_SHOW = [{ v: 0, l: 'Авто' }, { v: 20, l: '20 с' }, { v: 40, l: '40 с' }, { v: 60, l: '1 мин' }];
+  const ASK_SHOW = [{ v: 0, l: 'Авто' }, { v: 30, l: '30 с' }, { v: 60, l: '1 мин' }, { v: 120, l: '2 мин' }];
 
   async function toggleAutostart() {
     autostart = await backend.autostart(!autostart);
@@ -218,7 +218,7 @@
               <button role="radio" aria-checked={(app.settings?.askShow ?? 0) === o.v} class:on={(app.settings?.askShow ?? 0) === o.v} onclick={() => save({ askShow: o.v })}>{o.l}</button>
             {/each}
           </div>
-          <p class="hint after">«Авто» — по длине ответа: короткий около 20 секунд, длинный до минуты. Пока открыто меню ({app.settings?.hotkey ?? 'Alt+Q'}), время стоит на паузе, а у ответа есть кнопки «закрыть» и «закрепить».</p>
+          <p class="hint after">«Авто» — по длине ответа: короткий около 30 секунд, длинный до 2 минут. Пока открыто меню ({app.settings?.hotkey ?? 'Alt+Q'}), время стоит на паузе, а у ответа есть кнопки «закрыть» и «закрепить».</p>
         </div>
         <div class="row">
           <div><p class="value">Место, ширина, фон и шрифт</p><p class="hint">Как у закреплённых окон — в редакторе окон.</p></div>

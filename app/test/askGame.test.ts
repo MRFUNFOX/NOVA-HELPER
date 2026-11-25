@@ -20,11 +20,11 @@ describe('ответ для окна поверх игры', () => {
 });
 
 describe('сколько показывать ответ («Авто»)', () => {
-  it('короткий — около 20 секунд, длинный — до минуты', async () => {
+  it('короткий — около 30 секунд, длинный — до 2 минут', async () => {
     const { autoSeconds } = await import('../src/lib/askTime');
-    expect(autoSeconds(3, 5)).toBe(15);
-    expect(autoSeconds(10, 10)).toBe(20);
-    expect(autoSeconds(40, 10)).toBe(47);
-    expect(autoSeconds(80, 20)).toBe(60);
+    expect(autoSeconds(3, 5)).toBe(30);
+    expect(autoSeconds(10, 10)).toBe(34);
+    expect(autoSeconds(30, 10)).toBe(64);
+    expect(autoSeconds(80, 20)).toBe(120);
   });
 });

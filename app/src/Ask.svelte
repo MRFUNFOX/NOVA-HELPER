@@ -27,8 +27,7 @@
   let card: HTMLElement | undefined = $state();
 
   const words = (v: View) => (v.stage === 'answer' ? v.parts.map((p) => p.v).join(' ').split(/\s+/).filter(Boolean).length : 0);
-  /** «Авто» — по длине: в игре читают урывками, поэтому медленно — 8 с на то, чтобы заметить ответ,
-   *  и почти секунда на слово (вместе с вопросом). Не меньше 15 с и не больше минуты. */
+  /** «Авто» — по длине (askTime.ts): в игре читают урывками, поэтому с запасом — от 30 секунд до 2 минут */
   function duration(v: View) {
     if (v.stage === 'error') return 8000;
     if (v.stage !== 'answer') return 0;
