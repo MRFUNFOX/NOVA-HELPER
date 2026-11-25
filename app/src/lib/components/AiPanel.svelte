@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
   import { app } from '../state.svelte';
@@ -21,7 +22,10 @@
   }
 
   /** Что показано: разговор или история вопросов */
-  let view = $state<'chat' | 'history'>('chat');
+  /** Чат или история вопросов. В меню в игре свой заголовок окна — оттуда переключают через bind:view */
+  let { view = $bindable('chat') }: { view?: 'chat' | 'history' } = $props();
+  // Вопрос могли задать в другом окне (голосом в игре — его задаёт главное окно): историю берём свежую
+  $effect(() => { if (view === 'history') untrack(() => ai.reloadHistory()); });
   let hq = $state('');
   const found = $derived(searchHistory(ai.history, hq));
   const groups = $derived.by(() => {

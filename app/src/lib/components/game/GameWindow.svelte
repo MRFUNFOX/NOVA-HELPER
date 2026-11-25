@@ -126,6 +126,11 @@
   h2:has(+ .xb) { flex: 0 1 auto; }
   h2 { margin: 0; flex: 1; min-width: 0; font-size: 15px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tools { display: flex; align-items: center; gap: 4px; }
+  /* Кнопки, которые окно получает снаружи (история и «начать заново» у помощника) — как свои */
+  .tools :global(.ib) { width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-dim); display: grid; place-items: center; cursor: pointer; }
+  .tools :global(.ib:hover) { background: var(--surface-2); color: var(--text); }
+  .tools :global(.ib.open) { background: var(--surface-3); color: var(--accent-soft); }
+  .tools :global(.ib:disabled) { opacity: 0.45; cursor: default; }
   .ib { width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-dim); display: grid; place-items: center; cursor: pointer; }
   .ib:hover { background: var(--surface-2); color: var(--text); }
   .ib.own { color: var(--accent); }

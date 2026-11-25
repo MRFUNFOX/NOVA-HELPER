@@ -119,6 +119,8 @@
   const sumPins = $derived(app.calcEnabled ? app.pins.filter((p) => p.kind === 'calc' && p.calc?.type === 'sum' && p.x !== undefined && p.y !== undefined) : []);
   const pinW = (w?: number) => (w === undefined ? CALC_W : Math.min(PIN_W.max, Math.max(PIN_W.min, w)));
   let quick = $state<{ key: string; prof: string; x: number; y: number; h: number } | null>(null);
+  /** Окно помощника в игре: чат или история вопросов */
+  let aiView = $state<'chat' | 'history'>('chat');
   /** Окно записи — справа от закреплённого «Итога», не влезает — слева; высота как у окна калькулятора, но не выше экрана */
   function openQuick(p: (typeof sumPins)[number]) {
     if (quick?.key === p.key) { quick = null; return; }
@@ -217,9 +219,10 @@
     {#if isOpen('ai')}
       <GameWindow id="ai" title="ИИ-помощник" icon="spark">
         {#snippet tools()}
-          {#if ai.turns.length}<button class="ib" aria-label="Начать заново" title="Начать заново" onclick={() => ai.clear()} disabled={ai.busy}><Icon name="refresh" size={15} /></button>{/if}
+          {#if ai.ready}<button class="ib" class:open={aiView === 'history'} aria-label="История вопросов" title="История вопросов" aria-pressed={aiView === 'history'} onclick={() => (aiView = aiView === 'history' ? 'chat' : 'history')}><Icon name="history" size={15} /></button>{/if}
+          {#if ai.turns.length && aiView === 'chat'}<button class="ib" aria-label="Начать заново" title="Начать заново" onclick={() => ai.clear()} disabled={ai.busy}><Icon name="refresh" size={15} /></button>{/if}
         {/snippet}
-        <div class="ai"><AiPanel /></div>
+        <div class="ai"><AiPanel bind:view={aiView} /></div>
       </GameWindow>
     {/if}
     {#if isOpen('pins')}
@@ -396,7 +399,8 @@
   .layer.passive .tip { display: none; }
   /* «+» у закреплённого итога калькулятора */
   /* Маленькая кнопка в правом верхнем углу самого окна — как кнопки в редакторе окон, места не занимает */
-  .qadd { position: absolute; z-index: 7; transform: translateX(-100%); display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-radius: 6px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--accent); cursor: pointer; pointer-events: auto; }
+  /* Под окнами меню (у них z-index 1–3): «+» не должен торчать поверх открытого окна */
+  .qadd { position: absolute; z-index: 0; transform: translateX(-100%); display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border-radius: 6px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--accent); cursor: pointer; pointer-events: auto; }
   .qadd:hover, .qadd.on { border-color: var(--accent-line); background: var(--accent-tint); }
   /* «Заработок» со списком */
   .grp { position: relative; }

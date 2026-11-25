@@ -455,6 +455,8 @@ class Assistant {
   }
   forget(id: string) { this.saveHistory(this.history.filter((h) => h.id !== id)); }
   forgetAll() { this.saveHistory([]); }
+  /** История общая для всех окон программы (меню в игре, главное окно): перечитать перед показом */
+  reloadHistory() { this.history = readHistory(); }
 
   /** «Помог / Не помог»: запоминаем у вопроса и отправляем в статистику (без текста вопроса) */
   rate(t: Turn, v: Rating) {
