@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.24-0220",
- "generatedAt": "2026-11-24T02:20:02.387Z",
+ "dbVersion": "2026.11.25-1918",
+ "generatedAt": "2026-11-25T19:18:38.810Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -426,12 +426,12 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407999/",
-   "sha256": "831e25c495d35481709de4a90fe9f8800da71d79fd7c42fd85db82f92ad17c2c",
-   "size": 46115,
-   "path": "docs/project_407999.7d2eae0d5689.json",
+   "sha256": "b277f50a13bde81aa8178c953a03306ec2c15f30e1a137ced04bd67f128cd17e",
+   "size": 42929,
+   "path": "docs/project_407999.e9277ae7dd86.json",
    "stats": {
-    "nodes": 83,
-    "punishments": 77,
+    "nodes": 77,
+    "punishments": 69,
     "images": 1
    }
   },
@@ -1119,5 +1119,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.24-0220.json"
+ "changelog": "changelog/2026.11.25-1918.json"
 }

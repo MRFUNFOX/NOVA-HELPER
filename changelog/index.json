@@ -1,6 +1,12 @@
 {
  "versions": [
   {
+   "dbVersion": "2026.11.25-1918",
+   "path": "changelog/2026.11.25-1918.json",
+   "generatedAt": "2026-11-25T19:18:38.810Z",
+   "summary": "изменено пунктов: 50"
+  },
+  {
    "dbVersion": "2026.11.24-0220",
    "path": "changelog/2026.11.24-0220.json",
    "generatedAt": "2026-11-24T02:20:02.387Z",
