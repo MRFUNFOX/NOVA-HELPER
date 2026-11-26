@@ -1,6 +1,7 @@
 <script lang="ts">
   // Верхняя панель: поиск, ИИ-помощник, кнопки окна. Пустые места — область перетаскивания окна.
   import Icon from './Icon.svelte';
+  import Logo from './Logo.svelte';
   import { app, focusSearch } from '../state.svelte';
   import { backend } from '../backend';
   import { track } from '../stats';
@@ -35,7 +36,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <header class="topbar" bind:clientWidth={barWidth} data-tauri-drag-region ondblclick={(e) => { if (e.target === e.currentTarget) toggleMax(); }}>
   {#if wizard}
-    <div class="brand" data-tauri-drag-region><span class="mark" aria-hidden="true">§</span><span class="name" data-tauri-drag-region>NOVA <span>HELPER</span></span></div>
+    <div class="brand" data-tauri-drag-region><Logo size={28} /><span class="name wordmark" data-tauri-drag-region>NOVA <span class="tag">HELPER</span></span></div>
   {:else}
     <button class="icon-btn menu" aria-label="Открыть меню" onclick={() => (app.sidebarOpen = !app.sidebarOpen)}><Icon name="menu" /></button>
     <label class="search">
@@ -105,9 +106,7 @@
     flex-shrink: 0;
   }
   .brand { display: flex; align-items: center; gap: 10px; flex: 1; height: 100%; }
-  .mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: var(--on-accent); font-weight: 800; font-size: 17px; }
-  .name { font-weight: 800; letter-spacing: 0.02em; }
-  .name span { color: var(--accent); }
+  .name { font-size: 17px; }
 
   .search {
     flex: 1;

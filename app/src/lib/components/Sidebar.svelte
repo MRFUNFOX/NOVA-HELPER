@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from './Icon.svelte';
+  import Logo from './Logo.svelte';
   import { app, docCategory, formatDate, type Section } from '../state.svelte';
   import { prices } from '../prices.svelte';
   import { learn } from '../learn.svelte';
@@ -40,8 +41,8 @@
 
 <nav class="sidebar" class:rail class:open={app.sidebarOpen} aria-label="Разделы правил">
   <div class="brand" data-tauri-drag-region>
-    <span class="mark" aria-hidden="true">§</span>
-    {#if !rail}<span class="name" data-tauri-drag-region>NOVA <span>HELPER</span>{#if app.devMode}<em class="devtag" title="Режим разработчика">DEV</em>{:else}<em class="devtag" title="Бета-версия: программа ещё дорабатывается">BETA</em>{/if}</span>{/if}
+    <Logo size={28} />
+    {#if !rail}<span class="name wordmark" data-tauri-drag-region>NOVA <span class="tag">HELPER</span>{#if app.devMode}<em class="devtag" title="Режим разработчика">DEV</em>{:else}<em class="devtag" title="Бета-версия: программа ещё дорабатывается">BETA</em>{/if}</span>{/if}
     <button class="collapse" onclick={() => (app.sidebarOpen ? (app.sidebarOpen = false) : app.toggleSidebar())}
       title={rail ? 'Развернуть меню' : 'Свернуть меню'} aria-label={rail ? 'Развернуть меню' : 'Свернуть меню'}>
       <span class:flip={rail}><Icon name="collapse" size={16} /></span>
@@ -160,15 +161,8 @@
   .sidebar.rail { width: 64px; }
   .brand { height: var(--topbar); display: flex; align-items: center; gap: 10px; padding: 0 8px 0 18px; flex-shrink: 0; }
   .rail .brand { padding: 0; flex-direction: column; justify-content: center; gap: 0; height: auto; padding-top: 12px; }
-  .mark {
-    display: grid; place-items: center; flex-shrink: 0;
-    width: 28px; height: 28px; border-radius: 8px;
-    background: var(--accent); color: var(--on-accent);
-    font-weight: 800; font-size: 17px; line-height: 1;
-  }
-  .name { flex: 1; font-weight: 800; font-size: var(--fs-md); letter-spacing: 0.02em; white-space: nowrap; }
-  .name span { color: var(--accent); }
-  .devtag { margin-left: 6px; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--accent-line); color: var(--accent); font-size: 9px; font-style: normal; letter-spacing: 0.06em; vertical-align: 2px; }
+  .name { flex: 1; font-size: 17px; }
+  .devtag { font-family: var(--font); font-weight: 700; line-height: 1.4; margin-left: 6px; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--accent-line); color: var(--accent); font-size: 9px; font-style: normal; letter-spacing: 0.06em; vertical-align: 2px; }
   .collapse { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-muted); transition: background 0.15s, color 0.15s; }
   .collapse:hover { background: var(--surface-2); color: var(--text); }
   .rail .collapse { margin-top: 8px; }

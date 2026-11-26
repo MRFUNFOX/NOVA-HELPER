@@ -46,6 +46,19 @@
 
 * { box-sizing: border-box; }
 
+/* Надпись логотипа «NOVA HELPER»: Montserrat Black Italic (OFL, src/assets/fonts), только латиница */
+@font-face {
+  font-family: 'NovaWord';
+  src: url('./assets/fonts/montserrat-latin-900-italic.woff2') format('woff2');
+  font-weight: 900; font-style: italic; font-display: block;
+}
+.wordmark { display: inline-flex; align-items: center; gap: 0.3em; font-family: 'NovaWord', var(--font); font-style: italic; font-weight: 900; line-height: 1; white-space: nowrap; }
+.wordmark .tag {
+  font-size: 0.56em; letter-spacing: 0.06em; color: #000; background: var(--accent);
+  padding: 0.38em 0.75em 0.32em 0.6em; margin-left: 0.1em;
+  clip-path: polygon(0.55em 0, 100% 0, calc(100% - 0.55em) 100%, 0 100%);
+}
+
 html, body {
   margin: 0;
   height: 100%;

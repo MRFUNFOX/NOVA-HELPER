@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
   import Icon from './Icon.svelte';
+  import Logo from './Logo.svelte';
   import HotkeyField from './HotkeyField.svelte';
   import AiSetup from './AiSetup.svelte';
   import { app } from '../state.svelte';
@@ -46,7 +47,7 @@
   {#key step}
   <div class="card" in:fly={enter}>
     {#if step === 0}
-      <div class="mark" aria-hidden="true">§</div>
+      <div class="mark"><Logo size={56} /></div>
       <h1>Правила NOVA RP — не сворачивая игру</h1>
       <p>Нажали клавишу — поверх игры открылись правила проекта. Нашли пункт, нажали ещё раз — окно спряталось, вы снова в игре.</p>
       <ul class="facts">
@@ -125,7 +126,7 @@
   .card { width: 100%; max-width: 540px; padding: 28px; }
   .loading { flex: 1; }
   @media (max-width: 479px) { .card { padding: 20px 16px; } }
-  .mark { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--accent); color: var(--on-accent); font-size: 32px; font-weight: 800; margin-bottom: 18px; }
+  .mark { margin-bottom: 18px; }
   h1 { margin: 0 0 10px; font-size: var(--fs-xl); font-weight: 800; line-height: 1.25; }
   p { margin: 0 0 14px; color: var(--text-dim); }
   p b { color: var(--text); }
