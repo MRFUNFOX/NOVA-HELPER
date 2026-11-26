@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.25-1918",
- "generatedAt": "2026-11-25T19:18:38.810Z",
+ "dbVersion": "2026.11.26-0335",
+ "generatedAt": "2026-11-26T03:35:42.038Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -426,13 +426,13 @@
    "scope": "project",
    "category": "Правила для государственных структур",
    "sourceUrl": "https://forum.nova-rp.com/threads/407999/",
-   "sha256": "b277f50a13bde81aa8178c953a03306ec2c15f30e1a137ced04bd67f128cd17e",
-   "size": 42929,
-   "path": "docs/project_407999.e9277ae7dd86.json",
+   "sha256": "aeb69f51e75f1961ad5c19e17ad11a57abcbdab370fb2cc4911cfea98ab6ecc6",
+   "size": 55354,
+   "path": "docs/project_407999.dfcad7b86f7d.json",
    "stats": {
-    "nodes": 77,
-    "punishments": 69,
-    "images": 1
+    "nodes": 79,
+    "punishments": 70,
+    "images": 4
    }
   },
   {
@@ -1059,9 +1059,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411155/",
-   "sha256": "14bc632fe67cf854c603efcb86cc9661b5f16761deeb613d3d35facc1ac85218",
-   "size": 305768,
-   "path": "docs/server_horizon_411155.24f455c641bb.json",
+   "sha256": "2dec019879d889764f5735d78f3320e8c6426043f3a44d87f12deb088740eb36",
+   "size": 306119,
+   "path": "docs/server_horizon_411155.50585f7df06b.json",
    "stats": {
     "nodes": 373,
     "punishments": 0,
@@ -1119,5 +1119,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.25-1918.json"
+ "changelog": "changelog/2026.11.26-0335.json"
 }
