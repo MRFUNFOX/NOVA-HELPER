@@ -8,6 +8,6 @@ if (!import.meta.env.DEV) window.addEventListener('contextmenu', (e) => e.preven
 
 // МАКЕТ: варианты внешнего вида ?skin=a|b|c
 const skin = import.meta.env.DEV ? new URLSearchParams(location.search).get('skin') : null;
-if (skin) { document.documentElement.dataset.skin = skin; void import('./skins.css'); }
+if (skin) { document.documentElement.dataset.skin = skin; void import('./skins.css'); if (skin.includes('b3')) void import('@fontsource-variable/unbounded'); }
 
 export default mount(App, { target: document.getElementById('app')! });

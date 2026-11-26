@@ -70,3 +70,36 @@
 :root[data-skin='c'] .sec-badge { background: linear-gradient(135deg, #ffc300, #ff9a1f); border-radius: 12px; box-shadow: 0 8px 22px rgba(255, 170, 0, 0.28); }
 :root[data-skin='c'] .num { background: rgba(255, 195, 0, 0.1); border: 1px solid rgba(255, 195, 0, 0.22); }
 :root[data-skin='c'] .ai { box-shadow: 0 8px 24px rgba(255, 170, 0, 0.3); }
+
+/* ═══ Эксперименты от B «Строгий» (?skin=b+b1 и т. д.) ═══ */
+
+/* B1 «Документ»: удобно читать — крупнее текст, без линий между пунктами, номера отдельной колонкой */
+:root[data-skin~='b1'] .pt { border-top: 0; padding-top: 10px; padding-bottom: 10px; gap: 0 20px; }
+:root[data-skin~='b1'] .pt .text, :root[data-skin~='b1'] .pt .t { font-size: 16px; line-height: 1.7; }
+:root[data-skin~='b1'] .pt .num { min-width: 52px; font-size: 14px; opacity: 0.95; }
+:root[data-skin~='b1'] .sec-head { padding: 22px 0 10px; }
+:root[data-skin~='b1'] .sec-badge { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; color: rgba(255, 195, 0, 0.9); }
+:root[data-skin~='b1'] .sec-title { font-size: 20px; }
+:root[data-skin~='b1'] .doc { max-width: 780px; }
+
+/* B2 «Единое полотно»: меню и содержимое одного цвета, без рамок; выбранный раздел — жёлтая точка */
+:root[data-skin~='b2'] .shell { border-color: #1e1f23; }
+:root[data-skin~='b2'] .sidebar { background: var(--bg); border-right: 0; }
+:root[data-skin~='b2'] .topbar { border-bottom: 0 !important; }
+:root[data-skin~='b2'] .search { background: #1a1b1e; border-color: transparent; border-radius: 999px; }
+:root[data-skin~='b2'] .item { color: #9a9ea6; }
+:root[data-skin~='b2'] .item:hover { background: transparent; color: var(--text); }
+:root[data-skin~='b2'] .item.active { background: transparent; box-shadow: none; color: var(--text); font-weight: 700; }
+:root[data-skin~='b2'] .item.active::after { content: ''; position: absolute; left: -4px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--accent); }
+:root[data-skin~='b2'] .item .ico { opacity: 0.8; }
+:root[data-skin~='b2'] .caption { text-transform: none; color: #6f737b; }
+:root[data-skin~='b2'] .status { background: transparent; border-color: #222327; }
+
+/* B3 «С характером»: широкий шрифт Unbounded для заголовков и номеров — ближе к стилю игры */
+:root[data-skin~='b3'] .doc h1, :root[data-skin~='b3'] .sec-title, :root[data-skin~='b3'] .sec-badge, :root[data-skin~='b3'] .stat-value {
+  font-family: 'Unbounded Variable', var(--font);
+}
+:root[data-skin~='b3'] .doc h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.01em; }
+:root[data-skin~='b3'] .sec-title { font-weight: 600; }
+:root[data-skin~='b3'] .sec-badge { font-size: 24px; font-weight: 800; }
+:root[data-skin~='b3'] .stat-value { font-size: 20px; font-weight: 700; }
