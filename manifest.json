@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.26-0335",
- "generatedAt": "2026-11-26T03:35:42.038Z",
+ "dbVersion": "2026.11.26-1616",
+ "generatedAt": "2026-11-26T16:16:23.787Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -592,15 +592,14 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411153/",
-   "sha256": "4ebe00553a51e469a1764702bb0cff110522e3499dee0e8a615cf72ee8e8911b",
-   "size": 95906,
-   "path": "docs/server_horizon_411153.f4bf611c4959.json",
+   "sha256": "d7f5ee5611253a283f5149b88e6ec3a0b64acf47c6cfbcc74922aefe754fc692",
+   "size": 35117,
+   "path": "docs/server_horizon_411153.bdb453f1b5c6.json",
    "stats": {
-    "nodes": 168,
-    "punishments": 59,
+    "nodes": 57,
+    "punishments": 28,
     "images": 0
-   },
-   "stale": true
+   }
   },
   {
    "id": "server/horizon/411156",
@@ -636,20 +635,19 @@
   },
   {
    "id": "server/horizon/411143",
-   "title": "Закон \"О деятельности офиса Генерального Прокурора\"",
+   "title": "Закон \"О Департаменте Юстиции\"",
    "scope": "server",
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411143/",
-   "sha256": "d819b88842c015b0e66c00b3e215e7d435cac0248912e0fc6f6fb60ca5533808",
-   "size": 71747,
-   "path": "docs/server_horizon_411143.53db16f33702.json",
+   "sha256": "e4da115a9138a849534d0a2272fb27b6e64da7b3d58adf71cc975974d16acd8b",
+   "size": 19978,
+   "path": "docs/server_horizon_411143.bc4f9a21a39b.json",
    "stats": {
-    "nodes": 136,
+    "nodes": 27,
     "punishments": 0,
     "images": 0
-   },
-   "stale": true
+   }
   },
   {
    "id": "server/horizon/411148",
@@ -1042,15 +1040,14 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411154/",
-   "sha256": "482d09997fc179c27f106a560e082a02e0fc4bccd6b2cc86a58872545d222169",
-   "size": 159940,
-   "path": "docs/server_horizon_411154.e812d658c34f.json",
+   "sha256": "e1ce9caf38b5f8a37f1373ca61c519222bb01a66e46fced55b9d4b4ce31d186a",
+   "size": 97739,
+   "path": "docs/server_horizon_411154.4fa2694eca7e.json",
    "stats": {
-    "nodes": 263,
+    "nodes": 128,
     "punishments": 0,
     "images": 0
-   },
-   "stale": true
+   }
   },
   {
    "id": "server/horizon/411155",
@@ -1075,15 +1072,14 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411157/",
-   "sha256": "fbf142c42fdc4de88c3609cce6e296c96131efaf314b5bf1dbb725f82b8f993f",
-   "size": 57187,
-   "path": "docs/server_horizon_411157.edf0243ab821.json",
+   "sha256": "289cb731a40ead7f300a46d8b039e54b131a6b762096f559f7cd5ea6e502afef",
+   "size": 35046,
+   "path": "docs/server_horizon_411157.cbfc8ff1e16c.json",
    "stats": {
-    "nodes": 99,
+    "nodes": 44,
     "punishments": 0,
     "images": 0
-   },
-   "stale": true
+   }
   },
   {
    "id": "server/horizon/411152",
@@ -1092,15 +1088,14 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411152/",
-   "sha256": "1938a1400b424d9e64e5efa258f901f58df624a5a45711aaa15d3d161f327424",
-   "size": 218256,
-   "path": "docs/server_horizon_411152.d42ceb1c3355.json",
+   "sha256": "5b20af25d6217313f0ab5a1f8135554a5d38badbd4f77dcac4e1d302163efeea",
+   "size": 109752,
+   "path": "docs/server_horizon_411152.8ae85688982b.json",
    "stats": {
-    "nodes": 371,
-    "punishments": 141,
+    "nodes": 166,
+    "punishments": 0,
     "images": 0
-   },
-   "stale": true
+   }
   },
   {
    "id": "server/horizon/411158",
@@ -1119,5 +1114,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.26-0335.json"
+ "changelog": "changelog/2026.11.26-1616.json"
 }
