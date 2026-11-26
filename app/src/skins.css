@@ -103,3 +103,18 @@
 :root[data-skin~='b3'] .sec-title { font-weight: 600; }
 :root[data-skin~='b3'] .sec-badge { font-size: 24px; font-weight: 800; }
 :root[data-skin~='b3'] .stat-value { font-size: 20px; font-weight: 700; }
+
+/* B на остальных экранах: те же правила — крупный заголовок, без карточек, разделы через тонкую линию */
+:root[data-skin~='b'] main h1 { font-size: 36px; letter-spacing: -0.03em; }
+:root[data-skin~='b'] .settings section { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 22px 0; }
+:root[data-skin~='b'] .settings section:first-of-type { border-top: 0; padding-top: 8px; }
+:root[data-skin~='b'] .hit { background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 16px 4px; }
+:root[data-skin~='b'] .hit.active { background: var(--surface-2); border-radius: var(--radius); box-shadow: inset 2px 0 0 var(--accent); }
+:root[data-skin~='b'] .release { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; }
+:root[data-skin~='b'] .tabs { background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 0; gap: 18px; }
+:root[data-skin~='b'] .dcard, :root[data-skin~='b'] .chart, :root[data-skin~='b'] .step { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding-left: 0; padding-right: 0; }
+:root[data-skin~='b'] main .card { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; }
+:root[data-skin~='b'] .guide { background: none; border: 0; border-left: 2px solid var(--accent); border-radius: 0; padding: 4px 0 4px 16px; }
+/* Части статей (ч. 1, ч. 2) внутри законов — тоже просто текстом */
+:root[data-skin~='b'] .subs .pt .num { margin-left: 8px; border: 0; min-width: 0; padding-right: 8px !important; white-space: nowrap; color: var(--text-dim); }
+:root[data-skin~='b'] .subs .pt { border-left: 0; }

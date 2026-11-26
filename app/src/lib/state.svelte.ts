@@ -321,7 +321,7 @@ class AppState {
     if (import.meta.env.DEV) {
       const p = new URLSearchParams(location.search);
       if (p.get('q')) this.query = p.get('q')!;
-      if (p.get('view') === 'changes' || p.get('view') === 'settings' || p.get('view') === 'buyers' || p.get('view') === 'admin') this.view = { kind: p.get('view') as 'changes' };
+      if (p.get('view') === 'changes' || p.get('view') === 'settings' || p.get('view') === 'buyers' || p.get('view') === 'admin' || p.get('view') === 'calc') this.view = { kind: p.get('view') as 'changes' };
       if (p.get('doc')) { const d = this.db.docs.find((x) => x.title.includes(p.get('doc')!)); if (d) this.open(d.id, this.index.entries.find((e) => e.doc.id === d.id && e.node.number === p.get('focus'))?.node.id); }
       if (p.has('laws')) this.setSection('laws');
       if (p.has('ai')) this.aiOpen = true;
