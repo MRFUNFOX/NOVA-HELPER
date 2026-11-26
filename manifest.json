@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.26-1616",
- "generatedAt": "2026-11-26T16:16:23.787Z",
+ "dbVersion": "2026.11.26-1620",
+ "generatedAt": "2026-11-26T16:20:58.178Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -1008,12 +1008,12 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/413542/",
-   "sha256": "c22e984833c2b1bf3f658cc855030cf30066bd343d355fc004e58206a4e2fa6d",
-   "size": 36548,
-   "path": "docs/server_horizon_413542.d675d6d285c5.json",
+   "sha256": "01791b83f6305ebfcc8f8ff61d983c56cbd0c47b4b435cd3bb342a874c774147",
+   "size": 36731,
+   "path": "docs/server_horizon_413542.a9f5882d6333.json",
    "stats": {
     "nodes": 64,
-    "punishments": 2,
+    "punishments": 5,
     "images": 0
    }
   },
@@ -1088,12 +1088,12 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411152/",
-   "sha256": "5b20af25d6217313f0ab5a1f8135554a5d38badbd4f77dcac4e1d302163efeea",
-   "size": 109752,
-   "path": "docs/server_horizon_411152.8ae85688982b.json",
+   "sha256": "f627cb368b0351b7baffff662f4c3d918e06e8a8c0c3117d95f4b1cc4bcdbb10",
+   "size": 119182,
+   "path": "docs/server_horizon_411152.52e3b009ddff.json",
    "stats": {
     "nodes": 166,
-    "punishments": 0,
+    "punishments": 102,
     "images": 0
    }
   },
@@ -1114,5 +1114,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.26-1616.json"
+ "changelog": "changelog/2026.11.26-1620.json"
 }
