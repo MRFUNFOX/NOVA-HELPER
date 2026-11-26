@@ -1,0 +1,72 @@
+/* МАКЕТ (ветка mock/modern): три направления «осовременить» окно на рабочем столе. ?skin=a|b|c */
+
+/* ── A. Парящие панели: меню и содержимое — отдельные скруглённые панели на тёмном фоне окна ── */
+:root[data-skin='a'] {
+  --bg: #141519; --surface: #1b1c21; --surface-2: #23242a; --surface-3: #2d2e35;
+  --border: rgba(255, 255, 255, 0.06); --border-strong: rgba(255, 255, 255, 0.11);
+  --radius: 12px; --radius-lg: 18px;
+}
+:root[data-skin='a'] body { background: #0b0c0e; }
+:root[data-skin='a'] .shell { background: #0b0c0e; padding: 8px; gap: 8px; border: 0; }
+:root[data-skin='a'] .sidebar, :root[data-skin='a'] .column { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+:root[data-skin='a'] .topbar { background: transparent; }
+:root[data-skin='a'] .item { height: 40px; }
+:root[data-skin='a'] .item.active { background: var(--accent-tint); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+:root[data-skin='a'] .switch { background: #0f1013; }
+:root[data-skin='a'] .stat { background: var(--surface); border-color: transparent; }
+:root[data-skin='a'] .sec { background: var(--surface); border-color: transparent; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 30px rgba(0, 0, 0, 0.25); }
+:root[data-skin='a'] .sec-head { background: var(--surface); }
+:root[data-skin='a'] .sec-head:hover { background: #202127; }
+:root[data-skin='a'] .num { background: transparent; border: 1px solid var(--accent-line); }
+:root[data-skin='a'] .pt { border-top-color: rgba(255, 255, 255, 0.05); }
+
+/* ── B. Строгий: плоско, без карточек, крупный заголовок, жёлтый только там, где важно ── */
+:root[data-skin~='b'] {
+  --bg: #121315; --surface: #17181b; --surface-2: #1d1e22; --surface-3: #27282d;
+  --border: #222327; --border-strong: #2c2d32; --text-dim: #b4b7be;
+}
+:root[data-skin~='b'] .sidebar { background: #0e0f11; }
+:root[data-skin~='b'] .item { height: 36px; font-weight: 500; }
+:root[data-skin~='b'] .item.active { background: var(--surface-2); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+:root[data-skin~='b'] .item.active .ico { color: var(--accent); }
+:root[data-skin~='b'] .switch { background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 0 0 0; margin: 2px 16px 10px; }
+:root[data-skin~='b'] .switch .thumb { top: auto; bottom: -1px; height: 2px; border-radius: 2px; }
+:root[data-skin~='b'] .switch button.on { color: var(--accent); }
+:root[data-skin~='b'] .doc h1 { font-size: 36px; letter-spacing: -0.03em; }
+:root[data-skin~='b'] .stats { display: flex; gap: 36px; margin-top: 14px; }
+:root[data-skin~='b'] .stat { background: none !important; border: 0 !important; padding: 0 !important; display: flex !important; flex-direction: column-reverse; gap: 2px; box-shadow: none !important; }
+:root[data-skin~='b'] .stat-ico { display: none !important; }
+:root[data-skin~='b'] .stat-value { font-size: 22px; }
+:root[data-skin~='b'] .sec { background: none; border: 0; border-top: 1px solid var(--border); border-radius: 0; margin-top: 28px; }
+:root[data-skin~='b'] .sec-head { background: var(--bg); padding: 16px 0; border-radius: 0 !important; border-bottom: 0 !important; }
+:root[data-skin~='b'] .sec-head:hover { background: var(--bg); }
+:root[data-skin~='b'] .sec-badge { background: none; color: var(--accent); min-width: 0; padding: 0; font-size: 26px; height: auto; }
+:root[data-skin~='b'] .sec-title .kicker { display: none; }
+:root[data-skin~='b'] .sec-body { padding: 0 0 6px; }
+:root[data-skin~='b'] .pt .num { background: none; place-items: start; padding-top: 3px !important; min-width: 44px; padding: 0; height: auto; color: var(--accent); font-weight: 700; }
+:root[data-skin~='b'] .pt { padding-left: 0; }
+
+/* ── C. Глянец: как лаунчер игры — мягкое свечение, стеклянные панели, яркие акценты ── */
+:root[data-skin='c'] {
+  --bg: #101115; --surface: rgba(255, 255, 255, 0.035); --surface-2: rgba(255, 255, 255, 0.06); --surface-3: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.07); --border-strong: rgba(255, 255, 255, 0.12); --radius-lg: 18px;
+}
+:root[data-skin='c'] body, :root[data-skin='c'] .shell {
+  background:
+    radial-gradient(900px 520px at 8% -10%, rgba(255, 195, 0, 0.13), transparent 60%),
+    radial-gradient(800px 600px at 105% 110%, rgba(110, 130, 255, 0.10), transparent 60%),
+    #0f1014;
+}
+:root[data-skin='c'] .sidebar { background: rgba(255, 255, 255, 0.02); border-right-color: rgba(255, 255, 255, 0.06); backdrop-filter: blur(18px); }
+:root[data-skin='c'] .topbar { background: transparent; }
+:root[data-skin='c'] .item.active { background: linear-gradient(90deg, rgba(255, 195, 0, 0.2), rgba(255, 195, 0, 0.02)); color: var(--accent-soft); }
+:root[data-skin='c'] .doc h1 { font-size: 32px; letter-spacing: -0.02em; }
+:root[data-skin='c'] .stat { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.07); backdrop-filter: blur(12px); }
+:root[data-skin='c'] .stats > :first-child { background: linear-gradient(135deg, #ffc300 0%, #ff9a1f 100%); border-color: transparent; color: var(--on-accent); box-shadow: 0 12px 30px rgba(255, 170, 0, 0.22); }
+:root[data-skin='c'] .stats > :first-child .stat-label, :root[data-skin='c'] .stats > :first-child .stat-value { color: var(--on-accent); }
+:root[data-skin='c'] .stats > :first-child .stat-ico { background: rgba(26, 20, 0, 0.15); color: var(--on-accent); }
+:root[data-skin='c'] .sec { background: rgba(255, 255, 255, 0.035); border-color: rgba(255, 255, 255, 0.07); backdrop-filter: blur(14px); }
+:root[data-skin='c'] .sec-head { background: rgba(23, 24, 29, 0.92); }
+:root[data-skin='c'] .sec-badge { background: linear-gradient(135deg, #ffc300, #ff9a1f); border-radius: 12px; box-shadow: 0 8px 22px rgba(255, 170, 0, 0.28); }
+:root[data-skin='c'] .num { background: rgba(255, 195, 0, 0.1); border: 1px solid rgba(255, 195, 0, 0.22); }
+:root[data-skin='c'] .ai { box-shadow: 0 8px 24px rgba(255, 170, 0, 0.3); }
