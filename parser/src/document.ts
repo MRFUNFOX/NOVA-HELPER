@@ -27,7 +27,8 @@ export function buildDocument(pages: ThreadPage[], meta: DocMeta, now: Date): Bu
   const posts: Post[] = pages.flatMap((p) => p.posts);
   const main = posts[0];
   if (!main) throw new Error(`Тема ${meta.threadId}: нет сообщений`);
-  const title = pages[0]?.title || meta.listTitle;
+  // New Era помечает действующие редакции словом «NEW» в начале названия темы — игроку оно не нужно
+  const title = (pages[0]?.title || meta.listTitle).replace(/^\s*NEW\s+/, '').trim();
   const docId = meta.scope === 'project' ? `project/${meta.threadId}` : `server/${meta.serverId}/${meta.threadId}`;
 
   const children = parseStructure(htmlToLines(main.bodyHtml), { docId, title });

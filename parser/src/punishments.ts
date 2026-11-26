@@ -70,6 +70,13 @@ const RE_SANCTION_WORD = /штраф|арест|лишени\p{L}*\s+(?:своб
 /** «3.3.1 Водитель остановился после второго требования: штраф 10.000$.» */
 const RE_AFTER_COLON = /:\s*((?:штраф|лишени\p{L}*\s+(?:водительск|прав|лиценз)|эвакуац|арест\s+имущества)[^:]*)$/iu;
 
+/**
+ * Наказание в конце статьи через тире (уголовный кодекс Horizon с 23.11.2026):
+ * «Статья 18.7. Нарушение правил вождения… — до 7 месяцев лишения свободы.»
+ * Только длинное тире (— или –), не дефис: дефис бывает внутри слов и номеров.
+ */
+const RE_DASH = /\s[—–]\s*((?:до\s+|от\s+|в\s+виде\s+)?(?:\d|штраф|лишени|арест|исправительн|обязательн|пожизненн)[^—–]*)$/iu;
+
 export function inlinePunishment(line: string): Punishment | undefined {
   const colon = RE_AFTER_COLON.exec(line);
   if (colon && !RE_ENTAILS.test(line)) {
@@ -77,7 +84,12 @@ export function inlinePunishment(line: string): Punishment | undefined {
     return classifyPunishment(c.charAt(0).toUpperCase() + c.slice(1));
   }
   const m = RE_ENTAILS.exec(line);
-  if (!m) return undefined;
+  if (!m) {
+    const d = RE_DASH.exec(line.trim());
+    if (!d || !RE_SANCTION_WORD.test(d[1]!)) return undefined;
+    const c = d[1]!.trim().replace(/\s+/g, ' ').replace(/[.;]+$/, '');
+    return classifyPunishment(c.charAt(0).toUpperCase() + c.slice(1));
+  }
   const clause = m[1]!.trim().replace(/\s+/g, ' ');
   if (!RE_SANCTION_WORD.test(clause)) return undefined; // «влечет уголовную ответственность по статье…»
   const p = classifyPunishment(clause.charAt(0).toUpperCase() + clause.slice(1));
