@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.27-1224",
- "generatedAt": "2026-11-27T12:24:50.230Z",
+ "dbVersion": "2026.11.27-2328",
+ "generatedAt": "2026-11-27T23:28:28.464Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -336,12 +336,12 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/406242/",
-   "sha256": "72e31446e15db0a4d85e6e1548c7f7b453785e083fc293f5e046f3fbd0c85e41",
-   "size": 88405,
-   "path": "docs/project_406242.1ee9f3e9e55b.json",
+   "sha256": "e05664211b8130fc60c9120537df1d05781577285a6c0ee962bbf32d363f34f8",
+   "size": 86698,
+   "path": "docs/project_406242.435f6596db08.json",
    "stats": {
-    "nodes": 116,
-    "punishments": 103,
+    "nodes": 113,
+    "punishments": 99,
     "images": 0
    }
   },
@@ -1114,5 +1114,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.27-1224.json"
+ "changelog": "changelog/2026.11.27-2328.json"
 }
