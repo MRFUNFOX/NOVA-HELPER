@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.26-1620",
- "generatedAt": "2026-11-26T16:20:58.178Z",
+ "dbVersion": "2026.11.27-0145",
+ "generatedAt": "2026-11-27T01:45:07.184Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -351,12 +351,12 @@
    "scope": "project",
    "category": "Общие правила",
    "sourceUrl": "https://forum.nova-rp.com/threads/409119/",
-   "sha256": "f2d6898faabf924a80bddb65266321dc6c17f3c19ff8582ac774168f471cbdbd",
-   "size": 31767,
-   "path": "docs/project_409119.cdb36a68ffec.json",
+   "sha256": "6cfb5650bb243f1be33c56fac28ffdb32c63d3bd87a4aa1c40d681b840546457",
+   "size": 32233,
+   "path": "docs/project_409119.ba535c982bc0.json",
    "stats": {
-    "nodes": 48,
-    "punishments": 23,
+    "nodes": 49,
+    "punishments": 24,
     "images": 0
    }
   },
@@ -486,12 +486,12 @@
    "scope": "project",
    "category": "Правила для криминальных организаций",
    "sourceUrl": "https://forum.nova-rp.com/threads/406244/",
-   "sha256": "5553b9cb98f7b04dc37a6ccf612c71ab414d83f4274652a3024012ab258dbc1b",
-   "size": 56111,
-   "path": "docs/project_406244.8e4bccfc4135.json",
+   "sha256": "32630912a01213755d3b67268db310e82aa4c18f18d6b94cd9a76cad47e3fccb",
+   "size": 64380,
+   "path": "docs/project_406244.fa495408c967.json",
    "stats": {
-    "nodes": 91,
-    "punishments": 52,
+    "nodes": 79,
+    "punishments": 45,
     "images": 2
    }
   },
@@ -1114,5 +1114,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.26-1620.json"
+ "changelog": "changelog/2026.11.27-0145.json"
 }
