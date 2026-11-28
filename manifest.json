@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "dbVersion": "2026.11.27-2328",
- "generatedAt": "2026-11-27T23:28:28.464Z",
+ "dbVersion": "2026.11.28-1734",
+ "generatedAt": "2026-11-28T17:34:26.781Z",
  "minAppVersion": "0.1.0",
  "parserVersion": 1,
  "servers": [
@@ -66,13 +66,13 @@
    "scope": "project",
    "category": "Общие правила мероприятий",
    "sourceUrl": "https://forum.nova-rp.com/threads/406741/",
-   "sha256": "50d00d756bf2ba111e2f65fb768b55c6dfe25704b7d2b9e7970a89c5fe38bff2",
-   "size": 11204,
-   "path": "docs/project_406741.64dd1ff26cf0.json",
+   "sha256": "8c395a643c76bc89aa62bb7754d8717c22a9520b998b513bd217d036b430afbc",
+   "size": 11324,
+   "path": "docs/project_406741.8859944c2524.json",
    "stats": {
     "nodes": 21,
     "punishments": 14,
-    "images": 3
+    "images": 4
    }
   },
   {
@@ -960,9 +960,9 @@
    "serverId": "horizon",
    "category": "Законодательная база",
    "sourceUrl": "https://forum.nova-rp.com/threads/411144/",
-   "sha256": "1daf175e6ab4f24b4253cdff98104341df8bafd0d6b44af74b28ec9f80a47f09",
-   "size": 49803,
-   "path": "docs/server_horizon_411144.1cf0d566d2bd.json",
+   "sha256": "8120ca13c1af897b2f2848cd1d4a7e0eaca36e15751996b95777c3f2e674ae19",
+   "size": 49771,
+   "path": "docs/server_horizon_411144.185ff0e2d14e.json",
    "stats": {
     "nodes": 83,
     "punishments": 0,
@@ -1114,5 +1114,5 @@
    }
   }
  ],
- "changelog": "changelog/2026.11.27-2328.json"
+ "changelog": "changelog/2026.11.28-1734.json"
 }
