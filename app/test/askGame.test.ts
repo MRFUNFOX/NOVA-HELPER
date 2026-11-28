@@ -28,3 +28,19 @@ describe('сколько показывать ответ («Авто»)', () => 
     expect(autoSeconds(80, 20)).toBe(120);
   });
 });
+
+import { EXAM, examScore, staleRules } from '../src/lib/exam';
+describe('экзамен помощника', () => {
+  it('у каждого вопроса есть опора на текст правила', () => {
+    for (const x of EXAM) expect(x.rule.length, x.id).toBeGreaterThan(0);
+  });
+  it('правило переписали — эталон устарел, в итог не входит', () => {
+    const murder = EXAM.find((x) => x.id === 'law-murder')!;
+    expect(staleRules(murder, () => ['Убийство — 1 год лишения свободы.'])).toEqual([]);
+    expect(staleRules(murder, () => ['Убийство — 4 года лишения свободы.'])).toEqual(['6.2']);
+    expect(staleRules(murder, () => [])).toEqual(['6.2']);
+    const r = (match: 'yes' | 'no' | 'stale') => ({ id: '', answer: '', cited: [], citedOk: true, match, why: '' });
+    expect(examScore([r('yes'), r('stale'), r('stale')])).toBe(100);
+    expect(examScore([r('yes'), r('no')])).toBe(50);
+  });
+});

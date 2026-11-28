@@ -11,7 +11,7 @@ import { aboutGov, slang } from './slang';
 import { errorKind, track } from './stats';
 import { learn, type Note } from './learn.svelte';
 import { WORLD, WORLD_SHORT } from './world';
-import { EXAM, JUDGE, citesRef, type ExamItem, type ExamResult, type Match } from './exam';
+import { EXAM, JUDGE, citesRef, staleRules, type ExamItem, type ExamResult, type Match } from './exam';
 import { HISTORY_KEY, nickFormat, nickIn, people, pushHistory, sanitizeHistory, type HistItem, type NickCheck, type Rating } from './aiExtras';
 
 export interface Source { n: number; entry: Entry }
@@ -609,7 +609,10 @@ class Assistant {
       else {
         const topics = (an?.topics ?? []).map((x) => rank(app.index, `${x.check} ${x.words.join(' ')} ${slang(x.check)}`, 6, inScope, boost));
         const whole = rank(app.index, `${asked} ${q} ${extra} ${prev}`, 14, inScope, boost);
-        entries = mergeGroups(exact, [...topics, whole], fast ? 7000 : 8500, 18, (e) => fragSize(e, max), (e) => e.node.id);
+        // Лучшее по самому вопросу — всегда, даже если нейросеть выбрала не те документы (экзамен 28.11.2026:
+        // «дать взятку полицейскому» — нашли статью УК, но её оттеснили пункты из выбранных документов)
+        const plain = rank(app.index, `${asked} ${slang(asked)}`, 3, inScope);
+        entries = mergeGroups(exact, [plain, ...topics, whole], fast ? 7000 : 8500, 18, (e) => fragSize(e, max), (e) => e.node.id);
       }
       const sameNum = new Set(exact.map((e) => e.doc.id)).size > 1 ? exact : [];
       t.sources = entries.map((entry, n) => ({ n: n + 1, entry }));
@@ -709,6 +712,13 @@ class Assistant {
   }
 
   private async examOne(item: ExamItem): Promise<ExamResult> {
+    // Пункты с номерами эталона в разделе вопроса — по нынешней базе
+    const inScope = (d: RuleDocument) => sectionOf(d) === item.scope;
+    const rules = (ref: string) => app.index.entries.filter((e) => inScope(e.doc) && (e.node.number === ref || e.article === ref));
+    const texts = (ref: string) => rules(ref).map((e) => [e.node.text, ...e.node.punishments.map((p) => p.raw)].join('\n'));
+    // Правило переписали — эталон устарел: не тратим лимит и не ставим помощнику ошибку
+    const stale = staleRules(item, texts);
+    if (stale.length) return { id: item.id, answer: '', cited: [], citedOk: false, match: 'stale', why: `Правило изменилось (${stale.map((r) => `п. ${r}`).join(', ')}) — эталон этого вопроса надо переписать.` };
     const t: Turn = { id: `exam-${item.id}-${Date.now()}`, q: item.q, a: '', sources: [], pending: true, scope: item.scope, at: Date.now(), exam: true };
     await this.answer(t);
     const used = new Set(pieces(t.a).flatMap((p) => (p.t === 'ref' && p.kind === 's' ? [p.n] : [])));
@@ -718,7 +728,7 @@ class Assistant {
     try {
       const raw = await backend.aiComplete([
         { role: 'system', content: JUDGE },
-        { role: 'user', content: `Вопрос игрока: ${item.q}\n\nЭталон: ${item.verdict}\nВажно упомянуть: ${item.points.join('; ')}\n\nОтвет помощника: ${base.answer}\nПомощник сослался на: ${cited.join('; ') || 'ни на что'}` },
+        { role: 'user', content: `Вопрос игрока: ${item.q}\n\nЭталон: ${item.verdict}\nВажно упомянуть: ${item.points.join('; ')}\n\nТекст пунктов сейчас:\n${item.rule.flatMap(([r, has]) => rules(r).filter((e) => [e.node.text, ...e.node.punishments.map((p) => p.raw)].join(' ').toLowerCase().replace(/ё/g, 'е').includes(has.toLowerCase().replace(/ё/g, 'е'))).slice(0, 1).map((e) => `${sourceLabel({ n: 0, entry: e }).num} · ${shortTitle(e.doc.title)}: ${cut(e.node.text, 500)}${e.node.punishments.length ? ` Наказание: ${e.node.punishments.map((p) => p.raw).join('; ')}` : ''}`)).join('\n') || '(не найден)'}\n\nОтвет помощника: ${base.answer}\nПомощник сослался на: ${cited.join('; ') || 'ни на что'}` },
       ], 1);
       const a = raw.indexOf('{');
       const j = JSON.parse(a >= 0 ? raw.slice(a, raw.lastIndexOf('}') + 1) : raw) as { match?: unknown; why?: unknown };
@@ -756,7 +766,7 @@ class Assistant {
 /** Проверка ника: нейросеть оценивает только смысл, формат программа уже проверила */
 const NICK = `Ты проверяешь игровой ник по правилу 2.13 Общих правил проекта NOVA RP (GTA 5). Текст правила будет ниже — опирайся только на него.
 Формат (Имя_Фамилия, регистр) программа уже проверила — его не оценивай.
-Оцени смысл по списку правила: пол персонажа не угадывай; родные и близкие; скрытый смысл и звучание, близкое к оскорблениям; известные личности;
+Оцени смысл по списку правила: пол персонажа не угадывай; родные и близкие; скрытый смысл и звучание, близкое к оскорблениям; имена и фамилии реальных политических деятелей (актёры, певцы и другие знаменитости правилом не запрещены);
 роль игрока (Bandit, Medik, Inkassator); фашизм; религия, раса, нация; лекарства; мат; бессмысленные слова и клички, животные, персонажи,
 овощи и фрукты, предметы, компании (Cheater, GodMode, Shrek, Pomidor, Divan).
 Выдуманные имена и фамилии разрешены, как и фамилия по названию семьи, если вписываются в RolePlay.
@@ -860,12 +870,13 @@ export function sourceLabel(s: Source) {
 export type Piece = { t: 'text' | 'bold'; v: string } | { t: 'ref'; n: number; kind: 's' | 'n' };
 export function pieces(text: string): Piece[] {
   const out: Piece[] = [];
-  const re = /\*\*(.+?)\*\*|\[\s*([SN]\d+(?:\s*[,;]\s*[SN]\d+)*)\s*\]|\(\s*([SN]\d+(?:\s*[,;]\s*[SN]\d+)*)\s*\)/g;
+  // Третий вид — голая метка в тексте: «нарушение S3», «S3 и S4» (экзамен 28.11.2026: игрок видел «S3» вместо номера)
+  const re = /\*\*(.+?)\*\*|\[\s*([SN]\d+(?:\s*[,;]\s*[SN]\d+)*)\s*\]|\(\s*([SN]\d+(?:\s*[,;]\s*[SN]\d+)*)\s*\)|(?<![\p{L}\d])([SN]\d{1,2})(?![\p{L}\d]|\.\d)/gu;
   let last = 0;
   for (const m of text.matchAll(re)) {
     if (m.index! > last) out.push({ t: 'text', v: text.slice(last, m.index) });
     if (m[1]) out.push({ t: 'bold', v: m[1] });
-    else for (const r of (m[2] ?? m[3])!.split(/[,;]/)) {
+    else for (const r of (m[2] ?? m[3] ?? m[4])!.split(/[,;]/)) {
       const x = r.trim();
       out.push({ t: 'ref', n: Number(x.slice(1)), kind: x[0] === 'N' ? 'n' : 's' });
     }

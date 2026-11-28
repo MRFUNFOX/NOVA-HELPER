@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { buildIndex, rank } from '../src/lib/search';
+import { slang } from '../src/lib/slang';
 
 const db = JSON.parse(readFileSync(new URL('../dev/mock-db.json', import.meta.url), 'utf8'));
 const index = buildIndex(db.docs);
@@ -14,9 +15,10 @@ describe('подбор пунктов для ИИ', () => {
     expect(r.some((x) => /DeathMatch|DM/.test(x))).toBe(true);
   });
   it('вопрос про оскорбление родственников', () => {
-    const r = top('что будет если оскорбить родителей другого игрока', 8);
-    console.log(r.join('\n'));
-    expect(r.some((x) => /родн|родител/i.test(x))).toBe(true);
+    // Как в помощнике — вместе со сленгом: в правиле «родных и близких», а игрок пишет «родителей»
+    const q = 'что будет если оскорбить родителей другого игрока';
+    const r = rank(index, `${q} ${slang(q)}`, 8);
+    expect(r.some((e) => /оскорблени/i.test(e.node.text) && /родн|родител/i.test(e.node.text))).toBe(true);
   });
   it('вопрос по законам: кража', () => {
     const r = top('какое наказание за кражу машины', 8);

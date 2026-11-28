@@ -29,10 +29,11 @@ impl Provider {
         match self { Provider::Groq => "https://api.groq.com/openai/v1", Provider::Zai => "https://api.z.ai/api/paas/v4" }
     }
     /// Модели по порядку предпочтения. У каждой модели свой бесплатный лимит, поэтому
-    /// при «лимит исчерпан» пробуем следующую.
+    /// при «лимит исчерпан» пробуем следующую. Только сильные: экзамен 28.11.2026 показал,
+    /// что слабые запасные (gpt-oss-20b, llama-8b) уверенно отвечают неверно — лучше подождать лимит.
     fn answer_models(self) -> &'static [&'static str] {
         match self {
-            Provider::Groq => &["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", "openai/gpt-oss-20b", "llama-3.1-8b-instant"],
+            Provider::Groq => &["openai/gpt-oss-120b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile"],
             Provider::Zai => &["glm-4.7-flash", "glm-4.5-flash"],
         }
     }
@@ -411,6 +412,8 @@ fn retryable(e: &OpenErr) -> bool {
 
 /// Столько секунд ждём лимит лучшей модели, прежде чем перейти на следующую
 const MAX_WAIT: f32 = 20.0;
+/// Все сильные модели упёрлись в лимит на минуту — столько ждём самую скорую, прежде чем сдаться
+const MAX_WAIT_ALL: f32 = 65.0;
 
 /// Заголовок retry-after (секунды)
 fn retry_after(h: &reqwest::header::HeaderMap) -> Option<f32> {
@@ -479,12 +482,18 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>, deep: Optio
     } else {
         let mut res = Err(String::new());
         let mut waited = false;
+        let mut round2 = false;
+        // Через сколько секунд освободится лимит самой скорой из моделей
+        let mut soonest: Option<f32> = None;
         let mut i = 0;
         while i < models.len() {
             let model = models[i];
             match open_stream(&http, p, &s.key, model, &messages, think).await {
                 Ok(o) => { res = Ok(o); break; }
                 Err(e) => {
+                    if e.0 == Some(429) {
+                        if let Some(w) = e.2 { soonest = Some(soonest.map_or(w, |x| x.min(w))); }
+                    }
                     // Лимит лучшей модели освободится через несколько секунд — лучше подождать, чем отвечать моделью слабее
                     if e.0 == Some(429) && !waited && i == 0 {
                         if let Some(w) = e.2.filter(|w| *w <= MAX_WAIT) {
@@ -501,6 +510,17 @@ pub async fn ai_chat(app: AppHandle, id: String, messages: Vec<Msg>, deep: Optio
                 }
             }
             i += 1;
+            // Лимит на минуту у всех сильных моделей — ждём самую скорую и пробуем ещё круг
+            if i == models.len() && !round2 {
+                if let Some(w) = soonest.filter(|w| *w <= MAX_WAIT_ALL) {
+                    round2 = true;
+                    soonest = None;
+                    let _ = app.emit("ai-wait", Wait { id: &id, seconds: w.ceil() as u32 });
+                    tokio::time::sleep(Duration::from_secs_f32(w + 0.5)).await;
+                    let _ = app.emit("ai-wait", Wait { id: &id, seconds: 0 });
+                    i = 0;
+                }
+            }
         }
         res
     };

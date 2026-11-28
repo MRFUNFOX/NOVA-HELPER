@@ -10,9 +10,10 @@
     partly: x.results.filter((r) => r.match === 'partly').length,
     no: x.results.filter((r) => r.match === 'no').length,
     error: x.results.filter((r) => r.match === 'error').length,
+    stale: x.results.filter((r) => r.match === 'stale').length,
   });
   const item = (id: string) => EXAM.find((e) => e.id === id);
-  const LABEL = { yes: 'Верно', partly: 'Частично', no: 'Неверно', error: 'Ошибка' } as const;
+  const LABEL = { yes: 'Верно', partly: 'Частично', no: 'Неверно', error: 'Ошибка', stale: 'Эталон устарел' } as const;
   const when = (t: number) => new Date(t).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
   const minutes = Math.ceil(EXAM.length * 35 / 60);
 </script>
@@ -41,7 +42,7 @@
         {#each x.results as r (r.id)}<i class={r.match}></i>{/each}
         {#if x.running}<i class="now"></i>{/if}
       </div>
-      <p class="legend"><span class="yes">Верно {counts.yes}</span><span class="partly">Частично {counts.partly}</span><span class="no">Неверно {counts.no}</span>{#if counts.error}<span class="error">Ошибка {counts.error}</span>{/if}</p>
+      <p class="legend"><span class="yes">Верно {counts.yes}</span><span class="partly">Частично {counts.partly}</span><span class="no">Неверно {counts.no}</span>{#if counts.error}<span class="error">Ошибка {counts.error}</span>{/if}{#if counts.stale}<span class="stale" title="Правило изменилось — эти вопросы не входят в итог">Эталон устарел {counts.stale}</span>{/if}</p>
     </div>
 
     <ol class="list">
@@ -52,7 +53,7 @@
             <summary>
               <span class="badge {r.match}">{LABEL[r.match]}</span>
               <span class="q">{it?.q ?? r.id}</span>
-              {#if r.match !== 'error'}<span class="ref" class:miss={!r.citedOk} title={r.citedOk ? 'Сослался на нужный пункт' : `Не сослался на ${it?.refs.join(' или ')}`}>{r.citedOk ? 'пункт верный' : 'не тот пункт'}</span>{/if}
+              {#if r.match !== 'error' && r.match !== 'stale'}<span class="ref" class:miss={!r.citedOk} title={r.citedOk ? 'Сослался на нужный пункт' : `Не сослался на ${it?.refs.join(' или ')}`}>{r.citedOk ? 'пункт верный' : 'не тот пункт'}</span>{/if}
             </summary>
             <dl>
               <dt>Ответ помощника{r.fixed ? ' (поправлен перепроверкой)' : ''}</dt><dd class="selectable">{r.answer || '—'}</dd>
@@ -90,7 +91,8 @@
   .bar i.yes { background: var(--success); }
   .bar i.partly { background: var(--orange); }
   .bar i.no { background: var(--danger); }
-  .bar i.error { background: var(--text-muted); }
+  .bar i.error, .bar i.stale { background: var(--text-muted); }
+  .bar i.stale { opacity: 0.45; }
   .bar i.now { background: var(--accent-line); animation: pulse 1.2s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: 0.4; } }
   @media (prefers-reduced-motion: reduce) { .bar i.now { animation: none; } }
@@ -98,7 +100,7 @@
   .legend .yes { color: var(--success); }
   .legend .partly { color: var(--orange); }
   .legend .no { color: var(--danger); }
-  .legend .error { color: var(--text-muted); }
+  .legend .error, .legend .stale { color: var(--text-muted); }
 
   .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .list li { border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
@@ -110,7 +112,7 @@
   .badge.yes { background: var(--success-tint); color: var(--success); }
   .badge.partly { background: var(--orange-tint); color: var(--orange); }
   .badge.no { background: var(--danger-tint); color: var(--danger); }
-  .badge.error { background: var(--surface-3); color: var(--text-muted); }
+  .badge.error, .badge.stale { background: var(--surface-3); color: var(--text-muted); }
   .ref { flex-shrink: 0; font-size: 11.5px; color: var(--text-muted); }
   .ref.miss { color: var(--danger); font-weight: 700; }
   dl { margin: 0; padding: 0 12px 12px 92px; }

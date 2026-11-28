@@ -11,6 +11,13 @@ describe('ссылки в ответе', () => {
     expect(p.some((x) => x.t === 'bold' && x.v === 'нельзя')).toBe(true);
     expect(pieces('(см. приложение)').every((x) => x.t === 'text')).toBe(true);
   });
+  it('голая метка без скобок тоже становится ссылкой (экзамен 28.11.2026: «нарушение S3»)', () => {
+    const p = pieces('Нарушил — нарушение S3 и S4, JAIL 60–120 мин.');
+    expect(p.filter((x) => x.t === 'ref')).toEqual([{ t: 'ref', n: 3, kind: 's' }, { t: 'ref', n: 4, kind: 's' }]);
+    expect(p.map((x) => (x.t === 'ref' ? '#' : x.v)).join('')).toBe('Нарушил — нарушение # и #, JAIL 60–120 мин.');
+    // Слова и номера с буквой S не трогаем
+    expect(pieces('Модель GPT-S2X, пункт S1.2, BUS3').every((x) => x.t === 'text')).toBe(true);
+  });
 });
 
 describe('разбор довода', () => {
